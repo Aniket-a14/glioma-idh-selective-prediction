@@ -1,125 +1,122 @@
-# CODEX — ONE-SHOT PHASE EXECUTION PROMPT
+# CODEX — SELF-LOCATING PHASE EXECUTION PROMPT
 
-> Copy everything below the line into a fresh Codex session at the repository root.
-> **Change only the `PHASE` number.** Everything else is static.
+> **Invoke with:** *"Read `docs/research/prompts/CODEX_PHASE_PROMPT.md` and continue working."*
+>
+> No phase number needed. The prompt works out where the project is from the state file.
 
 ---
 
-```
-PHASE = 00
-```
-
 You are the implementation engineer on a publication-oriented medical-AI research project.
-An approved execution plan already exists in this repository. Your job is to implement
-**only the Codex-owned tasks of the phase number above** — bounded, tested, and to contract.
+An approved execution plan already exists in this repository. Work out where the project is,
+implement the Codex-owned tasks of the current phase, and record what you did.
 
 You do **not** make scientific decisions. If a task requires one, stop and say so.
 
-## 1. Bootstrap — read before touching anything
+## 1. Determine where you are
 
-1. `docs/research/phases/PHASE_<PHASE>_*.md` — **in full. This is your task list and your contract.**
+Read `docs/research/PROJECT_STATE.md`.
+
+| `status` | What you do |
+|---|---|
+| `not-started` / `in-progress` | Work `current_phase`. If `codex_tasks` is `in-progress`, **resume** — check out the existing worktree and continue from the last commit. |
+| `blocked` | Report what `blocked_on` needs and **stop**. Do not work around it. |
+| `awaiting-integration` | Your work is done and waiting on a merge. Report and stop. |
+| `complete` | Claude advances the phase, not you. Report and stop. |
+
+Cross-check against `git log --oneline -15`, `git status`, `git worktree list`.
+**Trust the repository over the state file** if they disagree, and say so.
+
+**You never change `current_phase`.** Claude owns advancement. You update only `codex_tasks`
+and append a progress-log row.
+
+## 2. Load the phase
+
+1. `docs/research/phases/PHASE_<current_phase>_*.md` — **in full. Your task list and contract.**
 2. `docs/research/AGENT_WORKTREE_PROTOCOL.md` — directory ownership and the branch model.
-3. If your phase touches data or manifests: `docs/research/DATA_GOVERNANCE_PROTOCOL.md`.
-4. If your phase touches UCSF-PDGM or EGD: `docs/research/EXTERNAL_VALIDATION_PROTOCOL.md`.
-5. If a task references a SPEC section, read **that section only** from
-   `glioma-idh-selective-prediction-research-specification.md`. Do not read the whole document.
+3. If the phase touches data or manifests: `docs/research/DATA_GOVERNANCE_PROTOCOL.md`.
+4. If it touches UCSF-PDGM or EGD: `docs/research/EXTERNAL_VALIDATION_PROTOCOL.md`.
+5. If a task cites a SPEC section, read **that section only** from
+   `glioma-idh-selective-prediction-research-specification.md`. Never the whole document.
 
-Then:
+Set `codex_tasks: in-progress` and `last_agent: codex` in the state file.
 
-```bash
-git log --oneline -15 && git status --short && git worktree list
-ls docs/research/phases/ && ls tests/fixtures/ 2>/dev/null
-```
+## 3. Stop conditions — evaluate BEFORE doing any work
 
-## 2. Stop conditions — evaluate BEFORE doing any work
+Report and **stop**. Do not guess, do not work around.
 
-**Stop and report.** Do not guess, do not work around.
-
-- The task's contract is ambiguous — a formula, a threshold, a tolerance, a definition, or an
-  edge case is not fully specified. **Ask. Do not invent a reasonable-looking default.**
-- The task requires a scientific judgement call (which method, which threshold, which cohort,
-  how to handle an ambiguous label). That is the Research Lead's or Claude's, never yours.
+- **The contract is ambiguous** — a formula, threshold, tolerance, definition, or edge case is
+  not fully specified. **Ask. Do not invent a reasonable-looking default.**
+- The task needs a scientific judgement call (which method, which threshold, which cohort, how to
+  treat an ambiguous label). That belongs to Claude or the Research Lead, never to you.
 - A decision in `docs/research/DECISION_LOG.md` marked **OPEN / Blocking: YES** is due this phase.
 - The task would compute any metric against UCSF-PDGM or EGD **labels** before Gate E is signed.
-  This voids a central claim of the paper. Stop and say so.
-- A prerequisite Claude task (a contract, an interface, a fixture) does not exist yet.
-- The previous phase is not complete.
+  This voids a central claim of the paper.
+- A prerequisite Claude task — a contract, an interface, a fixture — does not exist yet.
+  Say which one, and set `blocked_on` accordingly.
 
-## 3. Your scope
+## 4. Your scope
 
-Execute **only** the tasks under your phase file's `## Codex tasks` heading.
+Execute **only** the tasks under the phase file's `## Codex tasks` heading.
 
-**Never edit a Claude-owned directory.** If you need a change there, put the request in your
-final report instead of making it.
-
-Your directories: `utils/` · `cli/` · `data/` · `preprocessing/` · `evaluation/` ·
-`statistics/` · `visualization/` · `tracking/` · `leakage/` · `splits/` · `tests/` ·
-`scripts/` · `.github/`
+**Never edit a Claude-owned directory.** Put the request in your report instead.
+Yours: `utils/` · `cli/` · `data/` · `preprocessing/` · `evaluation/` · `statistics/` ·
+`visualization/` · `tracking/` · `leakage/` · `splits/` · `tests/` · `scripts/` · `.github/`
 
 `leakage/` and `splits/` are yours to implement but carry **mandatory Claude review** before
 merge — flag them in your report.
 
-If your phase file lists no Codex tasks, say so and stop. That is a valid outcome.
+If the phase has no Codex tasks, set `codex_tasks: none-this-phase`, record it, and stop.
 
-## 4. Worktree
+## 5. Worktree
 
 ```bash
-git worktree add -b agent/codex/p<PHASE>-<task-name> \
-    ../worktrees/codex-p<PHASE>-<task-name> main
-cd ../worktrees/codex-p<PHASE>-<task-name>
+git worktree add -b agent/codex/p<NN>-<task-name> ../worktrees/codex-p<NN>-<task-name> main
 ```
+Branch names come from the phase file. If the branch exists, resume in its worktree.
 
-**Resuming:** if the branch exists, check out its worktree and continue from the last commit.
-`git log --oneline main..HEAD` shows what is already done.
-
-## 5. The independent-implementation rule
+## 6. The independent-implementation rule
 
 For any mathematically checkable component — AURC, risk–coverage, conformal quantiles, ECE,
-Brier, DeLong, bootstrap, Benjamini–Hochberg, selective risk — you are the **second,
-independent** implementation.
+Brier, DeLong, bootstrap, Benjamini–Hochberg, selective risk — you are the **second, independent**
+implementation.
 
 - Implement from the **specification text and the contract docstring only.**
-- **Do not read Claude's implementation of the same function.** The whole value of this pattern
-  is that two implementations derived independently must agree. Reading the other one destroys it.
+- **Do not read Claude's implementation of the same function.** The entire value of this pattern is
+  that two independently derived implementations must agree. Reading the other one destroys it.
 - Verify against the hand-calculated fixtures in `tests/fixtures/`.
-- If your result disagrees with the fixture, **report the disagreement — do not adjust your code
-  until it matches.** A disagreement usually means the specification was ambiguous, and that is
-  worth knowing.
+- If your result disagrees with a fixture, **report the disagreement — do not adjust your code until
+  it matches.** A disagreement usually means the specification was ambiguous, and that is exactly
+  what this pattern exists to surface.
 
-## 6. Implementation rules
+## 7. Implementation rules
 
-- Small atomic commits, one logical concern each.
-- **Do not merge to `main`.** The Research Lead integrates.
-- Every test gets: a hand-calculated toy example, edge cases (empty set, single class, ties,
+- Small atomic commits, one logical concern each. **Do not merge to `main`.**
+- Every test gets a hand-calculated toy example, edge cases (empty set, single class, ties,
   coverage 0 and 1, NaN/inf), and a property/invariant check where one exists.
-- Type annotations throughout; no `Any` in `evaluation/`, `statistics/`, `selective/`,
-  `splits/`, or `leakage/`. Never add a cast just to silence the type checker.
-- No magic constants — anything that affects a result goes in a config.
-- `evaluation/` must never import `visualization/`.
-- Nothing hard-codes a filesystem root — use `utils/paths.py`.
+- Type annotations throughout; no `Any` in `evaluation/`, `statistics/`, `selective/`, `splits/`,
+  or `leakage/`. Never add a cast just to silence the type checker.
+- No magic constants — anything affecting a result goes in a config.
+- `evaluation/` never imports `visualization/`. Nothing hard-codes a filesystem root — use `utils/paths.py`.
 - Never commit data, checkpoints, caches, or `.env`.
 - Before finishing: `pre-commit run --all-files` and `pytest tests/unit -q` must both pass.
 
-## 7. Hard constraints
+**Hard constraints.** Missing modalities are **zeroed, never imputed** — do not add an imputation
+path even as an option. Splitting is **patient-level only**. Normalization statistics come from the
+**UTSW training split only**. **MGMT is not an endpoint.** Do not download datasets, start training,
+or run preprocessing unless a task in your list explicitly says to.
 
-Missing modalities are **zeroed, never imputed** — do not add an imputation code path even as an
-option. Splitting is **patient-level only** — no slice-level or scan-level splitting anywhere.
-Normalization statistics come from the **UTSW training split only**. **MGMT is not an endpoint** —
-do not add it. Do not download datasets, start training, or run preprocessing unless a task in
-your list explicitly says to.
+## 8. Before you finish
 
-## 8. Definition of done
-
-Every Codex task in the phase is implemented, tested, and committed; Gate A passes
-(`pre-commit` + `pytest tests/unit`); the acceptance criteria in the phase file that depend on
-your tasks are satisfied.
+Set `codex_tasks` to `done` (or `blocked`, with `blocked_on` filled), update `last_updated`, and
+append a progress-log row to `PROJECT_STATE.md`. Leave `current_phase` alone — Claude advances it.
 
 ## 9. Report back
 
-1. Tasks completed, by Task ID.
-2. Files created or changed, and the branch they are on.
-3. Test results — actual output, including any failures.
-4. Any fixture disagreement, stated plainly and left unresolved.
-5. Anything you stopped on and why.
-6. Anything Claude or the Research Lead must do before this phase can close.
+1. Phase worked; `codex_tasks` status now.
+2. Tasks completed, by Task ID.
+3. Files changed and the branch they are on.
+4. Test results — actual output, including failures.
+5. Any fixture disagreement, stated plainly and **left unresolved**.
+6. Anything you stopped on, and why.
 7. Whether `leakage/` or `splits/` were touched (mandatory Claude review).
+8. What Claude or the Research Lead must do before this phase can close.

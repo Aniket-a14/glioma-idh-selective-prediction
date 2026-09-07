@@ -46,8 +46,9 @@ The specification freezes *what* question is being answered. This corpus governs
 | `RISK_REGISTER.md` | Live risks; and which "bad" outcomes are findings rather than failures |
 | `PUBLICATION_PLAN.md` | Venue, framing, differentiation, checklists, submission→publication |
 | `phases/PHASE_NN_*.md` | Task-level detail for one phase |
-| `prompts/CLAUDE_PHASE_PROMPT.md` | One-shot prompt to run a phase's Claude tasks — change only the PHASE number |
-| `prompts/CODEX_PHASE_PROMPT.md` | Same, for Codex's tasks |
+| `PROJECT_STATE.md` | **Where the project is right now.** Agents read it first and update it last. |
+| `prompts/CLAUDE_PHASE_PROMPT.md` | Self-advancing prompt — invoke with "read this and continue working" |
+| `prompts/CODEX_PHASE_PROMPT.md` | Same, for Codex's tasks; never advances the phase |
 
 ---
 
@@ -84,4 +85,5 @@ Most of the machinery in this corpus exists to make those three procedurally har
 
 Plan version 1.0. **Phase 00 not started.** Repository contains this corpus and a directory skeleton; no research functionality is implemented.
 
-Next action: paste `prompts/CLAUDE_PHASE_PROMPT.md` into a fresh session with `PHASE = 00`.
+Next action: open a session and say *"read `docs/research/prompts/CLAUDE_PHASE_PROMPT.md` and continue working."*
+Current position is tracked in [`PROJECT_STATE.md`](PROJECT_STATE.md).
