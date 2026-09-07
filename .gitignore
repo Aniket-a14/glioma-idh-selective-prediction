@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------------------
+# Data and artifacts NEVER enter Git. They live on the external SSD and are
+# reached through the symlinks created by scripts/bootstrap_storage.py.
+# See docs/research/DATA_GOVERNANCE_PROTOCOL.md
+# ---------------------------------------------------------------------------
+/data
+/artifacts
+data/
+artifacts/
+*.nii
+*.nii.gz
+*.dcm
+*.mha
+*.mhd
+*.nrrd
+
+# Model checkpoints / caches / experiment output
+*.ckpt
+*.pth
+*.pt
+*.safetensors
+mlruns/
+mlflow.db
+.cache/
+cache/
+
+# Restricted clinical metadata (DUA-governed; never committed)
+*private*
+*phi*
+*PHI*
+
+# Environment
+.env
+.env.local
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Notebooks: strip output before committing (see .pre-commit-config.yaml)
+.ipynb_checkpoints/
