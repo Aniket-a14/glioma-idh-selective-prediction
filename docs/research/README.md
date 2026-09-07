@@ -46,6 +46,8 @@ The specification freezes *what* question is being answered. This corpus governs
 | `RISK_REGISTER.md` | Live risks; and which "bad" outcomes are findings rather than failures |
 | `PUBLICATION_PLAN.md` | Venue, framing, differentiation, checklists, submission→publication |
 | `phases/PHASE_NN_*.md` | Task-level detail for one phase |
+| `prompts/CLAUDE_PHASE_PROMPT.md` | One-shot prompt to run a phase's Claude tasks — change only the PHASE number |
+| `prompts/CODEX_PHASE_PROMPT.md` | Same, for Codex's tasks |
 
 ---
 
@@ -82,4 +84,4 @@ Most of the machinery in this corpus exists to make those three procedurally har
 
 Plan version 1.0. **Phase 00 not started.** Repository contains this corpus and a directory skeleton; no research functionality is implemented.
 
-Next action: `phases/PHASE_00_REPOSITORY_GENESIS.md`.
+Next action: paste `prompts/CLAUDE_PHASE_PROMPT.md` into a fresh session with `PHASE = 00`.
