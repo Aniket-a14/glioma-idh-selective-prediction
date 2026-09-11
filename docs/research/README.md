@@ -17,10 +17,12 @@ The specification freezes *what* question is being answered. This corpus governs
 
 ## Reading order
 
+**If this is a new machine** (fresh clone, new collaborator, the GPU server): `prompts/SETUP_PROMPT.md` first — "read this and set up the system." Everything below is about the science and the process, not the environment.
+
 **If you are new to the project**, read in this order:
 
 1. `MASTER_RESEARCH_EXECUTION_PLAN.md` §1–8 — objective, RQs, claims, datasets, invariants. *(20 min)*
-2. `DECISION_LOG.md` — the twelve known ambiguities, three of which block early phases. *(15 min)*
+2. `DECISION_LOG.md` — the known ambiguities, several of which block early phases. *(15 min)*
 3. `EXTERNAL_VALIDATION_PROTOCOL.md` — the single easiest way to destroy this project. *(10 min)*
 4. The phase file for whatever you are about to work on.
 
@@ -49,6 +51,7 @@ The specification freezes *what* question is being answered. This corpus governs
 | `PROJECT_STATE.md` | **Where the project is right now.** Agents read it first and update it last. |
 | `prompts/CLAUDE_PHASE_PROMPT.md` | Self-advancing prompt — invoke with "read this and continue working" |
 | `prompts/CODEX_PHASE_PROMPT.md` | Same, for Codex's tasks; never advances the phase |
+| `prompts/SETUP_PROMPT.md` | Any collaborator, any machine, any AI agent — invoke with "read this and set up the system" to get a fresh clone to the same working environment as everyone else's |
 
 ---
 

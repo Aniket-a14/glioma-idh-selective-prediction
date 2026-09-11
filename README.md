@@ -2,7 +2,7 @@
 
 Under missing MRI modalities and cross-institutional domain shift.
 
-**Status:** planning complete; Phase 00 not started. No research functionality is implemented.
+**Status:** see [`docs/research/PROJECT_STATE.md`](docs/research/PROJECT_STATE.md) for the current phase — that file is the live source of truth, this line is not.
 
 ---
 
@@ -27,14 +27,16 @@ It is pre-registered to be able to fail. If selective prediction degrades under 
 
 ---
 
-## Setup (once code exists)
+## Setup
 
-```bash
-cp .env.example .env          # set GLIOMA_STORAGE_ROOT to your SSD
-python scripts/bootstrap_storage.py
-```
+On a new machine (fresh clone, new collaborator, the GPU server), give any AI agent:
 
-Datasets never live in this repository. They live on an external SSD reached through the `data/` and `artifacts/` symlinks.
+> *"Read `docs/research/prompts/SETUP_PROMPT.md` and set up the system."*
+
+It clones, creates the virtual environment, installs the package and git hooks, and verifies
+everything CI checks — the same steps on every machine, kept current automatically as the
+codebase grows. Datasets never live in this repository; they live on an external SSD reached
+through the `data/` and `artifacts/` symlinks, set up by the same prompt.
 
 ---
 
