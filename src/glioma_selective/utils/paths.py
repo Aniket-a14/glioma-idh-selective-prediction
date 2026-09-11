@@ -88,7 +88,9 @@ def data_root() -> Path:
 
 
 def artifact_root() -> Path:
-    """Root of the artifact tree: ``$GLIOMA_ARTIFACT_ROOT`` or ``storage_root()/artifacts``."""
+    """Root of the artifact tree: ``$GLIOMA_ARTIFACT_ROOT`` or
+    ``storage_root()/artifacts``.
+    """
     override = _env_path("GLIOMA_ARTIFACT_ROOT")
     if override is not None:
         return override

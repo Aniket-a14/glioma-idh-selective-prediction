@@ -41,7 +41,9 @@ class TestStorageRoot:
         assert "GLIOMA_STORAGE_ROOT" in message
         assert ".env" in message
 
-    def test_empty_string_treated_as_unset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_empty_string_treated_as_unset(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "")
         with pytest.raises(paths.PathResolutionError):
             paths.storage_root()
@@ -55,7 +57,9 @@ class TestStorageRoot:
 
 
 class TestDataRoot:
-    def test_defaults_to_storage_root_slash_data(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_defaults_to_storage_root_slash_data(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/example/storage-root")
         assert paths.data_root() == Path("/example/storage-root/data")
 
