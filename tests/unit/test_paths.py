@@ -23,11 +23,11 @@ def _clear_root_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 class TestStorageRoot:
     def test_resolves_from_environment(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/Volumes/GliomaSSD")
-        assert paths.storage_root() == Path("/Volumes/GliomaSSD")
+        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/example/storage-root")
+        assert paths.storage_root() == Path("/example/storage-root")
 
     def test_returns_path_instance(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/Volumes/GliomaSSD")
+        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/example/storage-root")
         assert isinstance(paths.storage_root(), Path)
 
     def test_expands_user_home(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -56,19 +56,19 @@ class TestStorageRoot:
 
 class TestDataRoot:
     def test_defaults_to_storage_root_slash_data(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/Volumes/GliomaSSD")
-        assert paths.data_root() == Path("/Volumes/GliomaSSD/data")
+        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/example/storage-root")
+        assert paths.data_root() == Path("/example/storage-root/data")
 
     def test_override_takes_precedence(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/Volumes/GliomaSSD")
-        monkeypatch.setenv("GLIOMA_DATA_ROOT", "/mnt/fast-data")
-        assert paths.data_root() == Path("/mnt/fast-data")
+        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/example/storage-root")
+        monkeypatch.setenv("GLIOMA_DATA_ROOT", "/example/fast-data")
+        assert paths.data_root() == Path("/example/fast-data")
 
     def test_override_alone_does_not_require_storage_root(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("GLIOMA_DATA_ROOT", "/mnt/fast-data")
-        assert paths.data_root() == Path("/mnt/fast-data")
+        monkeypatch.setenv("GLIOMA_DATA_ROOT", "/example/fast-data")
+        assert paths.data_root() == Path("/example/fast-data")
 
     def test_raises_when_neither_set(self) -> None:
         with pytest.raises(paths.PathResolutionError):
@@ -79,13 +79,13 @@ class TestArtifactRoot:
     def test_defaults_to_storage_root_slash_artifacts(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/Volumes/GliomaSSD")
-        assert paths.artifact_root() == Path("/Volumes/GliomaSSD/artifacts")
+        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/example/storage-root")
+        assert paths.artifact_root() == Path("/example/storage-root/artifacts")
 
     def test_override_takes_precedence(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/Volumes/GliomaSSD")
-        monkeypatch.setenv("GLIOMA_ARTIFACT_ROOT", "/mnt/fast-artifacts")
-        assert paths.artifact_root() == Path("/mnt/fast-artifacts")
+        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/example/storage-root")
+        monkeypatch.setenv("GLIOMA_ARTIFACT_ROOT", "/example/fast-artifacts")
+        assert paths.artifact_root() == Path("/example/fast-artifacts")
 
 
 @pytest.mark.parametrize(
@@ -109,11 +109,11 @@ class TestArtifactRoot:
 def test_subdirectory_accessors(
     monkeypatch: pytest.MonkeyPatch, accessor_name: str, expected_suffix: str
 ) -> None:
-    monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/Volumes/GliomaSSD")
+    monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/example/storage-root")
     accessor = getattr(paths, accessor_name)
     result = accessor()
     assert isinstance(result, Path)
-    assert result == Path("/Volumes/GliomaSSD") / expected_suffix
+    assert result == Path("/example/storage-root") / expected_suffix
 
 
 def test_all_public_names_are_exported() -> None:
