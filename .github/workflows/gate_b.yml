@@ -1,0 +1,41 @@
+name: Gate B
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  full-cpu:
+    name: Full CPU validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install development dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files
+
+      - name: Check repository invariants
+        run: python scripts/check_invariants.py
+
+      - name: Run CPU test suite
+        run: pytest tests -q -m "not gpu"
+
+      - name: Run type checker
+        run: mypy
+
+      - name: Review cyclomatic complexity
+        run: radon cc src -a -nc --min B
+
+      - name: Review maintainability
+        run: radon mi src --min C

@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glioma-selective"
+version = "0.1.0"
+description = "Calibrated selective prediction for MRI-based glioma IDH classification"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "codespell",
+    "detect-secrets",
+    "mypy",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "radon",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["glioma_selective"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra"]
+markers = [
+    "gpu: requires CUDA or another GPU accelerator",
+    "integration: crosses a package or process boundary",
+    "slow: takes materially longer than the unit-test suite",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["glioma_selective"]
+
+[tool.coverage.report]
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src/glioma_selective"]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unused_configs = true
+
+# Radon does not currently consume a native pyproject configuration table.
+# These thresholds are kept here as the repository policy and are enforced by
+# the Gate B command in .github/workflows/gate_b.yml.
+[tool.glioma_selective.quality]
+radon_max_cyclomatic_complexity = 10
+radon_min_maintainability_index = 50
