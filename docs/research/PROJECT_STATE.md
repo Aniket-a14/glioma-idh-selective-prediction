@@ -41,4 +41,4 @@ Append one line per agent run. Newest at the bottom.
 | Date | Agent | Phase | What happened |
 |---|---|---|---|
 | 2026-09-07 | — | — | Plan approved. Corpus committed. Phase 00 not started. |
-| 2026-09-11 | Codex | 00 | Completed T00.2, T00.3, T00.4, T00.6, T00.8, and T00.10 on `agent/codex/p00-tooling`; commit `6d3ebac` is ready for Research Lead integration. |
+| 2026-09-11 | Codex | 00 | Completed T00.2, T00.3, T00.4, T00.6, T00.8, and T00.10 on `agent/codex/p00-tooling`; commits `6d3ebac` and `a7feb37` are ready for Research Lead integration. |
