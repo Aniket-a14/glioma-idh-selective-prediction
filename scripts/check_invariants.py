@@ -32,7 +32,7 @@ ABSOLUTE_ROOT_PATTERNS = (
     re.compile(r"(?:^|[^.])\.\./\.\./data(?:/|$)"),
 )
 VISUALIZATION_IMPORT_PATTERN = re.compile(
-    r"(?:from\s+(?:[.\w]+\.)?visualization\s+import|"
+    r"(?:from\s+[.\w]*visualization\s+import|"
     r"import\s+glioma_selective\.visualization(?:\.|\s|$))"
 )
 
@@ -94,7 +94,7 @@ def check_invariants(root: Path) -> list[str]:
                     )
                 )
 
-        if path.parts[-2:] == ("evaluation", path.name):
+        if "evaluation" in path.parts:
             for line_number, match in _matches(VISUALIZATION_IMPORT_PATTERN, text):
                 violations.append(
                     _location(

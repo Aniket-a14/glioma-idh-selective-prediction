@@ -26,14 +26,14 @@ def test_clean_tree_passes(tmp_path: Path) -> None:
 
 
 def test_planted_violations_fail(tmp_path: Path) -> None:
-    evaluation = tmp_path / "src" / "glioma_selective" / "evaluation"
+    evaluation = tmp_path / "src" / "glioma_selective" / "evaluation" / "submodule"
     evaluation.mkdir(parents=True)
     forbidden_endpoint = "MG" + "MT"
     forbidden_root = "/" + "Volumes/research/data"
     (evaluation / "metrics.py").write_text(
         f"PRIMARY_ENDPOINT = '{forbidden_endpoint}'\n"
         f"DATA_ROOT = '{forbidden_root}'\n"
-        "from glioma_selective.visualization import plot\n",
+        "from .visualization import plot\n",
         encoding="utf-8",
     )
 
