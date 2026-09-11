@@ -7,11 +7,11 @@ Do not hand-edit the status block during an agent run — let the agent own it.
 current_phase: 00
 status: not-started        # not-started | in-progress | blocked | awaiting-integration | complete
 claude_tasks: not-started  # not-started | in-progress | done
-codex_tasks: not-started   # not-started | in-progress | done | none-this-phase
+codex_tasks: done          # not-started | in-progress | done | none-this-phase
 integration_mode: research-lead   # research-lead | agent
 blocked_on: null
-last_updated: 2026-09-07
-last_agent: none
+last_updated: 2026-09-11
+last_agent: codex
 ```
 
 ## Field meanings
@@ -41,3 +41,4 @@ Append one line per agent run. Newest at the bottom.
 | Date | Agent | Phase | What happened |
 |---|---|---|---|
 | 2026-09-07 | — | — | Plan approved. Corpus committed. Phase 00 not started. |
+| 2026-09-11 | Codex | 00 | Completed T00.2, T00.3, T00.4, T00.6, T00.8, and T00.10 on `agent/codex/p00-tooling`; commit `6d3ebac` is ready for Research Lead integration. |
