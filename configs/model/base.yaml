@@ -1,0 +1,4 @@
+# Placeholder so Hydra's defaults list resolves before scientific content
+# exists. Populated in Phase 06 (3D SegResNet-style MONAI backbone; no
+# architecture search — SPEC §4.1).
+_placeholder: true

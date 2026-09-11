@@ -1,0 +1,5 @@
+# Placeholder so Hydra's defaults list resolves before scientific content
+# exists. Populated in Phase 06 (baseline) and Phase 08 (modality dropout);
+# named configs here are the 9 runs budgeted in docs/research/DECISION_LOG.md
+# D-005 (R1 baseline, R2-R6 modality-dropout seeds 0-4, R7-R9 ablations).
+_placeholder: true
