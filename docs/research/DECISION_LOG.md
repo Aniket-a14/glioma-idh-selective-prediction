@@ -160,6 +160,28 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 
 ---
 
+## D-013 — Config system: Hydra vs. plain OmegaConf vs. pydantic-settings
+**Status:** OPEN (provisional default adopted; skeleton built on it) · **Resolve by:** Phase 00, confirmed no later than Phase 05 freeze · **Blocking:** yes, for Phase 05
+
+**Conflict.** Phase 00's own task list (T00.7) and "Decisions requiring Research Lead approval" section name this as an explicit judgement call, not an engineering detail: *"Config system choice (Hydra vs. plain OmegaConf vs. pydantic-settings)."* The master plan (§10) commits only to *"Hydra/OmegaConf, decided in Phase 00"* — the choice between the two, and against pydantic-settings, was left open.
+
+**Why it matters enough to log rather than just pick.** `configs/` is where "experiments are DEFINED, not in code" (master plan §10) — the composition mechanism shapes how every later phase expresses a run (Phase 06 baselines, Phase 08 modality-dropout seeds, Phase 10's six ablation axes). Changing it later means touching every config file that exists by then.
+
+**Alternatives.**
+- **(a) Hydra** (structured configs over OmegaConf). Config-group composition (`configs/<group>/<name>.yaml`) matches the already-scaffolded directory layout exactly; built-in multirun/sweep support fits the ablation grid (§4.9) and the modality-dropout seed sweep (D-005's R2–R6) without hand-rolled iteration; CLI overrides give reproducible run records almost for free (REPRODUCIBILITY_PROTOCOL's run-record fields). Cost: Hydra's global ConfigStore and working-directory-changing behavior are known rough edges that the implementer (Codex, downstream) must account for explicitly (`hydra.job.chdir=False`).
+- **(b) Plain OmegaConf**, no Hydra runtime. Simpler, no global state, no CLI/working-directory surprises. Cost: config-group composition, multirun sweeps, and override syntax would all be hand-rolled — reimplementing a fraction of what (a) provides for free, for a project whose stated main risk is scope creep (R-C08), not insufficient tooling.
+- **(c) pydantic-settings.** Strongest runtime validation and typing ergonomics, and native environment-variable loading — but its design center is a flat settings object from env/CLI, not hierarchical multi-file YAML composition across the eight `configs/<group>/` directories already scaffolded. Would need to be paired with something else for composition, making it a validation layer on top of (a) or (b) rather than a replacement.
+
+**Decision (provisional).** **(a), Hydra with structured configs.** It is the only option that matches the already-committed `configs/{data,preprocessing,model,training,calibration,selective,evaluation,experiments}/` layout without extra machinery, and the multirun/override mechanics directly serve two already-budgeted needs (D-005's seed sweep, §4.9's ablation grid) rather than hypothetical future ones. `hydra.job.chdir=False` is adopted from the start so run working directories stay predictable for `utils/paths.py` consumers.
+
+**What is built now vs. deferred.** T00.7 ships the *decision* and a minimal *skeleton*: one `configs/config.yaml` root composing empty per-group `base.yaml` placeholders, and `configs/README.md` documenting the composition convention. It deliberately contains **no scientific parameter values** — populating `model/`, `training/`, etc. with real hyperparameters is Phase 06+ work and would be scope creep here (Risk R-C08). The structured-config dataclasses / `ConfigStore` registration and the actual config-loading entry point are implementation, not design, and belong to whichever agent owns the consuming module (`utils/`, `cli/` — Codex) once there is real content to validate.
+
+**Consequence if this default is wrong.** Reversing after Phase 05 freeze means restructuring every experiment config that exists by then, which is why this is marked blocking for Phase 05 rather than Phase 00 itself — Phase 00 can close on the provisional default; Phase 05 pre-registration should not proceed without an explicit Research Lead confirmation (or override) of this choice.
+
+**Owner.** Research Lead confirms or overrides before Phase 05.
+
+---
+
 ## Ongoing entries
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.

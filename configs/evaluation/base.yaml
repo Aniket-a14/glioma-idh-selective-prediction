@@ -1,0 +1,4 @@
+# Placeholder so Hydra's defaults list resolves before scientific content
+# exists. Populated starting Phase 07/09; evaluation/ must always report
+# ECE/Brier/AURC/coverage alongside AUROC, never AUROC alone.
+_placeholder: true

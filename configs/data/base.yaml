@@ -1,0 +1,6 @@
+# Placeholder so Hydra's defaults list resolves before scientific content
+# exists. Populated in Phase 02 (acquisition) / Phase 05 (cohort freeze).
+# Cohort paths and counts never belong here as literals — they come from
+# src/glioma_selective/utils/paths.py and frozen, hashed manifests
+# (docs/research/DATA_GOVERNANCE_PROTOCOL.md), never a config constant.
+_placeholder: true

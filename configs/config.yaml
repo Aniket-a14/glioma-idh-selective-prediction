@@ -1,0 +1,31 @@
+# Root Hydra composition (docs/research/DECISION_LOG.md D-013).
+#
+# Experiment-specific configs live under configs/experiments/ and select a
+# named config from each group below via Hydra's defaults list, e.g.:
+#
+#   defaults:
+#     - /training: r2_modality_dropout_seed0
+#     - /model: segresnet_backbone
+#     - override /data: utsw_frozen_split
+#
+# See configs/README.md for the full composition convention.
+defaults:
+  - data: base
+  - preprocessing: base
+  - model: base
+  - training: base
+  - calibration: base
+  - selective: base
+  - evaluation: base
+  - _self_
+
+hydra:
+  job:
+    chdir: false # keep the run's CWD stable for utils/paths.py consumers
+
+seed: 0
+machine: ${oc.env:GLIOMA_MACHINE,local-mac}
+
+# Every run names itself; there is no default. Set via an experiment config
+# (configs/experiments/<name>.yaml) or a CLI override (experiment_name=...).
+experiment_name: ???

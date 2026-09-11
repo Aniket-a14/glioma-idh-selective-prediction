@@ -1,0 +1,5 @@
+# Placeholder so Hydra's defaults list resolves before scientific content
+# exists. Populated in Phase 07 (temperature scaling, conformal quantiles).
+# D-002 (split CP vs. conformal risk control) must be resolved before this
+# group carries real content.
+_placeholder: true

@@ -1,0 +1,4 @@
+# Placeholder so Hydra's defaults list resolves before scientific content
+# exists. Populated in Phase 04 (registration, HD-BET skull-strip, N4,
+# resample, z-score normalization from the UTSW training split only).
+_placeholder: true
