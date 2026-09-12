@@ -53,3 +53,7 @@ dist/
 
 # Notebooks: strip output before committing (see .pre-commit-config.yaml)
 .ipynb_checkpoints/
+
+# Local Claude Code plugin/skill enablement (per-machine, not shared).
+.claude/
+skills-lock.json
