@@ -56,8 +56,15 @@ merge or rebase unasked.
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate        # macOS / Linux — the project's only two supported machine kinds
+source .venv/bin/activate        # macOS / Linux
 ```
+
+**On Windows: use WSL2 (Ubuntu), not native PowerShell/cmd.** Run every step in this prompt
+inside the WSL2 shell. The rest of the repository — bash scripts, symlink-based storage
+bootstrap, pre-commit hooks — assumes a POSIX shell, so WSL2 is the sanctioned Windows path
+rather than a second, native code path. If WSL2 isn't installed yet: `wsl --install` from an
+admin PowerShell prompt, reboot, then continue this entire prompt from inside the Ubuntu shell it
+opens.
 
 `.venv/` is already gitignored. Reuse an existing `.venv/` if one is present and its Python
 version satisfies step 1; otherwise recreate it.

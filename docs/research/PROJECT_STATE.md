@@ -23,6 +23,8 @@ last_agent: claude
 | `integration_mode` | `research-lead` (default): agents leave branches ready and you merge. `agent`: Claude merges and tags itself once gates pass. |
 | `blocked_on` | What the human must resolve. Null when not blocked. |
 
+Contributor (non-Claude/Codex) activity is tracked separately in `docs/research/CONTRIBUTOR_TASKS.md` and never changes any field on this page.
+
 ## Human-gated phases — `integration_mode: agent` never applies
 
 **Phases 05, 11, and 12 always require the Research Lead**, regardless of the setting above:

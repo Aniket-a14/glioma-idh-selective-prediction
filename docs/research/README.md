@@ -19,6 +19,8 @@ The specification freezes *what* question is being answered. This corpus governs
 
 **If this is a new machine** (fresh clone, new collaborator, the GPU server): `prompts/SETUP_PROMPT.md` first — "read this and set up the system." Everything below is about the science and the process, not the environment.
 
+**If you are one of the team's other collaborators picking up small side-work** (not a research phase): `CONTRIBUTOR_TASKS.md` + `prompts/CONTRIBUTOR_PROMPT.md` — "read this and pick up a task." You don't need anything else on this page.
+
 **If you are new to the project**, read in this order:
 
 1. `MASTER_RESEARCH_EXECUTION_PLAN.md` §1–8 — objective, RQs, claims, datasets, invariants. *(20 min)*
@@ -52,6 +54,9 @@ The specification freezes *what* question is being answered. This corpus governs
 | `prompts/CLAUDE_PHASE_PROMPT.md` | Self-advancing prompt — invoke with "read this and continue working" |
 | `prompts/CODEX_PHASE_PROMPT.md` | Same, for Codex's tasks; never advances the phase |
 | `prompts/SETUP_PROMPT.md` | Any collaborator, any machine, any AI agent — invoke with "read this and set up the system" to get a fresh clone to the same working environment as everyone else's |
+| `CONTRIBUTOR_TASKS.md` | Standing backlog of small, bounded, off-critical-path work for the team's other collaborators |
+| `prompts/CONTRIBUTOR_PROMPT.md` | Any collaborator, any AI agent — invoke with "read this and pick up a task" |
+| `prompts/WEEKLY_STATUS_PROMPT.md` | Generates the Friday capstone demo report — invoke with "read this and generate this week's update" |
 
 ---
 

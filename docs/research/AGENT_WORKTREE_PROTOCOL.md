@@ -22,6 +22,26 @@ Worktrees live outside the repository so an agent cannot accidentally read or ed
 
 ---
 
+## 1a. A third branch namespace: contributors
+
+The team's other five collaborators (and whichever AI agent they run — Antigravity, Codex free
+tier, or otherwise) are a separate role from Claude/Codex above. They do not work the phase files
+and do not use the `agent/claude/` or `agent/codex/` namespaces:
+
+```
+contrib/<github-username>/<short-task-slug>      # e.g. contrib/priyaagrawal2/paths-edge-cases
+```
+
+They are direct collaborators on this repo (not forks) with `write` access, so branch protection
+on `main` — one required review, no self-merge — is what stands between their work and `main`,
+the same as for anyone else. Their task source is `docs/research/CONTRIBUTOR_TASKS.md`, not a
+phase file, and `integration_mode` in `PROJECT_STATE.md` does not apply to them at all: a
+contributor branch **always** goes through a PR and a Research Lead (or reviewer) merge,
+regardless of what that field says for Claude/Codex. See
+`docs/research/prompts/CONTRIBUTOR_PROMPT.md` for their operating instructions.
+
+---
+
 ## 2. Command templates
 
 ```bash
@@ -56,7 +76,7 @@ git worktree prune
 
 ## 3. Directory ownership
 
-**No directory has two owners in the same phase.** This table is the authority; a phase file may narrow it but never contradict it.
+**No directory has two owners in the same phase.** This table is the authority; a phase file may narrow it but never contradict it. Its one sanctioned exception is `docs/research/CONTRIBUTOR_TASKS.md`: a task listed there may hand a narrow, explicitly-scoped slice of an otherwise-owned directory (e.g. new test files, a `paper/` draft) to a contributor for that task only.
 
 | Directory | Default owner | Notes |
 |---|---|---|
@@ -134,3 +154,4 @@ Integration tests run after each merge, not batched at the end.
 - Merge conflicts are resolved by the Research Lead, not by an agent.
 - **Record the git SHA for every scientifically meaningful experiment.** A dirty tree blocks Gate C.
 - An agent that needs a file outside its ownership opens a task for the owner rather than editing it.
+- Contributors (the `contrib/` namespace) never touch `PROJECT_STATE.md`, `DECISION_LOG.md`, dataset splits/manifests, or `.env` — no task in `CONTRIBUTOR_TASKS.md` may override this.

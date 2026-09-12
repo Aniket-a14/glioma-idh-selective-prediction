@@ -36,7 +36,15 @@ On a new machine (fresh clone, new collaborator, the GPU server), give any AI ag
 It clones, creates the virtual environment, installs the package and git hooks, and verifies
 everything CI checks — the same steps on every machine, kept current automatically as the
 codebase grows. Datasets never live in this repository; they live on an external SSD reached
-through the `data/` and `artifacts/` symlinks, set up by the same prompt.
+through the `data/` and `artifacts/` symlinks, set up by the same prompt. On Windows, run it
+inside WSL2 (Ubuntu) — the prompt covers installing that too.
+
+**Team members picking up small side-work** (not a research phase): give any AI agent
+
+> *"Read `docs/research/prompts/CONTRIBUTOR_PROMPT.md` and pick up a task."*
+
+It claims one bounded task from `docs/research/CONTRIBUTOR_TASKS.md`, does only that, and opens a
+PR — it never touches the research phases themselves.
 
 ---
 
