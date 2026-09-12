@@ -33,6 +33,7 @@ where = ["src"]
 target-version = "py311"
 line-length = 88
 src = ["src", "tests", "scripts"]
+extend-exclude = [".claude"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
