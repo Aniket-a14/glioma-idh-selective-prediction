@@ -32,7 +32,7 @@ claimant's GitHub username, before starting any work.
 
 | ID | Task | Claimed by | Branch | PR |
 |---|---|---|---|---|
-| C-001 | Add edge-case unit tests for `utils/paths.py` (empty env var, relative path rejected, trailing slash, nonexistent parent) | solankisuryansh | `contrib/solankisuryansh/c-001-path-edge-cases` | — |
+| C-001 | Add edge-case unit tests for `utils/paths.py` (empty env var, relative path rejected, trailing slash, nonexistent parent) | solankisuryansh | `contrib/solankisuryansh/c-001-path-edge-cases` | [PR #1](https://github.com/Aniket-a14/glioma-idh-selective-prediction/pull/1) |
 
 ## Done
 
