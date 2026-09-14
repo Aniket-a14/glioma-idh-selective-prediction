@@ -25,7 +25,6 @@ claimant's GitHub username, before starting any work.
 
 | ID | Task | Allowed paths | Notes |
 |---|---|---|---|
-| C-001 | Add edge-case unit tests for `utils/paths.py` (empty env var, relative path rejected, trailing slash, nonexistent parent) | `tests/unit/test_paths.py` only | Do not modify `src/glioma_selective/utils/paths.py` itself — tests only. 26 tests already exist; add to them, don't replace them. |
 | C-002 | Proofread `docs/research/` for typos, broken internal links, and inconsistent terminology | `docs/research/**/*.md` (content edits only, no structural/heading changes, no changes to YAML state blocks) | Do not edit `PROJECT_STATE.md`'s status block or `DECISION_LOG.md` entries — flag anything that looks wrong there instead of fixing it. |
 | C-003 | Draft a related-work paragraph summarizing 3–5 recent papers on selective prediction / conformal prediction in medical imaging | `paper/RELATED_WORK_DRAFT.md` (new file) | Draft only — citations and claims get checked by the Research Lead before anything moves into the actual manuscript. |
 
@@ -33,7 +32,7 @@ claimant's GitHub username, before starting any work.
 
 | ID | Task | Claimed by | Branch | PR |
 |---|---|---|---|---|
-| — | — | — | — | — |
+| C-001 | Add edge-case unit tests for `utils/paths.py` (empty env var, relative path rejected, trailing slash, nonexistent parent) | ShantanuTripathi2745 | `contrib/ShantanuTripathi2745/paths-edge-case-tests` | pending |
 
 ## Done
 
