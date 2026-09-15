@@ -33,8 +33,8 @@ On a new machine (fresh clone, new collaborator, the GPU server), give any AI ag
 
 > *"Read `docs/research/prompts/SETUP_PROMPT.md` and set up the system."*
 
-It clones, creates the virtual environment, installs the package and git hooks, and verifies
-everything CI checks — the same steps on every machine, kept current automatically as the
+It creates the virtual environment, installs the package and git hooks, and verifies everything
+CI checks — the same steps on every machine, kept current automatically as the
 codebase grows. Datasets never live in this repository; they live on an external SSD reached
 through the `data/` and `artifacts/` symlinks, set up by the same prompt. On Windows, run it
 inside WSL2 (Ubuntu) — the prompt covers installing that too.
