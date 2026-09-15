@@ -53,11 +53,34 @@ class PathResolutionError(RuntimeError):
 
 
 def _env_path(var_name: str) -> Path | None:
-    """Return ``$var_name`` as a ``Path``, or ``None`` if unset/empty."""
+    """Return ``$var_name`` as a ``Path``, or ``None`` if unset/empty.
+
+    Raises:
+        PathResolutionError: if the value is set but not an absolute path, or
+            its parent directory does not exist on disk. Both are almost
+            always a typo or an unmounted volume — failing fast here is
+            cheaper than a downstream write into the wrong place. The path
+            itself is not required to exist (``scripts/bootstrap_storage.py``
+            creates it); only its parent, which should already be a real
+            mount point or directory.
+    """
     value = os.environ.get(var_name)
     if not value:
         return None
-    return Path(value).expanduser()
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        raise PathResolutionError(
+            f"{var_name}={value!r} is not an absolute path. Set it to an "
+            "absolute path (see docs/research/MASTER_RESEARCH_EXECUTION_PLAN.md, "
+            "section 11)."
+        )
+    if not path.parent.exists():
+        raise PathResolutionError(
+            f"{var_name}={value!r} has a parent directory that does not exist "
+            f"({path.parent}). Check that the volume is mounted and the path "
+            "is correct."
+        )
+    return path
 
 
 def storage_root() -> Path:
