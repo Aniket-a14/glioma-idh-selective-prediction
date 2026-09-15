@@ -33,21 +33,47 @@ Check that `.venv/` (or equivalent) and `pre-commit` are already set up. If not,
 different job — go run *"Read `docs/research/prompts/SETUP_PROMPT.md` and set up the system"*
 first, then come back here.
 
+**If you are Codex CLI specifically: do not run this in its default sandboxed mode.** Codex's
+sandbox blocks filesystem writes outside a scratch area and blocks network access by default,
+which silently breaks `git push`, `gh pr create`, and `pre-commit`'s hook-download step — the
+failure usually looks like a hang waiting for an approval prompt, or a command that "succeeds"
+but never actually reaches GitHub. This operator already has legitimate `write` access to this
+repository (it's a direct collaborator, not a fork), so run Codex in an approval/sandbox mode
+that permits filesystem writes inside the repo and network access for `git`/`gh` — e.g.
+`codex --sandbox workspace-write` or the equivalent "auto" approval mode with network enabled,
+per whatever Codex CLI's current flag/setting is. If unsure which flag applies, stop and report
+that rather than proceeding with unclear sandbox behavior — a task that silently didn't actually
+push is worse than one that didn't run at all.
+
 ## 2. Read the backlog
 
 Read `docs/research/CONTRIBUTOR_TASKS.md` in full. Look at the `## Open` table only.
 
 - If it's empty, report that and stop — there's nothing to claim right now, and you should not
   invent your own task.
-- Pick exactly **one** row. Do not claim a second task while one is still open under your name in
-  `## Claimed`.
+- **If the table has an "Assigned to" column, only claim the row that names your own GitHub
+  username.** Do not claim a row assigned to someone else, even if it looks easier or is first in
+  the table — every row in that model is pre-assigned specifically to avoid multiple agents
+  landing on the same row at once. If no row names you, stop and report that.
+- If the table has no "Assigned to" column (a fully open round), pick exactly **one** row —
+  but `git pull --ff-only` first (see step 3) since this is where two agents can race.
+- Do not claim a second task while one is still open under your name in `## Claimed`.
 
 ## 3. Claim it
+
+```bash
+git checkout main && git pull --ff-only
+```
 
 Edit `docs/research/CONTRIBUTOR_TASKS.md`: move your chosen row from `## Open` to `## Claimed`,
 filling in your GitHub username and the branch name you're about to create. Commit this edit by
 itself first (`docs: claim C-00X`), on `main`, and push it directly — this is bookkeeping, not
 code, and prevents two people claiming the same task.
+
+If `git push` is rejected as non-fast-forward, **do not force-push.** Someone else pushed to
+`main` in between — `git pull --ff-only` again, re-read the table, and check whether your task
+row still exists and is still unclaimed (or, under the assignment model, still names you) before
+retrying the same edit.
 
 ## 4. Branch
 

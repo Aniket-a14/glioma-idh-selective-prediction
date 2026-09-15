@@ -59,12 +59,24 @@ python3 -m venv .venv
 source .venv/bin/activate        # macOS / Linux
 ```
 
-**On Windows: use WSL2 (Ubuntu), not native PowerShell/cmd.** Run every step in this prompt
-inside the WSL2 shell. The rest of the repository — bash scripts, symlink-based storage
-bootstrap, pre-commit hooks — assumes a POSIX shell, so WSL2 is the sanctioned Windows path
-rather than a second, native code path. If WSL2 isn't installed yet: `wsl --install` from an
-admin PowerShell prompt, reboot, then continue this entire prompt from inside the Ubuntu shell it
-opens.
+**On Windows: use WSL2, not native PowerShell/cmd.** Run every step in this prompt inside the
+WSL2 shell.
+
+*Why WSL2 at all:* every script in this repo that isn't pure Python assumes a POSIX shell —
+`pre-commit` hooks, the symlink-based `data/`/`artifacts/` storage bootstrap, and `scripts/*.sh`
+as they appear. None of that runs correctly under native PowerShell/cmd (symlinks in particular
+behave differently and often need elevated privileges on native Windows). Rather than maintain a
+second, native-Windows code path for all of that, WSL2 is the one sanctioned Windows path — it
+gives every machine, Windows included, the same POSIX environment.
+
+*Why Ubuntu specifically:* it isn't a hard requirement — any Linux distro under WSL2 would work.
+Ubuntu is just what `wsl --install` gives you by default with zero extra flags, and it's the only
+one this has actually been tested on. If a teammate already has a different WSL2 distro installed
+(Debian, etc.), they don't need to switch — just report which one, since if something breaks in a
+distro-specific way we'll want to know that's the variable.
+
+If WSL2 isn't installed yet: `wsl --install` from an admin PowerShell prompt, reboot, then
+continue this entire prompt from inside the Ubuntu shell it opens.
 
 `.venv/` is already gitignored. Reuse an existing `.venv/` if one is present and its Python
 version satisfies step 1; otherwise recreate it.
