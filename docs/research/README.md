@@ -91,7 +91,9 @@ Most of the machinery in this corpus exists to make those three procedurally har
 
 ## Current status
 
-Plan version 1.0. **Phase 00 not started.** Repository contains this corpus and a directory skeleton; no research functionality is implemented.
+Plan version 1.0. **Phase 01 not started.** The repository contains this corpus, initial utility
+and configuration scaffolding, and unit-test coverage; research functionality is not yet
+implemented.
 
 Next action: open a session and say *"read `docs/research/prompts/CLAUDE_PHASE_PROMPT.md` and continue working."*
 Current position is tracked in [`PROJECT_STATE.md`](PROJECT_STATE.md).
