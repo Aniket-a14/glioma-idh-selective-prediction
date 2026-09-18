@@ -168,6 +168,8 @@ T03.3 closes it out formally.
 
 **Recommendation.** **(a).** It keeps the patient set identical across all 18 evaluation conditions — which is what makes matched-coverage comparison and paired statistics valid in the first place — and it turns the naturally-missing cases into a small bonus analysis that partly addresses D-008's construct-validity gap. Record the count and reason for every such exclusion in the exclusion manifest (`missing:sequence`).
 
+**Partial finding (T03.9, naturally-missing sequence inventory, 2026-09-18).** Ran the inventory this decision's policy depends on against the real UTSW and UCSF-PDGM downloads: **zero** naturally-incomplete cases in either cohort — UTSW 625/625 and UCSF-PDGM 501/501 have all four canonical sequences (T1, T1ce, T2, FLAIR). Policy (a) therefore has nothing to exclude for these two cohorts; the tension this decision describes doesn't materialize here. **Status stays OPEN** — EGD hasn't been downloaded yet and could still surface naturally-incomplete cases once it arrives, and the exclusion-manifest wiring (T03.10) that actually applies this policy hasn't run.
+
 ---
 
 ## D-013 — Config system: Hydra vs. plain OmegaConf vs. pydantic-settings
