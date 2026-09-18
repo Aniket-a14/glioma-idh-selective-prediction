@@ -6,12 +6,14 @@ Do not hand-edit the status block during an agent run — let the agent own it.
 ```yaml
 current_phase: 02
 status: in-progress      # not-started | in-progress | blocked | awaiting-integration | complete
-claude_tasks: not-started  # not-started | in-progress | done
+claude_tasks: done         # not-started | in-progress | done
 codex_tasks: done          # not-started | in-progress | done | none-this-phase
 integration_mode: research-lead   # research-lead | agent
-blocked_on: null
+blocked_on: null  # status stays in-progress, not blocked: T02.1 (EGD DUA) is the sole open item,
+                   # deferred by Research Lead choice (D-018), and doesn't block Phase 03 per this
+                   # phase file's own dependency note — see DATA_ACCESS_LOG.md's EGD section
 last_updated: 2026-09-18
-last_agent: codex
+last_agent: claude
 ```
 
 ## Field meanings
