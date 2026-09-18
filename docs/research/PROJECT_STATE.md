@@ -5,13 +5,13 @@ Do not hand-edit the status block during an agent run — let the agent own it.
 
 ```yaml
 current_phase: 01
-status: not-started        # not-started | in-progress | blocked | awaiting-integration | complete
+status: in-progress       # not-started | in-progress | blocked | awaiting-integration | complete
 claude_tasks: not-started  # not-started | in-progress | done
-codex_tasks: not-started   # not-started | in-progress | done | none-this-phase
+codex_tasks: in-progress   # not-started | in-progress | done | none-this-phase
 integration_mode: research-lead   # research-lead | agent
 blocked_on: null
 last_updated: 2026-09-18
-last_agent: claude
+last_agent: codex
 ```
 
 ## Field meanings
