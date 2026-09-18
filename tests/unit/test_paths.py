@@ -48,6 +48,25 @@ class TestStorageRoot:
         with pytest.raises(paths.PathResolutionError):
             paths.storage_root()
 
+    def test_relative_path_is_rejected(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "relative/storage-root")
+        with pytest.raises(paths.PathResolutionError):
+            paths.storage_root()
+
+    def test_trailing_slash_is_normalized(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", "/example/storage-root/")
+        assert paths.storage_root() == Path("/example/storage-root")
+
+    def test_nonexistent_parent_is_rejected(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        missing_parent = tmp_path / "missing-parent" / "storage-root"
+        monkeypatch.setenv("GLIOMA_STORAGE_ROOT", str(missing_parent))
+        with pytest.raises(paths.PathResolutionError):
+            paths.storage_root()
+
     def test_no_leaked_default_when_unset(self) -> None:
         """An unset root must raise, never silently resolve to some path
         (e.g. the current working directory) that could cause data to be
