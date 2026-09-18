@@ -133,6 +133,6 @@ The SPEC is explicit that several "bad-looking" results are legitimate findings.
 | R-M03 | Forward-dated citations unverifiable (**D-010**) | M/L | C | Verify-before-cite pass in Phase 14; drop rather than cite on faith |
 | R-M04 | TRIPOD+AI or CLAIM updated before submission | M/L | C | Freshness re-check within 30 days of submission (SI-15) |
 | R-M05 | A competing paper closes the gap during the project | M/M | A | Fresh novelty check at Phase 14; framing changes, experiment does not |
-| R-M06 | Simulated-vs-natural missingness challenged by reviewers (**D-008**) | **H**/M | A | Pre-emptive Limitations paragraph; "simulated" in every relevant caption |
+| R-M06 | Simulated-vs-natural missingness challenged by reviewers (**D-008**) | **H**/M | A | Preemptive Limitations paragraph; "simulated" in every relevant caption |
 | R-M07 | External SSD failure | L/H | A | Raw data re-downloadable; manifests in Git; checkpoints and predictions backed up after each frozen run |
 | R-M08 | Dirty git tree during a scientific run | M/M | A | Gate C blocks on `git_dirty` |
