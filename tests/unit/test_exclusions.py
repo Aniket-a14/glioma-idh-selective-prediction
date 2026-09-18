@@ -9,9 +9,14 @@ import pytest
 
 from glioma_selective.leakage.exclusions import (
     BRATS_EXCLUSION_REASON,
+    FOLLOWUP_TIMEPOINT_REASON,
+    IDH_UNAVAILABLE_REASON,
+    NO_IMAGING_AVAILABLE_REASON,
     ExclusionReportError,
     build_brats_exclusion_report,
     build_brats_exclusion_summary,
+    build_exclusion_manifest,
+    build_followup_timepoint_selection_record,
     verify_post_exclusion_no_brats_overlap,
     write_brats_exclusion_report,
 )
@@ -88,3 +93,86 @@ def test_post_exclusion_check_rejects_a_roster_that_leaves_an_overlap() -> None:
             {**report, "exclusions": []},
             details,
         )
+
+
+def test_combined_manifest_keeps_its_two_ucsf_bases_separate() -> None:
+    brats_report = build_brats_exclusion_report(
+        _details(
+            ("UCSF-PDGM-0001", "BraTS2021_00001"),
+            ("UCSF-PDGM-0003", "BraTS2021_00003"),
+        )
+    )
+    manifest = build_exclusion_manifest(
+        utsw_patient_ids=("BT0001", "BT0002", "BT0003"),
+        utsw_idh_unavailable_ids=("BT0002",),
+        ucsf_metadata_ids=(
+            "UCSF-PDGM-001",
+            "UCSF-PDGM-0002",
+            "UCSF-PDGM-0003",
+            "UCSF-PDGM-0004",
+            "UCSF-PDGM-0005",
+        ),
+        ucsf_directory_ids=(
+            "UCSF-PDGM-0001_nifti",
+            "UCSF-PDGM-0002_nifti",
+            "UCSF-PDGM-0003_nifti",
+            "UCSF-PDGM-0003_FU001d_nifti",
+            "UCSF-PDGM-0004_nifti",
+        ),
+        brats_exclusion_report=brats_report,
+    )
+
+    assert manifest["reason_counts"] == {
+        IDH_UNAVAILABLE_REASON: 1,
+        BRATS_EXCLUSION_REASON: 2,
+        NO_IMAGING_AVAILABLE_REASON: 1,
+    }
+    assert manifest["excluded_patient_count"] == 4
+    cohorts = manifest["cohorts"]
+    assert isinstance(cohorts, dict)
+    assert cohorts["utsw"]["retained_patient_count"] == 2
+    assert cohorts["ucsf_pdgm"]["metadata_patient_count"] == 5
+    assert cohorts["ucsf_pdgm"]["directory_backed_patient_count"] == 4
+    assert cohorts["ucsf_pdgm"]["no_imaging_patient_count"] == 1
+    assert cohorts["ucsf_pdgm"]["retained_patient_count"] == 2
+    assert cohorts["ucsf_pdgm"]["excluded_patient_count"] == 3
+    assert cohorts["ucsf_pdgm"]["followup_selection_count"] == 1
+    checks = manifest["accounting_checks"]
+    assert isinstance(checks, dict)
+    assert checks["ucsf_metadata_partition"]["identity_holds"] is True
+    assert checks["ucsf_directory_partition"]["identity_holds"] is True
+    assert checks["ucsf_retained_cohort"]["identity_holds"] is True
+    assert all(
+        entry["reason"] != FOLLOWUP_TIMEPOINT_REASON for entry in manifest["exclusions"]
+    )
+
+
+def test_followup_selection_record_is_directory_level_and_retains_baseline() -> None:
+    record = build_followup_timepoint_selection_record(
+        (
+            "UCSF-PDGM-0001_nifti",
+            "UCSF-PDGM-0001_FU016d_nifti",
+            "UCSF-PDGM-0002_nifti",
+        )
+    )
+
+    assert record["selection_count"] == 1
+    assert record["selections"] == [
+        {
+            "patient_id": "UCSF-PDGM-0001",
+            "retained_directory": "UCSF-PDGM-0001_nifti",
+            "excluded_directory": "UCSF-PDGM-0001_FU016d_nifti",
+            "reason": FOLLOWUP_TIMEPOINT_REASON,
+        }
+    ]
+    assert record["directory_accounting"] == {
+        "raw_directory_count": 3,
+        "directory_backed_patient_count": 2,
+        "baseline_directory_count": 2,
+        "followup_directory_count": 1,
+    }
+
+
+def test_followup_selection_requires_a_baseline_directory() -> None:
+    with pytest.raises(ExclusionReportError, match="exactly one base directory"):
+        build_followup_timepoint_selection_record(("UCSF-PDGM-0001_FU016d_nifti",))
