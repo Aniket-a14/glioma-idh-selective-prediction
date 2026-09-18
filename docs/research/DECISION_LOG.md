@@ -214,6 +214,21 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 
 ---
 
+## D-016 — Dependency-lock tool: uv (`requirements.lock.txt`)
+**Status:** RESOLVED (2026-09-18, Research Lead) · **Blocking:** yes, for T01.3/T01.5
+
+**Conflict.** `REPRODUCIBILITY_PROTOCOL.md` §6 requires "a committed lock file" but leaves the tool unspecified. `SETUP_PROMPT.md` step 4 names three candidate conventions (`requirements*.lock.txt`, `uv.lock`, `poetry.lock`) without committing to one. This surfaced as a real blocker when Codex's T01.3 (`capture_environment.py`) hit the "dependency-lock hash" field: it can't hash a lock file whose format isn't decided, and correctly stopped rather than guessing.
+
+**Alternatives.** (a) `uv pip compile pyproject.toml -o requirements.lock.txt` — `uv` is already installed on the primary dev machine, `poetry` is not; keeps the existing `setuptools` build backend untouched; smallest change. (b) Full `uv.lock` project (adds `[tool.uv]`, converts the project to uv-managed installs) — more idiomatic uv workflow, but a larger infrastructure change than Phase 01 needs to make right now. (c) `poetry.lock` — requires installing poetry and migrating the dependency spec to poetry's format; biggest change of the three.
+
+**Decision.** **(a).** `requirements.lock.txt`, generated via `uv pip compile pyproject.toml -o requirements.lock.txt`, committed to the repo. The lock hash field in `capture_environment.py`'s fingerprint is `sha256(requirements.lock.txt)` when the file exists, and explicitly reported as absent (not an error) when it doesn't — since T01.4's first environment-capture pass runs *before* T01.5 creates this file (see the phase's own `T01.3 → T01.4 → T01.5` ordering).
+
+**Consequence.** T01.5 ("pin `pyproject.toml`") is now concretely: run `uv pip compile` after the GPU-server driver/CUDA measurement from T01.4, commit `requirements.lock.txt`, and both machines install from it (T01.6). Unblocks T01.3.
+
+**Owner.** Research Lead (this entry).
+
+---
+
 ## Ongoing entries
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
