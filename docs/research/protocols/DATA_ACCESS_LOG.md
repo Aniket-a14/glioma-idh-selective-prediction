@@ -19,14 +19,14 @@ populated once Phase 03 does that work, not invented here to fill the row.
 | Source dataset version | TCIA collection, DOI [10.7937/DFAE-1B86](https://doi.org/10.7937/dfae-1b86) |
 | Download date | 2026-09-11 (from file modification timestamps on disk — **not independently confirmed by the operator**; TBD if a different date should be recorded) |
 | Download method | TBD — not recorded at acquisition time. Needs Research Lead confirmation (NBIA Data Retriever vs. manual TCIA browser download) |
-| Source checksum | None published by TCIA for a manual download (no NBIA manifest checksum captured at download time). Baseline SHA-256 per file computed post-hoc by T02.6's integrity verification — see its report, not a comparison against a known-good external hash |
-| Raw-file inventory | 625 patient directories (`BTxxxx`). Per-patient: `brain_t1`, `brain_t1ce`, `brain_t2`, `brain_flair` (core four) + ANTs-registered variants + segmentations (`tumorseg_FeTS`, `tumorseg_manual_correction`, `rtumorseg_manual_correction`). Full counts: see T02.6's integrity report |
+| Source checksum | None published by TCIA for a manual download (no NBIA manifest checksum captured at download time). Baseline SHA-256 per file computed post-hoc by T02.6's integrity verification (`scripts/verify_download_integrity.py`), not a comparison against a known-good external hash |
+| Raw-file inventory | 625 patient directories (`BTxxxx`), **6,349 files, all 6,349 valid gzip + valid NIfTI header** (T02.6 real run, 2026-09-18). Per-patient: `brain_t1`, `brain_t1ce`, `brain_t2`, `brain_flair` (core four) + ANTs-registered variants + segmentations (`tumorseg_FeTS`, `tumorseg_manual_correction`, `rtumorseg_manual_correction`) |
 | Patient count | 625 directories on disk, matching TCIA's published "625 subjects, 6,349 studies" and the SPEC's claimed 625 — **provisional per D-009 until Phase 03's hashed manifest**, recorded here only as "matches," not as verified |
 | Label counts per marker | Not populated here — Phase 03 (see note above) |
-| Modality counts | Core four sequences present per patient per T02.6/T02.8's findings — exact per-patient completeness in the integrity report |
+| Modality counts | Core four sequences present per patient per T02.6/T02.8's findings — exact per-patient completeness in the T02.6 report (`data/manifests/download_integrity_report.json`, external SSD, not committed) |
 | Ambiguous labels | N/A this phase (Phase 03) |
-| Naturally missing sequences | Not yet assessed — see T02.6's per-patient inventory once complete |
-| Corrupt volumes | Not yet assessed — see T02.6's integrity report |
+| Naturally missing sequences | None detected at the file-presence level by T02.6 (per-patient breakdown in its report); a definitive per-sequence completeness check is Phase 03/04's job, not this file-existence pass |
+| Corrupt volumes | **Zero** — T02.6's full real-data run found zero gzip/NIfTI-header validation failures across all 6,349 files |
 | Duplicate scans | Not assessed this phase |
 | Licence / DUA terms | **CC BY 4.0** (Creative Commons Attribution 4.0 International), confirmed via [TCIA's UTSW-Glioma collection page](https://www.cancerimagingarchive.net/collection/utsw-glioma/). No DUA. Redistribution and derivative works permitted with attribution. **Transfer to the GPU server is permitted** — no restriction in the licence terms. Citation/DOI attribution required per TCIA's Data Usage Policy. |
 | Who downloaded it | TBD — not recorded. Needs Research Lead confirmation of who ran the download in the earlier session |
@@ -38,14 +38,14 @@ populated once Phase 03 does that work, not invented here to fill the row.
 | Source dataset version | TCIA collection, [UCSF-PDGM v5](https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=119705830) |
 | Download date | 2026-09-11 (file modification timestamps — same caveat as UTSW-Glioma above) |
 | Download method | TBD — same caveat as UTSW-Glioma |
-| Source checksum | None published for a manual download; baseline SHA-256 computed post-hoc, see T02.6's integrity report |
-| Raw-file inventory | 501 patient directories (`UCSF-PDGM-NNNN_nifti`). Per-patient: core four (`_T1`, `_T1c`, `_T2`, `_FLAIR`, + `_bias` variants) plus `_ADC`, `_ASL`, `_DTI_eddy*`, `_DWI`, `_SWI`, and three segmentation volumes. Full counts: see T02.6's integrity report |
+| Source checksum | None published for a manual download; baseline SHA-256 computed post-hoc, see T02.6's report |
+| Raw-file inventory | 501 patient directories (`UCSF-PDGM-NNNN_nifti`), **12,030 files** (T02.6 real run, 2026-09-18): **11,529 valid NIfTI files + 501 non-NIfTI sidecars** (the `_DTI_eddy.eddy_rotated_bvecs` text file, one per patient — correctly not NIfTI, not a failure). Per-patient: core four (`_T1`, `_T1c`, `_T2`, `_FLAIR`, + `_bias` variants) plus `_ADC`, `_ASL`, `_DTI_eddy*`, `_DWI`, `_SWI`, and three segmentation volumes |
 | Patient count | 501 directories on disk, matching TCIA's stated cohort size and the SPEC's claimed 501 — same D-009 provisional caveat as above |
 | Label counts per marker | Not populated here — Phase 03 |
 | Modality counts | Core four present per patient, plus additional modalities beyond the SPEC's scope (recorded, not used) — see T02.6/T02.8 |
 | Ambiguous labels | N/A this phase |
-| Naturally missing sequences | Not yet assessed |
-| Corrupt volumes | Not yet assessed |
+| Naturally missing sequences | None detected at the file-presence level; definitive check is Phase 03/04 |
+| Corrupt volumes | **Zero** — all 11,529 NIfTI files passed gzip/header validation; the 501 sidecars are non-NIfTI by design, not failures |
 | Duplicate scans | Not assessed this phase |
 | Licence / DUA terms | **CC BY 4.0**, confirmed via the TCIA wiki page above. No DUA. **Transfer to the GPU server is permitted.** Attribution required — see the wiki page's specified citations |
 | Who downloaded it | TBD |
