@@ -12,6 +12,13 @@ dependencies = [
     # Config system decision: docs/research/DECISION_LOG.md D-013.
     "hydra-core>=1.3,<2",
     "omegaconf>=2.3,<3",
+    # Phase 01 T01.5 (docs/research/DECISION_LOG.md D-017): pinned against the
+    # measured home-GPU-server driver (CUDA 13.2 max, Turing/compute 7.5) and
+    # expected to remain compatible once NVIDIA Labs A100 access exists (Ampere,
+    # any recent CUDA). No GPU-specific lower bound is hard-coded here; MONAI's
+    # own floor governs.
+    "torch>=2.4,<3",
+    "monai>=1.4,<2",
 ]
 
 [project.optional-dependencies]

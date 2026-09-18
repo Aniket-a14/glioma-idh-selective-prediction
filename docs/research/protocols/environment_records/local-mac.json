@@ -1,16 +1,16 @@
 {
   "cpu": "Apple M5",
-  "cuda_runtime": "not available (PyTorch is not installed)",
-  "dependency_lock_hash": "not yet generated",
+  "cuda_runtime": "not available (PyTorch was built without CUDA)",
+  "dependency_lock_hash": "aee7b75e361fe46177dc5bcf535ea7aec02f0c21a89bb8a1ecc8e7ada6c42007",
   "driver": "not available (nvidia-smi was not found)",
-  "free_disk": "199529922560 bytes (185.83 GiB) on /Users/aniketsaha/4th_Year/Glioma",
-  "git_sha": "1dd227c8673d212aaf1bf42ece3de2643f28afa3",
+  "free_disk": "198590660608 bytes (184.95 GiB) on /Users/aniketsaha/4th_Year/Glioma",
+  "git_sha": "aac4dd4e6ed03816c16c46b65e72f946c7214fc7",
   "gpu_model": "not available (nvidia-smi was not found)",
-  "monai": "not installed",
+  "monai": "1.6.0",
   "nvidia_smi": "not available (nvidia-smi was not found)",
   "python": "3.14.7 (v3.14.7:823f0323ee6, Aug  5 2026, 07:07:01) [Clang 21.0.0 (clang-2100.1.1.101)]",
-  "pytorch": "not installed",
+  "pytorch": "2.14.0",
   "ram": "17179869184 bytes (16.00 GiB)",
-  "torch_cuda_capability": "not available (PyTorch is not installed)",
+  "torch_cuda_capability": "not available (torch.cuda.is_available() is False)",
   "vram": "not available (nvidia-smi was not found)"
 }

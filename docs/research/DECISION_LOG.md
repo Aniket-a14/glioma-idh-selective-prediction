@@ -230,7 +230,9 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 ---
 
 ## D-017 — Measured GPU VRAM and system RAM are below SPEC §3.1/§3.5
-**Status:** OPEN · **Resolve by:** Phase 06 (before any real training run) · **Blocking:** YES
+**Status:** OPEN, substantially clarified (2026-09-18, Research Lead) · **Resolve by:** Phase 06
+(before any real training run) · **Blocking:** YES until the A100 access below is confirmed and
+scheduled
 
 **Conflict.** T01.4's environment capture on the home GPU server (`capture_environment.py`,
 recorded in `ENVIRONMENT_RECORD.md`) measured:
@@ -275,9 +277,33 @@ recording the deviation, would be exactly the kind of unreviewed engineering-dri
 change this log exists to prevent (same principle as R-H04's OOM-ladder rule and
 `RECOVERY_RUNBOOK.md`'s cross-cutting rule).
 
-**Owner.** Research Lead. Must be confirmed (or overridden toward (b)/(c)) before Phase 06 begins
-training; T01.5/T01.7 can proceed on hypothesis (a) in the meantime since they're measurement,
-not commitment.
+**Update (2026-09-18).** The Research Lead confirms the real plan is closer to a variant of (b)
+than (a): upcoming NVIDIA Labs access to an **A100** (40/80 GB class — well above the SPEC §3.1
+envelope, not just meeting it) is where Phase 06+'s actual training runs happen. The home GPU
+server (RTX 2060 SUPER, 8 GB) is *not* the target training environment for the real experiment
+grid — it's useful for CPU-bound work, lightweight smoke tests, and exercising the training loop
+end-to-end on toy data (exactly what the master plan's §12 "pre-training authorization sequence"
+steps 2–4 need — one-sample data test, tiny-batch forward pass, tiny overfit test — none of which
+need 16+ GB). T01.7's benchmark on the 8 GB card is still worth running for that purpose, but its
+result is no longer the number that decides Phase 06's patch/batch size — the A100's actual specs
+are, once that access exists.
+
+**What's still open, not yet resolved by this update.** (i) Timeline: A100 access is described as
+"later," not yet provisioned or scheduled — Phase 06 cannot start real training until it exists,
+so this remains a genuine blocker for that phase, just a different one than originally framed.
+(ii) `REPRODUCIBILITY_PROTOCOL.md` §6 says "both machines install from the same lock" — a third
+environment (the A100 cluster) means either a third lock/environment record, or confirming one
+lock works across all three, which can't be settled until the A100 environment's own driver/CUDA
+is captured via `capture_environment.py` there too, same as T01.4 did for the other two. (iii)
+Whether the A100 environment counts as this project's canonical "GPU server" for
+`GLIOMA_MACHINE`/run-record purposes, or as a fourth machine class alongside local-mac/gpu-server,
+is undecided — matters for `REPRODUCIBILITY_PROTOCOL.md`'s run-record schema field 13 (`gpu_info`).
+
+**Owner.** Research Lead. T01.5 proceeds now (pins a build compatible with both the home GPU's
+Turing/CUDA-13.2-max card and, when it exists, an A100 — no known conflict, both are well within
+range of any current stable PyTorch release). T01.7 runs on the home GPU as a smoke-test
+benchmark, explicitly labeled as not the Phase 06 sizing decision. Points (i)–(iii) above need
+Research Lead input once A100 access details are known — flag again then, not now.
 
 ---
 
