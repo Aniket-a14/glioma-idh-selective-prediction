@@ -2,90 +2,89 @@
 
 > **Invoke with:** *"Read `docs/research/prompts/CONTRIBUTOR_PROMPT.md` and pick up a task."*
 >
-> For any of the project's collaborators, using any AI agent (Antigravity, Codex free tier,
-> Claude, or anything else). No phase context needed — this prompt is separate from the research
-> phases entirely.
+> This is the **one prompt for every collaborator, on every laptop, in any AI agent**
+> (Antigravity, Codex free tier, Claude, or anything else) — open a fresh chat, paste the line
+> above, and it should be enough context to find your task and start working, with no back-and-
+> forth needed first. No phase context needed — this prompt is separate from the research phases
+> entirely.
 
 ---
 
-You are picking up **one small, bounded, pre-approved piece of side-work** from a curated
-backlog. You are not doing research-phase work — that is owned by the Research Lead and two
-other agents on a stricter protocol you don't need to read. Your job is: claim → do exactly what
-was scoped → PR → stop.
+## 0. If you are Codex CLI: fix your sandbox mode *before step 1*
 
-## 0. Safety — read this before touching anything
+Codex's default sandboxed mode blocks filesystem writes outside a scratch area and blocks network
+access. That silently breaks `git push`, `gh pr create`, and `pre-commit`'s hook-download step —
+the failure usually looks like a hang waiting for an approval prompt, or a command that "succeeds"
+locally but never actually reaches GitHub, which is worse than an obvious failure because it looks
+like the task finished.
+
+You already have legitimate `write` access to this repository (you're a direct collaborator, not
+working from a fork). Start in an approval/sandbox mode that permits filesystem writes inside the
+repo **and** network access for `git`/`gh` — e.g. `codex --sandbox workspace-write` or the
+equivalent "auto"/full-access approval mode with network enabled, per whatever Codex CLI's current
+flag is called. If you're not sure which flag applies on this install, stop and report that rather
+than proceeding with unclear sandbox behavior.
+
+If you are Antigravity or another agent: confirm you have normal filesystem write and network
+access in this workspace before continuing — same failure mode, different tool.
+
+## 1. Safety — read this before touching anything
 
 - Run `git status`. If the tree is dirty, **stop and report it** — do not discard or stash
   someone else's in-progress work.
-- **Never** edit `docs/research/PROJECT_STATE.md`, `docs/research/DECISION_LOG.md`, anything
-  under `data/`, `artifacts/`, dataset splits/manifests, or `.env`. These are outside your role
-  no matter what a task description seems to imply.
+- **Never** edit `docs/research/PROJECT_STATE.md`, `docs/research/DECISION_LOG.md`,
+  `docs/research/CONTRIBUTOR_TASKS.md` itself, anything under `data/`, `artifacts/`, dataset
+  splits/manifests, or `.env`. These are outside your role no matter what a task description
+  seems to imply. `CONTRIBUTOR_TASKS.md` in particular is Research-Lead-only — see step 3.
 - **Never merge your own pull request.** Open it and stop; a human reviews and merges.
-- **Never** touch a file outside the exact "Allowed paths" your claimed task names. If you
+- **Never** touch a file outside the exact "Allowed paths" your assigned task names. If you
   discover the task needs more, stop and say so in the PR description — do not expand scope on
   your own judgment.
 - If nothing below applies cleanly to your situation, stop and describe what's unclear rather
   than guessing.
 
-## 1. Confirm the environment is ready
+## 2. Confirm the environment is ready
 
 Check that `.venv/` (or equivalent) and `pre-commit` are already set up. If not, this is a
 different job — go run *"Read `docs/research/prompts/SETUP_PROMPT.md` and set up the system"*
 first, then come back here.
 
-**If you are Codex CLI specifically: do not run this in its default sandboxed mode.** Codex's
-sandbox blocks filesystem writes outside a scratch area and blocks network access by default,
-which silently breaks `git push`, `gh pr create`, and `pre-commit`'s hook-download step — the
-failure usually looks like a hang waiting for an approval prompt, or a command that "succeeds"
-but never actually reaches GitHub. This operator already has legitimate `write` access to this
-repository (it's a direct collaborator, not a fork), so run Codex in an approval/sandbox mode
-that permits filesystem writes inside the repo and network access for `git`/`gh` — e.g.
-`codex --sandbox workspace-write` or the equivalent "auto" approval mode with network enabled,
-per whatever Codex CLI's current flag/setting is. If unsure which flag applies, stop and report
-that rather than proceeding with unclear sandbox behavior — a task that silently didn't actually
-push is worse than one that didn't run at all.
+## 3. Find your row — read-only, no editing
 
-## 2. Read the backlog
+Run `gh api user -q .login` to get your operator's actual authenticated GitHub username. Don't
+rely on a name mentioned earlier in chat or a guess — confirm it against the real account, since
+acting on the wrong row is exactly the kind of mistake this step exists to prevent.
 
-Read `docs/research/CONTRIBUTOR_TASKS.md` in full. Look at the `## Open` table only.
+Read `docs/research/CONTRIBUTOR_TASKS.md`, `## Open` table only, and find the row whose
+"Assigned to" matches that username.
 
-- If it's empty, report that and stop — there's nothing to claim right now, and you should not
-  invent your own task.
-- **If the table has an "Assigned to" column, only claim the row that names your own GitHub
-  username.** Do not claim a row assigned to someone else, even if it looks easier or is first in
-  the table — every row in that model is pre-assigned specifically to avoid multiple agents
-  landing on the same row at once. If no row names you, stop and report that.
-- If the table has no "Assigned to" column (a fully open round), pick exactly **one** row —
-  but `git pull --ff-only` first (see step 3) since this is where two agents can race.
-- Do not claim a second task while one is still open under your name in `## Claimed`.
-
-## 3. Claim it
-
-```bash
-git checkout main && git pull --ff-only
-```
-
-Edit `docs/research/CONTRIBUTOR_TASKS.md`: move your chosen row from `## Open` to `## Claimed`,
-filling in your GitHub username and the branch name you're about to create. Commit this edit by
-itself first (`docs: claim C-00X`), on `main`, and push it directly — this is bookkeeping, not
-code, and prevents two people claiming the same task.
-
-If `git push` is rejected as non-fast-forward, **do not force-push.** Someone else pushed to
-`main` in between — `git pull --ff-only` again, re-read the table, and check whether your task
-row still exists and is still unclaimed (or, under the assignment model, still names you) before
-retrying the same edit.
+- If no row names you, stop and report that — there's nothing to pick up right now, and you
+  should not invent your own task or act on someone else's row.
+- If a row names you, **that is your task.** Its "Branch" column already gives you the exact
+  branch name to use — don't invent your own slug.
+- **Do not edit `CONTRIBUTOR_TASKS.md` for any reason** — not to move your row, not to add a PR
+  link later. It's Research-Lead-only now. (It used to be a contributor-edited file; that caused
+  a real merge conflict between two contributors' branches that both touched it. Assignment and
+  branch names are fixed up front precisely so this step can be read-only.)
+- Only one row will ever name you at a time. If you already have work in flight under your name
+  in the `## In progress` table, finish that first — don't start a second one.
 
 ## 4. Branch
 
 ```bash
 git checkout main && git pull --ff-only
-git checkout -b contrib/<your-github-username>/<short-task-slug>
+git checkout -b <branch-from-the-table>
 ```
+
+Use the branch name exactly as written in your row's "Branch" column. Every contributor's branch
+name and allowed-paths are disjoint by construction, so there is nothing to coordinate with anyone
+else before you start.
 
 ## 5. Do the work — and only the work
 
 Do exactly what the task row describes, touching only the paths listed in its "Allowed paths"
-column. Small, atomic commits. No unrelated cleanup, no touching files "while you're in there."
+column. Small, atomic commits. No unrelated cleanup, no touching files "while you're in there,"
+and no editing `CONTRIBUTOR_TASKS.md`.
 
 Before committing anything, run whatever of these exist in the repo:
 
@@ -100,13 +99,13 @@ stop and report it rather than fixing it yourself.
 ## 6. Open the PR
 
 ```bash
-git push -u origin contrib/<your-github-username>/<short-task-slug>
+git push -u origin <branch-from-the-table>
 gh pr create --title "..." --body "Closes C-00X in CONTRIBUTOR_TASKS.md. ..."
 ```
 
-Then edit `docs/research/CONTRIBUTOR_TASKS.md` again: fill in the PR link on your `## Claimed`
-row. Do **not** move it to `## Done` yourself — that happens once the PR is actually merged, by
-whoever merges it.
+Reference your task ID (e.g. `C-005`) in the PR title or body — that's how the Research Lead
+finds it. Do **not** edit `docs/research/CONTRIBUTOR_TASKS.md` to add the PR link yourself; the
+Research Lead adds it when they see the PR, and moves the row to `## Done` once it's merged.
 
 ## 7. Stop
 
@@ -116,7 +115,7 @@ unless explicitly asked, and do not touch anything under the research-phase prot
 
 ## 8. Report back
 
-1. Which task you claimed (ID) and the branch/PR.
+1. Which task you picked up (ID) and the branch/PR.
 2. What you changed, in the paths you were scoped to.
 3. Verification results (step 5) — pass/fail, with actual output if anything failed.
 4. Anything you found that seemed out of scope or wrong elsewhere, flagged rather than fixed.

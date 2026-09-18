@@ -43,8 +43,10 @@ inside WSL2 (Ubuntu) — the prompt covers installing that too.
 
 > *"Read `docs/research/prompts/CONTRIBUTOR_PROMPT.md` and pick up a task."*
 
-It claims one bounded task from `docs/research/CONTRIBUTOR_TASKS.md`, does only that, and opens a
-PR — it never touches the research phases themselves.
+It finds the row in `docs/research/CONTRIBUTOR_TASKS.md` pre-assigned to that person's GitHub
+username, does only that, and opens a PR — it never edits that file itself (that's Research-Lead
+territory, to keep contributor branches from ever colliding on it) and never touches the research
+phases themselves.
 
 ---
 

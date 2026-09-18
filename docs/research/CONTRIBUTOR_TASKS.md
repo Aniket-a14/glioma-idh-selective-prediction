@@ -9,38 +9,42 @@ sanctioned exception to that protocol's directory-ownership table — a task lis
 exactly the paths it names, nothing else.
 
 **Agents: start at `docs/research/prompts/CONTRIBUTOR_PROMPT.md`, not here.** That prompt tells
-you how to claim a task from this file safely. Reading this file alone is not enough context to
-act on.
+you how to pick up your row safely. Reading this file alone is not enough context to act on.
+
+**This file is edited only by the Research Lead — never by a contributor or a contributor's
+agent, not even to claim a row or add a PR link.** That used to be a contributor step, and it was
+the actual cause of a real merge conflict (PR #4 and PR #5 both touched this file's table and
+collided). Every row below is now pre-assigned — person, branch name, and allowed paths are all
+fixed before any agent starts — so there is nothing left for a contributor to write here. If your
+agent thinks it needs to edit this file, it has misread its instructions; it should stop and say
+so instead.
 
 **Humans: this file is curated by the Research Lead, weekly**, ahead of the Friday capstone
-discussion. Add tasks here only when you (Research Lead) have picked a bounded, safe piece of
-work off the critical path — never let a contributor agent invent its own scope.
+discussion. Add rows here only when you (Research Lead) have picked a bounded, safe piece of
+work off the critical path, picked the exact person, and filled in an exact branch name — never
+let a contributor agent invent its own scope or its own branch name.
 
 ---
 
 ## Open
 
-**This round, each row below is pre-assigned to a specific person** (see "Assigned to") rather
-than first-come — five people were independently landing on C-001 at the same time under the old
-pure first-come model, since it was the first row in the table and nothing stopped two agents
-claiming it within the same few minutes (the claim step is a plain commit-and-push to `main`;
-without a lock, whoever pushes second either gets a rejected non-fast-forward push and doesn't
-know why, or force-pushes over the first person's claim). Pre-assigning by name and giving each
-person a non-overlapping set of paths removes the collision by construction for this round.
-Once these five are done and the backlog is refreshed, new rows may go back to open first-come —
-if so, the claim step below (git pull immediately before editing) still applies.
+**Every row is pre-assigned to a specific person and a specific branch name.** There is no
+first-come claiming and nothing to edit to "claim" a row — an agent claims a task simply by
+reading it and starting work on the named branch. This removes two failure modes at once: two
+agents racing for the same row, and two agents' edits to this file colliding with each other.
 
-**Agents: only claim the row with your operator's GitHub username in "Assigned to."** If that
-row is gone (already moved to Claimed/Done) and none of the remaining Open rows name your
-operator, stop and report that rather than claiming someone else's row or inventing a new task.
+**Agents: only act on the row whose "Assigned to" is your operator's GitHub username** (confirm
+it with `gh api user -q .login` — don't trust an assumption or a name in chat, confirm it against
+the actual authenticated account). If no remaining row names your operator, stop and report that
+rather than acting on someone else's row or inventing a new task.
 
-| ID | Task | Allowed paths | Assigned to | Notes |
-|---|---|---|---|---|
-| C-005 | Draft a related-work paragraph summarizing 3–5 recent papers on missing-modality robustness in multimodal MRI deep learning | `paper/RELATED_WORK_MISSING_MODALITY_DRAFT.md` (new file) | udaypratapchauhan | Draft only, disjoint file from C-003 — citations and claims get checked by the Research Lead before anything moves into the actual manuscript. |
+| ID | Task | Allowed paths | Assigned to | Branch | Notes |
+|---|---|---|---|---|---|
+| C-005 | Draft a related-work paragraph summarizing 3–5 recent papers on missing-modality robustness in multimodal MRI deep learning | `paper/RELATED_WORK_MISSING_MODALITY_DRAFT.md` (new file) | udaypratapchauhan | `contrib/udaypratapchauhan/c-005-related-work-missing-modality` | Draft only, disjoint file from C-003 — citations and claims get checked by the Research Lead before anything moves into the actual manuscript. |
 
-## Claimed
+## In progress
 
-| ID | Task | Claimed by | Branch | PR |
+| ID | Task | Assigned to | Branch | PR |
 |---|---|---|---|---|
 | C-003 | Draft a related-work paragraph summarizing 3–5 recent papers on selective prediction / conformal prediction in medical imaging | ShantanuTripathi2745 | `contrib/ShantanuTripathi2745/c-003-related-work` | [#5](../../../pull/5) |
 | C-001 | Add edge-case unit tests for `utils/paths.py` | solankisuryansh | `contrib/solankisuryansh/c-001-path-edge-cases` | [#1](../../../pull/1) (draft — flags that `utils/paths.py` currently accepts relative paths and nonexistent parents, out of this task's scope; needs Research Lead decision before the PR can leave draft) |
@@ -57,15 +61,19 @@ operator, stop and report that rather than claiming someone else's row or invent
 
 ## Hard rules (same as every other agent role in this repo)
 
+- **Never edit this file.** Assignment, branch naming, and PR-link tracking are Research-Lead-only
+  — see the note at the top. This is the one rule in this list that's new relative to how the
+  first round worked, and it exists specifically to stop contributor branches from conflicting
+  with each other on this table.
 - Never touch `PROJECT_STATE.md`, `DECISION_LOG.md`, dataset splits/manifests, `.env`, or anything
   under `data/`/`artifacts/`.
 - Never merge your own PR. Every PR here goes through the same branch protection as everyone
   else's: 1 review, conversation resolution, Research Lead decides.
-- Never work outside the "Allowed paths" column of your claimed task. If the task turns out to
+- Never work outside the "Allowed paths" column of your assigned task. If the task turns out to
   need more, stop and say so in the PR description rather than expanding scope silently.
-- One claimed task at a time per person. Finish or explicitly drop it before claiming another.
-- When a row names an "Assigned to" GitHub username, only that person's agent may claim it.
-  When the column is blank or absent (a future, refreshed round of this table), it's first-come —
-  `git pull --ff-only` immediately before editing this file, and if the push is rejected as
-  non-fast-forward, pull again and check whether someone else already claimed it before retrying;
-  never force-push over another person's claim.
+- One assigned task at a time per person. If you finish early and want more, ask the Research
+  Lead for a new row rather than picking your own.
+- Use the exact branch name in the "Branch" column — don't invent your own slug. This, plus each
+  row's disjoint "Allowed paths", is what guarantees no two contributors' work can collide at
+  merge time: different branch, different files, and (per the rule above) nobody but the Research
+  Lead ever writes to this table.

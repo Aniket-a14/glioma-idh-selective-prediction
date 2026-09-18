@@ -40,6 +40,13 @@ contributor branch **always** goes through a PR and a Research Lead (or reviewer
 regardless of what that field says for Claude/Codex. See
 `docs/research/prompts/CONTRIBUTOR_PROMPT.md` for their operating instructions.
 
+`docs/research/CONTRIBUTOR_TASKS.md` is edited **only by the Research Lead** — never by a
+contributor or their agent, including to claim a row or add a PR link. Every row is pre-assigned
+(person, branch name, allowed paths) before any agent touches it, so a contributor's job is read
+that file, not write it. This is not incidental caution: two contributor branches both editing
+that file (one to claim, one to add a PR link) produced a real merge conflict between PR #4 and
+PR #5. See §6.
+
 ---
 
 ## 2. Command templates
@@ -140,6 +147,7 @@ Integration tests run after each merge, not batched at the end.
 | `src/glioma_selective/utils/paths.py` | Everything imports it | Frozen after Phase 01; changes require Research Lead approval |
 | `tests/fixtures/` | Shared test data | Append-only; never edit an existing fixture (it may pin a verified result) |
 | `.pre-commit-config.yaml`, CI | Both touch tooling | Codex owns; Claude reviews |
+| `docs/research/CONTRIBUTOR_TASKS.md` | Every contributor's workflow used to edit it (claim a row, then add a PR link) — two branches editing the same table rows around the same time collided (real incident: PR #4 vs. PR #5) | Research-Lead-only edits; contributors never touch it — see §1a |
 
 ---
 
