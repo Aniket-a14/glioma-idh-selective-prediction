@@ -45,7 +45,7 @@ operator, stop and report that rather than claiming someone else's row or invent
 |---|---|---|---|---|
 | C-001 | Add edge-case unit tests for `utils/paths.py` | solankisuryansh | `contrib/solankisuryansh/c-001-path-edge-cases` | [#1](../../../pull/1) (draft — flags that `utils/paths.py` currently accepts relative paths and nonexistent parents, out of this task's scope; needs Research Lead decision before the PR can leave draft) |
 | C-002 | Proofread top-level docs for typos, broken internal links, and inconsistent terminology | priyaagrawal2 | `contrib/priyaagrawal2/c-002-doc-proofread` | [#2](../../../pull/2) |
-| C-004 | Proofread the protocol docs for typos, broken internal links, and inconsistent terminology | Akshita1395 | `contrib/Akshita1395/c-004-protocol-doc-proofread` | pending |
+| C-004 | Proofread the protocol docs for typos, broken internal links, and inconsistent terminology | Akshita1395 | `contrib/Akshita1395/c-004-protocol-doc-proofread` | [#4](../../../pull/4) |
 
 ## Done
 
