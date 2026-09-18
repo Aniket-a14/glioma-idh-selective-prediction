@@ -19,6 +19,10 @@ dependencies = [
     # own floor governs.
     "torch>=2.4,<3",
     "monai>=1.4,<2",
+    # Phase 03 T03.5 (docs/research/DECISION_LOG.md D-020): BraTS-2021's official
+    # TCIA-mapping crosswalk ships only as .xlsx. openpyxl alone (no pandas) is
+    # the minimal reader for one small, read-only spreadsheet.
+    "openpyxl>=3.1,<4",
 ]
 
 [project.optional-dependencies]

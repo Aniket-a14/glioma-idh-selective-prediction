@@ -77,6 +77,21 @@ still gates any code path that would read it before Gate E, same as everything e
 | T02.2 — weekly status check | N/A until T02.1 is submitted |
 | Download / inventory / licence | N/A until the DUA is granted |
 
+## External reference ID lists (T03.4/T03.5 — BraTS-2021, TCGA-GBM, TCGA-LGG)
+
+Not a downloaded imaging cohort — these are the subject-ID rosters Phase 03's overlap audit checks
+UTSW/UCSF-PDGM against. Full acquisition-method detail and verification in **D-020**.
+
+| Field | Value |
+|---|---|
+| Acquired | 2026-09-18, by Claude (orchestrating), Research Lead session |
+| TCGA-GBM | GDC API (`api.gdc.cancer.gov/cases`), public, no account. 617 cases, `submitter_id` field, `TCGA-XX-XXXX` format |
+| TCGA-LGG | Same method. 516 cases |
+| BraTS-2021 | `BraTS2021_MappingToTCIA.xlsx`, official TCIA wiki attachment, CC BY 4.0, no DUA. 1,488 rows (train+validation only — **challenge test set is sequestered on Synapse `syn25829067`, not obtainable here**) |
+| Storage | `paths.private_data_dir() / "external_cohort_ids"` (external SSD, **not committed** — raw-identifier tier per `DATA_GOVERNANCE_PROTOCOL.md` §3) |
+| Licence | GDC data is public domain / open per NIH data-sharing policy; TCIA wiki attachment is CC BY 4.0. Neither requires a DUA |
+| Consumed by | T03.4 (full overlap matrix), T03.5 (UCSF-PDGM ⇄ BraTS-2021 exclusion) — not yet run |
+
 ---
 
 ## Storage cross-reference (D-014)

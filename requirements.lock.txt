@@ -10,6 +10,8 @@ cuda-pathfinder==1.8.2 ; python_full_version < '3.15' and sys_platform == 'linux
     # via cuda-bindings
 cuda-toolkit==13.0.3.0 ; sys_platform == 'linux'
     # via torch
+et-xmlfile==2.0.0
+    # via openpyxl
 filelock==4.0.0
     # via torch
 fsspec==2026.7.0
@@ -73,6 +75,8 @@ omegaconf==2.3.1
     # via
     #   glioma-selective (pyproject.toml)
     #   hydra-core
+openpyxl==3.1.5
+    # via glioma-selective (pyproject.toml)
 packaging==26.3
     # via hydra-core
 pyyaml==6.0.3

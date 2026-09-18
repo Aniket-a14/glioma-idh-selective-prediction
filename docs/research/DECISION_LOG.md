@@ -342,6 +342,15 @@ EGD yet") rather than it slipping unnoticed. This is a real cost: every week of 
 week added to the critical path before Phase 11 (Gate E, external evaluation authorization) can
 close, since EGD is one of the two external test cohorts the SPEC's claims depend on.
 
+**Consequence.** Phase 02 otherwise closes out with 6/9 tasks complete (T02.3–T02.8 done, T02.9
+mostly populated) — this is the one open item, and it's open by choice, not oversight.
+`DATA_ACCESS_LOG.md`'s EGD section states this explicitly. No other phase is blocked by this deferral
+right now — Phase 03 explicitly "does not wait for EGD" per the phase file's own dependency note.
+The real deadline pressure lands at Phase 11, not sooner.
+
+**Owner.** Research Lead — resume T02.1 whenever ready; no agent should treat this as something to
+chase or escalate on its own.
+
 ---
 
 ## D-019 — T03.7 ambiguous-label exclusion boundary (UTSW no-IDH, UCSF-PDGM relative co-deletion)
@@ -368,14 +377,46 @@ patient is excluded by this decision, only classified.
 relative co-deletion (now settled). Feeds T03.10's exclusion manifest directly: 3 UTSW patients
 excluded (`label:idh_unavailable`); 0 patients excluded by the 1p/19q classification decision.
 
-**Consequence.** Phase 02 otherwise closes out with 6/9 tasks complete (T02.3–T02.8 done, T02.9
-mostly populated) — this is the one open item, and it's open by choice, not oversight.
-`DATA_ACCESS_LOG.md`'s EGD section states this explicitly. No other phase is blocked by this deferral
-right now — Phase 03 explicitly "does not wait for EGD" per the phase file's own dependency note.
-The real deadline pressure lands at Phase 11, not sooner.
+---
 
-**Owner.** Research Lead — resume T02.1 whenever ready; no agent should treat this as something to
-chase or escalate on its own.
+## D-020 — BraTS-2021/TCGA-GBM/TCGA-LGG ID lists: acquisition method and the `openpyxl` dependency
+**Status:** RESOLVED (2026-09-18) · **Blocking:** no · **Resolve by:** Phase 03
+
+**Context.** T03.4 (full overlap matrix) and T03.5 (UCSF-PDGM ⇄ BraTS-2021 exclusion) need the
+subject-ID rosters of three cohorts not otherwise in hand. TCIA's public REST API
+(`getCollectionValues`, `getPatient`) does not index TCGA-GBM, TCGA-LGG, or any BraTS-2021 name
+variant — confirmed directly (all return HTTP 200 with a zero-byte body), not assumed from
+documentation.
+
+**Method found and verified live (not from memory):**
+- **TCGA-GBM / TCGA-LGG** — the GDC API (`api.gdc.cancer.gov/cases`), public, no account, filtered
+  by `cases.project.project_id`, field `submitter_id`. Returns the same `TCGA-XX-XXXX` barcode
+  format TCIA uses for imaging Patient IDs. Confirmed counts: **TCGA-GBM 617 cases, TCGA-LGG 516
+  cases** (all registered GDC cases, not filtered to imaging-only — a safe overinclusion for an
+  overlap check, since it can only add candidate IDs, never hide a true overlap).
+- **BraTS-2021** — no API; TCIA's DOI wiki page hosts a public attachment,
+  `BraTS2021_MappingToTCIA.xlsx` (CC BY 4.0, no DUA, no cookie/auth wall), the official BraTS-ID ⇄
+  source-cohort-PatientID crosswalk. Confirmed by opening it: 1,488 rows, columns include `Data
+  Collection`, `PatientID on TCIA Radiology Portal`, and `BraTS2021 ID`; 135 rows tagged
+  `TCGA-GBM` and 108 tagged `TCGA-LGG`, cross-validating against T03.1's independent finding that
+  298 UCSF-PDGM patients have a non-blank `BraTS21 ID` (this file's own `UCSF-PDGM` + additional
+  rows total 438, a superset consistent with that count). **Caveat, not silently absorbed:** this
+  file covers BraTS-2021's training + validation pool only (~1,480 patients). The official
+  challenge **test set is sequestered on Synapse** (`syn25829067`) and is genuinely not obtainable
+  through any open API — T03.4's overlap matrix must state this gap explicitly rather than imply
+  the BraTS-2021 side of every cell is exhaustively checked.
+
+**Storage.** All three files are raw identifiers "as shipped by the cohort" per
+`DATA_GOVERNANCE_PROTOCOL.md` §3 — written to `paths.private_data_dir() / "external_cohort_ids"`
+(external SSD, reached through `data/private/`, **not committed**), the same tier UTSW/UCSF-PDGM
+raw IDs already use. No patient ID from any of these files appears in this entry or in any
+committed file.
+
+**Dependency decision.** The `.xlsx` format has no acceptable non-library parse path. Chose
+`openpyxl` (`>=3.1,<4`) over `pandas` — this is a single small, read-only spreadsheet parsed once
+into ID lists; pulling in all of pandas for that is unjustified weight. Added to `pyproject.toml`,
+`requirements.lock.txt` regenerated via `uv pip compile --universal` (installs and parses correctly
+on this machine).
 
 ---
 
