@@ -28,20 +28,26 @@ analysis, figures, writing. No GPU role expected or needed here.
 
 ## gpu-server (`home-gpu`, hostname `aniket-B450M-DS3H-V2`)
 
-Captured 2026-09-18, git SHA `1dd227c8673d212aaf1bf42ece3de2643f28afa3`.
+First captured 2026-09-18 pre-lock (git SHA `1dd227c8...`); re-captured post-T01.5/T01.6
+(git SHA `83f98e8950c36df65aa27479071ea526b278f1a4`) with the environment actually installed:
 
 | Field | Value |
 |---|---|
 | CPU | AMD Ryzen 5 5600G with Radeon Graphics |
 | RAM | 15.48 GiB |
-| Free disk (`/data`, `GLIOMA_STORAGE_ROOT` target) | 233.83 GiB |
+| Free disk (`/data`, `GLIOMA_STORAGE_ROOT` target) | 228.45 GiB (post-install) |
 | Python | 3.12.3 |
 | GPU | NVIDIA GeForce RTX 2060 SUPER |
 | VRAM | **8192 MiB (8 GB)** |
 | Driver | 595.84 |
-| CUDA (driver max) | 13.2 |
-| PyTorch / MONAI | not installed |
-| Dependency lock hash | not yet generated |
+| CUDA (driver max / PyTorch build) | 13.2 / 13.0 |
+| `torch.cuda` capability | 7.5 (matches Turing, matches installed build — acceptance criterion 7) |
+| PyTorch / MONAI | 2.14.0 / 1.6.0 |
+| Dependency lock hash | `aee7b75e361fe46177dc5bcf535ea7aec02f0c21a89bb8a1ecc8e7ada6c42007` — **identical to local-mac** (acceptance criterion 5) |
+
+`GLIOMA_STORAGE_ROOT=/data/glioma-idh/storage`, `GLIOMA_MACHINE=gpu-server`. Repo checkout at
+`/data/glioma-idh/repo`, venv at `/data/glioma-idh/venv`. `bootstrap_storage.py` run twice
+(idempotent, acceptance criterion 1) — `data/`/`artifacts/` symlinks confirmed.
 
 ## T01.5 — measured hardware vs. SPEC §3.1/§3.5
 
