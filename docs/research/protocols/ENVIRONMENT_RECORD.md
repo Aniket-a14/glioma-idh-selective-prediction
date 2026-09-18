@@ -1,0 +1,80 @@
+# ENVIRONMENT RECORD
+
+Phase 01 T01.4: `scripts/capture_environment.py` run on both machines. Raw JSON fingerprints are
+the authoritative record; this file is the human-readable summary plus the scientific
+comparison against SPEC §3.1/§3.5 that T01.5 exists to do.
+
+**Both captures below predate T01.5** (dependency pinning) and T01.6 (locked install), so
+`pytorch`/`monai`/`dependency_lock_hash` are correctly absent on both — this is the first,
+pre-lock capture pass the phase file's own `T01.3 → T01.4 → T01.5` ordering expects, not a
+mistake. A second capture pass after T01.6 will show these fields populated and matching.
+
+## local-mac
+
+Captured 2026-09-18, git SHA `1dd227c8673d212aaf1bf42ece3de2643f28afa3`.
+
+| Field | Value |
+|---|---|
+| CPU | Apple M5 |
+| RAM | 16.00 GiB |
+| Free disk (repo mount) | 185.83 GiB |
+| Python | 3.14.7 |
+| GPU / VRAM / CUDA / driver | not available (no NVIDIA GPU — Apple Silicon) |
+| PyTorch / MONAI | not installed |
+| Dependency lock hash | not yet generated |
+
+Role per `MASTER_RESEARCH_EXECUTION_PLAN.md` §12: development, CPU tests, preprocessing,
+analysis, figures, writing. No GPU role expected or needed here.
+
+## gpu-server (`home-gpu`, hostname `aniket-B450M-DS3H-V2`)
+
+Captured 2026-09-18, git SHA `1dd227c8673d212aaf1bf42ece3de2643f28afa3`.
+
+| Field | Value |
+|---|---|
+| CPU | AMD Ryzen 5 5600G with Radeon Graphics |
+| RAM | 15.48 GiB |
+| Free disk (`/data`, `GLIOMA_STORAGE_ROOT` target) | 233.83 GiB |
+| Python | 3.12.3 |
+| GPU | NVIDIA GeForce RTX 2060 SUPER |
+| VRAM | **8192 MiB (8 GB)** |
+| Driver | 595.84 |
+| CUDA (driver max) | 13.2 |
+| PyTorch / MONAI | not installed |
+| Dependency lock hash | not yet generated |
+
+## T01.5 — measured hardware vs. SPEC §3.1/§3.5
+
+**This is the genuine gate the phase file names it as, not a formality — see `DECISION_LOG.md`
+D-017.** Both VRAM and RAM measured on the only GPU-bearing machine are below the specification's
+stated envelope:
+
+| | SPEC target | Measured | |
+|---|---|---|---|
+| VRAM (§3.1) | 16–24 GB | **8 GB** | half the floor |
+| RAM (§3.5) | ≥32 GB | **15.48 GB** | well under half |
+
+This is exactly the failure condition `PHASE_01_INFRASTRUCTURE.md` names explicitly ("Measured
+VRAM < 16 GB (triggers a specification-checked accommodation decision)") and one of the phase's
+own listed "Decisions requiring Research Lead approval" ("patch size if the benchmark forces a
+change from 128³ · whether cloud GPU fallback is provisioned now or deferred"). See D-017 for the
+full analysis and options — this is not resolved by this record alone, it requires Research Lead
+sign-off before Phase 06 (first real training) can proceed.
+
+## Storage layout note (cross-reference D-014)
+
+`GLIOMA_STORAGE_ROOT` differs by machine, as `.env.example` already anticipates:
+- local-mac: `/Volumes/Research_2` (external SSD), with `data/external` symlinked to
+  `/Volumes/Research_1` (second external SSD) — see D-014.
+- gpu-server: `/data` (233.83 GB free, a local NVMe partition, not removable media) — this
+  machine's repo checkout lives at `/data/glioma-idh/repo`.
+
+## GPU-server access note
+
+The GPU server's root filesystem (`/`) was found at 100% full during this capture (a single
+runaway `/var/log/syslog.1`, 28 GB, unrelated to this project — deleted with Research Lead
+sign-off). An unrelated project's directory (`/data/cancer-rg`, PET-CT lung cancer staging) was
+also found on `/data` and removed with Research Lead sign-off; this project's checkout now lives
+at the dedicated `/data/glioma-idh/`. Repo access from the GPU server uses a read-only GitHub
+deploy key (`~/.ssh/glioma_deploy_key` on that machine), registered specifically for this
+purpose — not a broad personal credential.

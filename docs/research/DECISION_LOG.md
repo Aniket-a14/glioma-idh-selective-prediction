@@ -182,6 +182,105 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 
 ---
 
+## D-014 — External storage falls short of SPEC §3.2, and already holds unrecorded data
+**Status:** RESOLVED (2026-09-18, Research Lead, live) · **Blocking:** no (Phase 01 proceeds under the accommodation below)
+
+**Conflict.** Phase 01 (`PHASE_01_INFRASTRUCTURE.md`) requires ≥500 GB free on the storage root (acceptance criterion 3) and treats <250 GB as an explicit failure condition. Two external USB drives are connected: `Research_1` (256 GB total, 95 GB free, exFAT) and `Research_2` (128 GB total, 96 GB free, exFAT). Combined free space is 191 GB — below the 250 GB floor even summed across both, and neither drive individually approaches 500 GB.
+
+**Second finding, discovered in the same pass.** Both drives already contain dataset content that predates Phase 01/02 formally starting — `Research_1/Glioma/PKG - UCSF-PDGM Version 5` (143 GB, the external test cohort) and `Research_2/Glioma/PKG - UTSW-Glioma` (23 GB, the primary dev cohort) plus `UTSW_Glioma_Metadata-2-1.tsv`. Per the Research Lead, this was downloaded following instructions given in an earlier session, prior to this repository's Phase 01/02 process existing in its current form. Neither package is laid out per the canonical `$GLIOMA_STORAGE_ROOT/data/{raw,external,...}` structure, and no acquisition record, checksum, or manifest exists anywhere in the repo for either (`docs/research/DATA_GOVERNANCE_PROTOCOL.md` §1–2 require both) — because Phase 02, which is where those artifacts are produced, hasn't started yet.
+
+**Alternatives considered for the capacity shortfall.** (a) Wait for additional/larger storage before starting Phase 01. (b) Free existing capacity or acquire bigger hardware first. (c) Proceed on the 191 GB actually available, logging the deviation and accepting a tighter operating margin (aggressive `cache/`/`interim/` pruning, no long-tail checkpoint retention) as the accommodation.
+
+**Decision.** **(c).** Research Lead confirmed live: "this is genuinely all we have — log a deviation and proceed." Phase 01 continues on the two drives as-is rather than blocking on hardware that isn't coming.
+
+**Storage layout implication (for whoever writes T01.1 `scripts/bootstrap_storage.py`, Codex per the phase table).** `utils/paths.py` supports exactly two independent root overrides (`GLIOMA_DATA_ROOT`, `GLIOMA_ARTIFACT_ROOT`) on top of `GLIOMA_STORAGE_ROOT` — there is no per-subdirectory override, so `data/external` cannot be routed to a second physical volume through env vars alone. The two datasets already sit on separate drives (dev cohort on `Research_2`, external cohort on `Research_1`), which happens to line up naturally with the external-validation firewall. Recommended treatment: `GLIOMA_STORAGE_ROOT=/Volumes/Research_2` (dev cohort + artifacts), with `data/external` created as a plain symlink to `/Volumes/Research_1/...` *after* `bootstrap_storage.py` runs, not inside the script itself — keeps the idempotent-symlink-creation script generic (single root in, `data/`+`artifacts/` out) while accommodating the two-drive reality as a documented one-off. `bootstrap_storage.py`'s "refuses dangerous overwrites" requirement must tolerate `data/external` already existing as a symlink rather than treating it as a conflict.
+
+**Consequence.** (i) Phase 02 must retroactively produce the acquisition record and checksums for both already-downloaded packages before either is treated as a verified project input — nothing computes against them until that exists, consistent with D-009's "every count is provisional until verified." (ii) Operating margin is tight (191 GB vs. the 500 GB target); if raw+processed+checkpoints approach the ceiling before Phase 05, revisit hardware rather than silently letting `cache/`/`interim/` growth crowd out `raw/`. (iii) `Research_1`/`Research_2` being exFAT is fine functionally (large-file support, readable without extra drivers) but carries no Unix permission bits — not a blocker, noted for completeness.
+
+**Owner.** Research Lead (this entry). Layout implication is input to whoever executes T01.1.
+
+---
+
+## D-015 — T01.9 names five recovery-runbook failure modes but requires six
+**Status:** RESOLVED (2026-09-18, Claude, non-blocking editorial gap) · **Blocking:** no
+
+**Conflict.** `PHASE_01_INFRASTRUCTURE.md`'s T01.9 task row names five failure modes: *"SSH drop, OOM, crash, partial checkpoint, power loss."* Acceptance criterion 8 requires *"Recovery runbook covers all six failure modes."* The row and the criterion disagree on count.
+
+**Resolution.** The same phase file's Risks section names R-M07 (external SSD failure) as in-scope for Phase 01 specifically because "nothing irreplaceable is stored yet" — and R-M07 isn't covered by any of the five named modes ("crash" is process/host crash, not storage-media failure). Treating SSD/storage failure as the implied sixth mode is the only reading consistent with the rest of the same document, so `RECOVERY_RUNBOOK.md` covers six: SSH drop, OOM, process crash, partial/corrupt checkpoint, power loss, and external storage failure.
+
+**Consequence.** None — this is a documentation completeness question, not a scientific one. Flagging here rather than silently picking a number, per the confusion protocol, since it's a direct textual contradiction rather than a judgment call resolvable purely by reading harder.
+
+**Owner.** Research Lead may override if a different sixth mode was intended.
+
+---
+
+## D-016 — Dependency-lock tool: uv (`requirements.lock.txt`)
+**Status:** RESOLVED (2026-09-18, Research Lead) · **Blocking:** yes, for T01.3/T01.5
+
+**Conflict.** `REPRODUCIBILITY_PROTOCOL.md` §6 requires "a committed lock file" but leaves the tool unspecified. `SETUP_PROMPT.md` step 4 names three candidate conventions (`requirements*.lock.txt`, `uv.lock`, `poetry.lock`) without committing to one. This surfaced as a real blocker when Codex's T01.3 (`capture_environment.py`) hit the "dependency-lock hash" field: it can't hash a lock file whose format isn't decided, and correctly stopped rather than guessing.
+
+**Alternatives.** (a) `uv pip compile pyproject.toml -o requirements.lock.txt` — `uv` is already installed on the primary dev machine, `poetry` is not; keeps the existing `setuptools` build backend untouched; smallest change. (b) Full `uv.lock` project (adds `[tool.uv]`, converts the project to uv-managed installs) — more idiomatic uv workflow, but a larger infrastructure change than Phase 01 needs to make right now. (c) `poetry.lock` — requires installing poetry and migrating the dependency spec to poetry's format; biggest change of the three.
+
+**Decision.** **(a).** `requirements.lock.txt`, generated via `uv pip compile pyproject.toml -o requirements.lock.txt`, committed to the repo. The lock hash field in `capture_environment.py`'s fingerprint is `sha256(requirements.lock.txt)` when the file exists, and explicitly reported as absent (not an error) when it doesn't — since T01.4's first environment-capture pass runs *before* T01.5 creates this file (see the phase's own `T01.3 → T01.4 → T01.5` ordering).
+
+**Consequence.** T01.5 ("pin `pyproject.toml`") is now concretely: run `uv pip compile` after the GPU-server driver/CUDA measurement from T01.4, commit `requirements.lock.txt`, and both machines install from it (T01.6). Unblocks T01.3.
+
+**Owner.** Research Lead (this entry).
+
+---
+
+## D-017 — Measured GPU VRAM and system RAM are below SPEC §3.1/§3.5
+**Status:** OPEN · **Resolve by:** Phase 06 (before any real training run) · **Blocking:** YES
+
+**Conflict.** T01.4's environment capture on the home GPU server (`capture_environment.py`,
+recorded in `ENVIRONMENT_RECORD.md`) measured:
+
+| | SPEC target | Measured |
+|---|---|---|
+| VRAM (§3.1) | 16–24 GB (RTX 3090/4090, A5000, or equivalent) | **RTX 2060 SUPER, 8 GB** |
+| System RAM (§3.5) | ≥32 GB | **15.48 GB** |
+
+This is precisely the scenario `PHASE_01_INFRASTRUCTURE.md` names as a failure condition
+("Measured VRAM < 16 GB") and flags as needing Research Lead approval ("patch size if the
+benchmark forces a change from 128³ · whether cloud GPU fallback is provisioned now or
+deferred") — not something T01.5/T01.7 can silently accommodate on their own. SPEC §3.4 says
+96³/128³ patches at batch 1–2 fit "in 16–24 GB VRAM" — at 8 GB, neither patch size is guaranteed
+to fit even at batch 1 without measuring (T01.7's job), and the OOM ladder (R-H04:
+128³→96³→gradient accumulation→batch 1) may bottom out without headroom to spare. The RAM
+shortfall (15.48 GB vs. ≥32 GB) is arguably the more structural problem: it constrains data
+loading/preprocessing concurrency independent of anything patch-size tuning can fix.
+
+**Alternatives.** (a) Proceed on this hardware, accepting the OOM ladder's smallest rung (96³,
+batch 1, gradient accumulation) once T01.7 actually measures what fits, and treat the RAM
+constraint as a data-loader worker-count/prefetch limit rather than a hard blocker — SPEC §3.8
+already states compute is not expected to be the real bottleneck for this project, and this may
+still hold even at reduced settings. (b) Cloud GPU rental, sanctioned explicitly by SPEC §3.7 as
+"a reasonable fallback... not a structural requirement" — a single rented instance (16–24 GB
+class) for the training-heavy phases (06, 08, 09, 10), keeping the home GPU server for
+CPU-bound/lightweight work. (c) Different/upgraded local hardware before Phase 06.
+
+**Recommendation.** **(a) first, informed by T01.7's actual benchmark**, with **(b) held in
+reserve** exactly as SPEC §3.7 frames it — a fallback for intermittent access or a deadline
+crunch, not a default. Concretely: T01.5 pins a PyTorch/CUDA build compatible with this GPU's
+driver (CUDA 13.2 max, compute capability 7.5/Turing — no compatibility conflict expected, this
+GPU is well within range of any current PyTorch build); T01.7 benchmarks 96³/128³ × batch 1/2 on
+the *actual* 8 GB card, not the SPEC's assumed 16–24 GB one; whatever config survives that
+benchmark is what Phase 06 uses, recorded as a deviation from the SPEC's stated envelope (not
+from its scientific claims — patch size and batch size are engineering, not something RQ1–RQ4 or
+C1–C6 depend on). If T01.7 shows nothing workable even at batch 1 with gradient accumulation,
+that is the trigger for (b), decided then rather than preemptively now.
+
+**Consequence if unaddressed.** Silently training at whatever settings happen not to OOM, without
+recording the deviation, would be exactly the kind of unreviewed engineering-driven scientific
+change this log exists to prevent (same principle as R-H04's OOM-ladder rule and
+`RECOVERY_RUNBOOK.md`'s cross-cutting rule).
+
+**Owner.** Research Lead. Must be confirmed (or overridden toward (b)/(c)) before Phase 06 begins
+training; T01.5/T01.7 can proceed on hypothesis (a) in the meantime since they're measurement,
+not commitment.
+
+---
+
 ## Ongoing entries
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
