@@ -19,7 +19,13 @@ moment the corresponding decision was made — not findings to wait for.
 
 ## Log
 
+| Source | Limitation | Manuscript disclosure obligation |
+|---|---|---|
+| **Phase 03 T03.6 (D-001 DEGRADED task, realized)** | Label-definition harmonization across UTSW/UCSF-PDGM/EGD (`docs/research/protocols/LABEL_DEFINITIONS.md`) was executed solo — no independent second reviewer cross-checked the harmonization mapping, as D-001's three-person model assumed. | State explicitly that label-definition harmonization was performed by a single reviewer without independent cross-check. |
+| **T03.6 finding** | UTSW-Glioma's IDH labels are assayed by two different methods within the same cohort — 413/622 (66%) by immunohistochemistry (IHC, which can under-call non-R132H variants as wildtype), 209/622 (34%) by next-generation sequencing. This is real within-cohort assay heterogeneity, not a data-entry artifact. | State the IHC/NGS split explicitly in the methods section; note the differential false-negative risk of IHC for non-R132H variants. |
+| **T03.6 finding** | UCSF-PDGM's IDH assay methodology was not independently re-confirmed against the original publication (Calabrese et al. 2022) — the label granularity (specific variant names) implies sequencing, but this is an inference from the data, not a verified methods-section citation. | State this as an unverified inference if it appears in the manuscript's cohort description; do not present it as confirmed. |
+
 *(Further entries append here as later phases surface them — e.g. cohort
 verification discrepancies (D-009), RQ4's exploratory power limits (D-007),
-or anything Phase 04's visual QC / Phase 03's adjudication find. Each entry:
-source, limitation, disclosure obligation.)*
+or anything Phase 04's visual QC find. Each entry: source, limitation,
+disclosure obligation.)*

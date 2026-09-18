@@ -125,6 +125,16 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 
 **Recommendation.** Treat every count as **provisional** until Phase 03 emits a hashed, verified cohort manifest. The plan must make cohort sizes a *verified artifact*, never a hard-coded constant — no count from the SPEC may be written into source code or a config. Phase 03's acceptance criterion is a table of SPEC-claimed vs. file-verified counts with every discrepancy explained. If verified counts differ materially (especially 1p/19q), D-007's power assumptions and Phase 05's split sizing are revisited before the freeze.
 
+**Partial finding (T03.6, label harmonization pass, 2026-09-18).** The "625 patients but IDH
+n=622" gap is now explained, from the actual UTSW metadata file, not assumption: exactly 3 patients
+have `IDH = NA` in `UTSW_Glioma_Metadata-2-1.tsv`. The remaining 622 split 176 mutated / 446
+wildtype, matching the SPEC's claimed breakdown exactly. UCSF-PDGM's IDH (103 mutant variants /
+398 wildtype) and 1p/19q (410 labeled, matching SPEC) also verified from its metadata CSV — see
+`docs/research/protocols/LABEL_DEFINITIONS.md` for the full per-cohort breakdown. **This is not
+the full D-009 resolution** — UTSW's 1p/19q/MGMT counts, the complete SPEC-vs-verified comparison
+table, and EGD (once it arrives) are still T03.3's job, a separate task. Status stays OPEN until
+T03.3 closes it out formally.
+
 ---
 
 ## D-010 — Several cited works are forward-dated or unverifiable
