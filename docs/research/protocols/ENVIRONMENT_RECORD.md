@@ -61,6 +61,35 @@ change from 128³ · whether cloud GPU fallback is provisioned now or deferred")
 full analysis and options — this is not resolved by this record alone, it requires Research Lead
 sign-off before Phase 06 (first real training) can proceed.
 
+## T01.7 — GPU memory benchmark (home GPU server, RTX 2060 SUPER, 8 GB)
+
+**Explicitly a smoke-test benchmark, not the Phase 06 sizing decision** — see D-017's 2026-09-18
+update: NVIDIA Labs A100 access is the real Phase 06 training environment, still unscheduled.
+This benchmark exists because Phase 01's acceptance criteria require it and because it's still
+useful for the CPU/toy-scale pre-training-authorization steps (master plan §12, steps 2–4) that
+don't need A100-class hardware.
+
+Method: `SegResNet` (`spatial_dims=3, in_channels=4, out_channels=2, init_filters=16`, MONAI
+1.6.0), one forward + backward pass + optimizer step per cell, random input tensors, fp32, peak
+VRAM via `torch.cuda.max_memory_allocated`. Not the full training pipeline (no augmentation, no
+`DataLoader` overhead, no mixed precision) — a lower bound on real usage, not an exact prediction.
+
+| Patch | Batch | Peak VRAM | Status |
+|---|---|---|---|
+| 96³ | 1 | 1004.6 MiB | ok |
+| 96³ | 2 | 1994.0 MiB | ok |
+| 128³ | 1 | 2340.5 MiB | ok |
+| 128³ | 2 | 4662.0 MiB | ok |
+
+**Finding: all four cells fit comfortably within 8 GB**, including 128³ at batch 2 (4.66 GB peak,
+~3.5 GB headroom before the OOM ladder in `RECOVERY_RUNBOOK.md` §2 would even be needed). This is
+more headroom than D-017's original framing assumed — the core backbone at SPEC §4.2's target
+patch sizes was never actually going to be the tight constraint on this card; real training-loop
+overhead (data loading, augmentation, larger effective batch via accumulation) is the more likely
+source of any future OOM, not the bare model. Still not a substitute for A100 access at Phase 06 —
+`init_filters=16` is a moderate configuration, and the full joint-training/ensemble setups (SPEC
+§4.6, D-005's 9-run budget) were never sized for an 8 GB card in the first place.
+
 ## Storage layout note (cross-reference D-014)
 
 `GLIOMA_STORAGE_ROOT` differs by machine, as `.env.example` already anticipates:
