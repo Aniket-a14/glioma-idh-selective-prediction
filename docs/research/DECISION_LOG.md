@@ -420,6 +420,66 @@ on this machine).
 
 ---
 
+## D-021 — UCSF-PDGM's "501 patients" hides 6 duplicate-scan patients and 6 with no imaging at all
+**Status:** OPEN — needs Research Lead decisions · **Blocking:** T03.8's retention rule, T03.10's
+exclusion manifest · **Resolve by:** Phase 03
+
+**Context.** Every prior Phase 03 task (T02.6, T02.8, T03.6, T03.8, T03.9, T03.4) reported "UCSF-PDGM
+501 patients," because the metadata file has 501 rows and the imaging archive has 501 directories,
+and those two counts matched. **Both counts are individually correct and still mask a real
+discrepancy underneath them**, found while independently re-verifying T03.5's own two internal
+consistency checks (`ucsf_pdgm_input_unique_patient_count`: 501 from metadata vs. 495 from
+directories, after correct ID normalization — a gap T03.5's own code surfaced honestly rather than
+silently reconciling).
+
+**Finding 1 — 6 patients have two directories, not one** (`UCSF-PDGM-0391`, `-0396`, `-0409`,
+`-0429`, `-0431`, `-0433`): each has both a base scan directory (`UCSF-PDGM-NNNN_nifti`) and a
+separate follow-up scan directory (`UCSF-PDGM-NNNN_FU<days>d_nifti`, e.g. `_FU016d` = a follow-up
+16 days later) — a real second imaging timepoint for the same real-world patient, not a re-upload
+or accidental duplicate. T03.8 (duplicate-scan detection, already merged) did not catch this,
+correctly by its own design: T03.8 detects byte-identical file content across directories, and a
+genuine follow-up scan is not byte-identical to the primary scan — it is a different acquisition.
+This is not a bug in T03.8; it is a different category of "duplicate" (same patient, second
+timepoint) that a content-hash check structurally cannot see, and it is squarely within T03.8's own
+stated scope ("Duplicate-scan detection within cohorts; **retention rule**").
+
+**Finding 2 — 6 different patients have metadata but zero downloaded imaging at all**
+(`UCSF-PDGM-0138`, `-0175`, `-0181`, `-0278`, `-0289`, `-0315`, confirmed disjoint from Finding 1's
+set). T03.9's "naturally-missing sequence inventory" (501/501 complete, zero missing) did not catch
+this either, correctly by its own scope: T03.9 checks *sequence*-level completeness for patients
+that *have* a directory; it never checked whether every *metadata* patient has a directory at all.
+
+**Arithmetic, verified directly against both real files:** 501 metadata patients = 489 with exactly
+one directory + 6 with two directories (12 directories) + 6 with zero directories. 489 + 12 = 501
+raw directories (matches every prior "501" directory count). 489 + 6 + 6 = 501 metadata rows
+(matches every prior "501" metadata count). Both widely-cited "501" figures were correct as stated
+and still concealed this.
+
+**Consequence for the BraTS-2021 exclusion (T03.5, D-020).** Unaffected — verified directly. The
+293-patient exclusion count already normalizes Finding 1's duplicates correctly (both directories
+collapse to one canonical ID, no double-counting) and already excludes Finding 2's 6 no-imaging
+patients from the overlap count by construction (a patient absent from the downloaded directories
+was never a candidate for a directory-based overlap check). No correction needed to D-020 or the
+merged exclusion roster.
+
+**Decisions needed from the Research Lead, not decided here:**
+1. **Finding 1's retention rule** — which of the two directories represents the patient for this
+   study: the base (likely pre-treatment/baseline) scan, the follow-up scan, or should both be
+   excluded pending a clearer clinical read of what `_FU<days>d` actually denotes? T03.8's phase-file
+   scope already names this exact decision type ("keep earliest," "keep pre-operative only") as
+   Research-Lead territory.
+2. **Finding 2's 6 no-imaging patients** — presumed exclusion from the cohort manifest (a patient
+   without any downloaded imaging cannot be used regardless of label completeness), but this is
+   logged for explicit confirmation rather than assumed, per this project's standing practice for
+   every other exclusion decision this phase (D-019).
+
+**Owner.** Research Lead. Feeds directly into T03.10 (exclusion manifest needs the reason codes and
+counts this decision settles) and the final cohort count T03.11/Phase 05 will use — the true UCSF-PDGM
+external test set is at most 495 patients before any other exclusion (D-020's 293 BraTS overlap,
+etc.), not 501.
+
+---
+
 ## Ongoing entries
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
