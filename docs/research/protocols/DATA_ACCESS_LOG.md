@@ -73,7 +73,7 @@ still gates any code path that would read it before Gate E, same as everything e
 
 | Field | Value |
 |---|---|
-| T02.1 — DUA submission | **NOT SUBMITTED — explicitly deferred by Research Lead (2026-09-18), not an oversight.** This is Phase 02's "DAY-1 ACTION" and the single most time-critical item in the phase (4–8 week external latency, R-H01) — the delay is a known, accepted cost, not something to silently let slide. Revisit before Phase 11 (Gate E) at the latest, since Phase 11's SPEC dependency needs this in motion well before then. Requires institutional details and Research Lead signature; not something an agent submits on the Research Lead's behalf. Contact: `servicedesk@health-ri.nl` |
+| T02.1 — DUA submission | **NOT SUBMITTED — explicitly deferred by Research Lead (2026-09-18), not an oversight.** This is Phase 02's "DAY-1 ACTION" and the single most time-critical item in the phase (4–8 week external latency, R-H01) — the delay is a known, accepted cost, not something to silently let slide. Revisit before Phase 11 (Gate E) at the latest, since Phase 11's SPEC dependency needs this in motion well before then. Requires institutional details and Research Lead signature; not something an agent submits on the Research Lead's behalf. Contact: `servicedesk@health-ri.nl`. **Draft request prepared:** `EGD_DUA_REQUEST_DRAFT.md` (2026-09-18) — has blanks for institutional details, not yet sent. **This row is updated to "submitted" only once it actually is** — the acceptance criterion is a dated receipt, not a drafted email. |
 | T02.2 — weekly status check | N/A until T02.1 is submitted |
 | Download / inventory / licence | N/A until the DUA is granted |
 
