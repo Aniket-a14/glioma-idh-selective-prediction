@@ -485,6 +485,30 @@ apply on top), not 501.
 
 ---
 
-## Ongoing entries
+## D-022 — T03.11's committed final cohort manifest carries a hash, not the raw patient roster
+**Status:** RESOLVED (2026-09-18) · **Blocking:** no · **Resolve by:** Phase 03
+
+**Context.** `PHASE_03_LEAKAGE_AUDIT.md` lists T03.11 as "Final cohort manifest, SHA-256,
+committed" — the one manifest this phase actually commits to Git, unlike every other Phase 03
+derived report (which stays on external storage per `DATA_GOVERNANCE_PROTOCOL.md`). The phrase
+doesn't itself specify whether the committed file contains the roster of patient IDs or only a hash
+of it.
+
+**Resolution — already settled by existing protocol, not decided fresh here.**
+`DATA_GOVERNANCE_PROTOCOL.md` §3's identifier-tier table and its explicit instruction ("Restricted
+clinical metadata is not committed unless the dataset terms clearly permit it... When in doubt, do
+not commit; the manifest can carry a hash instead of a value") already resolve this in the cautious
+direction. UTSW-Glioma and UCSF-PDGM are both CC BY 4.0 with no DUA, so redistributing patient IDs
+would not be a *license* violation — but this project has not built any separate pseudonymization
+scheme, and every other Phase 03 task this far has kept raw/normalized patient IDs off Git
+regardless of license permission, treating "permitted by license" and "should be published in a
+public repo" as separate questions. Consistency with that established practice, not a new
+argument, is the basis for this decision: **the committed `cohort_manifest.json` (T03.11) carries
+per-cohort counts, exclusion-reason breakdowns, and a SHA-256 digest of the canonical sorted
+patient-ID roster — never the roster itself.** Anyone holding the actual raw data (which the manifest
+does not gate access to) can recompute the same digest and confirm the committed manifest matches
+exactly which patients were included, without the repository itself ever naming a real patient.
+
+**Owner.** Research Lead — this closes the "committed vs. hashed" ambiguity for T03.11 before it runs.
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
