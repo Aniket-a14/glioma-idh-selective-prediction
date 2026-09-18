@@ -421,8 +421,7 @@ on this machine).
 ---
 
 ## D-021 — UCSF-PDGM's "501 patients" hides 6 duplicate-scan patients and 6 with no imaging at all
-**Status:** OPEN — needs Research Lead decisions · **Blocking:** T03.8's retention rule, T03.10's
-exclusion manifest · **Resolve by:** Phase 03
+**Status:** RESOLVED (2026-09-18, Research Lead) · **Blocking:** no · **Resolve by:** Phase 03
 
 **Context.** Every prior Phase 03 task (T02.6, T02.8, T03.6, T03.8, T03.9, T03.4) reported "UCSF-PDGM
 501 patients," because the metadata file has 501 rows and the imaging archive has 501 directories,
@@ -462,21 +461,27 @@ patients from the overlap count by construction (a patient absent from the downl
 was never a candidate for a directory-based overlap check). No correction needed to D-020 or the
 merged exclusion roster.
 
-**Decisions needed from the Research Lead, not decided here:**
-1. **Finding 1's retention rule** — which of the two directories represents the patient for this
-   study: the base (likely pre-treatment/baseline) scan, the follow-up scan, or should both be
-   excluded pending a clearer clinical read of what `_FU<days>d` actually denotes? T03.8's phase-file
-   scope already names this exact decision type ("keep earliest," "keep pre-operative only") as
-   Research-Lead territory.
-2. **Finding 2's 6 no-imaging patients** — presumed exclusion from the cohort manifest (a patient
-   without any downloaded imaging cannot be used regardless of label completeness), but this is
-   logged for explicit confirmation rather than assumed, per this project's standing practice for
-   every other exclusion decision this phase (D-019).
+**Decision 1 — Finding 1's retention rule: keep the baseline scan, exclude the follow-up.**
+Research Lead first asked whether using both scans could help the research; answered no, for two
+independent reasons specific to how this project actually uses UCSF-PDGM: (a) it is external-test-only,
+never a development/training cohort (project invariant) — the usual benefit of multi-timepoint
+data (more training examples) doesn't apply to a set that's never trained on; (b) IDH mutation
+status is fixed at diagnosis and does not change over a 16–175 day gap, so both scans would carry
+an identical label — using both would not add label information, only two correlated images of the
+same patient in what must be an *independent*-observations evaluation set. Counting a patient twice
+would inflate the reported N and violate the independence assumption underlying every metric this
+project reports on UCSF-PDGM (AUROC confidence intervals, DeLong, calibration/AURC), with no
+compensating benefit. **All 6 `_FU<days>d` follow-up directories are excluded; the 6 base
+directories are retained.** Reason code for the exclusion manifest: `duplicate:followup_timepoint`.
 
-**Owner.** Research Lead. Feeds directly into T03.10 (exclusion manifest needs the reason codes and
-counts this decision settles) and the final cohort count T03.11/Phase 05 will use — the true UCSF-PDGM
-external test set is at most 495 patients before any other exclusion (D-020's 293 BraTS overlap,
-etc.), not 501.
+**Decision 2 — Finding 2's 6 no-imaging patients: excluded from the cohort manifest**, as
+recommended (a patient without any downloaded imaging cannot be used regardless of label
+completeness). Reason code: `no_imaging_available`.
+
+**Owner.** Research Lead — both decisions final. Feeds directly into T03.10 (exclusion manifest uses
+these two reason codes) and the final cohort count T03.11/Phase 05 will use — the true UCSF-PDGM
+external test set is 495 patients before any other exclusion (D-020's 293 BraTS overlap etc. still
+apply on top), not 501.
 
 ---
 
