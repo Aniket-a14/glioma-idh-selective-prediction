@@ -7,11 +7,11 @@ Do not hand-edit the status block during an agent run — let the agent own it.
 current_phase: 03
 status: in-progress      # not-started | in-progress | blocked | awaiting-integration | complete
 claude_tasks: not-started  # not-started | in-progress | done
-codex_tasks: not-started   # not-started | in-progress | done | none-this-phase
+codex_tasks: done          # not-started | in-progress | done | none-this-phase
 integration_mode: research-lead   # research-lead | agent
 blocked_on: null
 last_updated: 2026-09-18
-last_agent: claude
+last_agent: codex
 ```
 
 ## Field meanings
@@ -54,3 +54,4 @@ Append one line per agent run. Newest at the bottom.
 | 2026-09-18 | codex | 02 | Completed T02.6 on `agent/codex/p02-integrity-verification`: added `scripts/verify_download_integrity.py` and synthetic NIfTI/gzip tests. The complete real-data run through `utils/paths.py` found UTSW 625 patients / 6,349 files and UCSF-PDGM 501 patients / 12,030 files; all 18,379 files have SHA-256 records, all 17,878 `.nii.gz` files pass gzip and NIfTI-header validation, and no failures were recorded. Counts match the provisional SPEC counts. Focused pre-commit, `scripts/check_invariants.py`, and 44 unit tests pass; full-tree pre-commit is blocked only by the read-only mounted `.agents/skills` files. |
 | 2026-09-18 | claude | 02 | Orchestrated both Codex sessions above and did T02.5/T02.7 directly: fixed the raw downloads' storage layout (`paths.raw_data_dir()/"utsw"`, `paths.external_data_dir()/"ucsf_pdgm"` symlinks, zero data copied) so both Codex tasks could use canonical paths instead of hard-coded drive locations. Downloaded the UCSF-PDGM/BraTS-2021 ID-mapping file from TCIA's official wiki attachment (T02.5, not optional). Confirmed both cohorts are CC BY 4.0 via TCIA's collection pages — no DUA, GPU-server transfer explicitly permitted (T02.7). Drafted `DATA_ACCESS_LOG.md` with what's verifiable now; download date/method/operator marked TBD pending Research Lead confirmation, since the downloads predate this repo's Phase 02 process. T02.1 (EGD DUA submission) explicitly flagged as not done — the actual day-1-critical item, requires Research Lead action. |
 | 2026-09-18 | claude | 02 | Filled `DATA_ACCESS_LOG.md`'s remaining TBDs from Research Lead confirmation (NBIA Data Retriever, downloaded personally). Drafted `EGD_DUA_REQUEST_DRAFT.md` for Research Lead to fill and send — explicitly not marked "submitted" since it isn't yet (D-018 already covers the deferral). 8/9 Phase 02 tasks done; only T02.1 remains, open by choice. **Advancing `current_phase` to 03 without tagging `phase-02-complete`** — acceptance criterion 1 (EGD DUA submitted) is genuinely unmet, but `PHASE_03_LEAKAGE_AUDIT.md`'s own entry criteria only require Phase 02's UTSW/UCSF-PDGM acceptance criteria (met) plus the BraTS ID-map (obtained); EGD "is audited separately on arrival" per Phase 03's own Data-required note. T02.1/T02.2 keep tracking independently in `DATA_ACCESS_LOG.md`, not gating phase progression. |
+| 2026-09-18 | codex | 03 | Completed T03.2 on agent/codex/p03-label-counts (adeb0af): added literal per-marker metadata counting and synthetic TSV/CSV tests. Real report verified UTSW 625 rows with IDH NA=3, mutated=176, wild type=446 and UCSF-PDGM 501 rows with nine literal IDH categories and no blank/NA IDH. Full unit suite passed (53 tests); all-files pre-commit remains blocked by the read-only mounted .agents/skills/* files, while changed-file hooks pass. |
