@@ -182,6 +182,38 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 
 ---
 
+## D-014 — External storage falls short of SPEC §3.2, and already holds unrecorded data
+**Status:** RESOLVED (2026-09-18, Research Lead, live) · **Blocking:** no (Phase 01 proceeds under the accommodation below)
+
+**Conflict.** Phase 01 (`PHASE_01_INFRASTRUCTURE.md`) requires ≥500 GB free on the storage root (acceptance criterion 3) and treats <250 GB as an explicit failure condition. Two external USB drives are connected: `Research_1` (256 GB total, 95 GB free, exFAT) and `Research_2` (128 GB total, 96 GB free, exFAT). Combined free space is 191 GB — below the 250 GB floor even summed across both, and neither drive individually approaches 500 GB.
+
+**Second finding, discovered in the same pass.** Both drives already contain dataset content that predates Phase 01/02 formally starting — `Research_1/Glioma/PKG - UCSF-PDGM Version 5` (143 GB, the external test cohort) and `Research_2/Glioma/PKG - UTSW-Glioma` (23 GB, the primary dev cohort) plus `UTSW_Glioma_Metadata-2-1.tsv`. Per the Research Lead, this was downloaded following instructions given in an earlier session, prior to this repository's Phase 01/02 process existing in its current form. Neither package is laid out per the canonical `$GLIOMA_STORAGE_ROOT/data/{raw,external,...}` structure, and no acquisition record, checksum, or manifest exists anywhere in the repo for either (`docs/research/DATA_GOVERNANCE_PROTOCOL.md` §1–2 require both) — because Phase 02, which is where those artifacts are produced, hasn't started yet.
+
+**Alternatives considered for the capacity shortfall.** (a) Wait for additional/larger storage before starting Phase 01. (b) Free existing capacity or acquire bigger hardware first. (c) Proceed on the 191 GB actually available, logging the deviation and accepting a tighter operating margin (aggressive `cache/`/`interim/` pruning, no long-tail checkpoint retention) as the accommodation.
+
+**Decision.** **(c).** Research Lead confirmed live: "this is genuinely all we have — log a deviation and proceed." Phase 01 continues on the two drives as-is rather than blocking on hardware that isn't coming.
+
+**Storage layout implication (for whoever writes T01.1 `scripts/bootstrap_storage.py`, Codex per the phase table).** `utils/paths.py` supports exactly two independent root overrides (`GLIOMA_DATA_ROOT`, `GLIOMA_ARTIFACT_ROOT`) on top of `GLIOMA_STORAGE_ROOT` — there is no per-subdirectory override, so `data/external` cannot be routed to a second physical volume through env vars alone. The two datasets already sit on separate drives (dev cohort on `Research_2`, external cohort on `Research_1`), which happens to line up naturally with the external-validation firewall. Recommended treatment: `GLIOMA_STORAGE_ROOT=/Volumes/Research_2` (dev cohort + artifacts), with `data/external` created as a plain symlink to `/Volumes/Research_1/...` *after* `bootstrap_storage.py` runs, not inside the script itself — keeps the idempotent-symlink-creation script generic (single root in, `data/`+`artifacts/` out) while accommodating the two-drive reality as a documented one-off. `bootstrap_storage.py`'s "refuses dangerous overwrites" requirement must tolerate `data/external` already existing as a symlink rather than treating it as a conflict.
+
+**Consequence.** (i) Phase 02 must retroactively produce the acquisition record and checksums for both already-downloaded packages before either is treated as a verified project input — nothing computes against them until that exists, consistent with D-009's "every count is provisional until verified." (ii) Operating margin is tight (191 GB vs. the 500 GB target); if raw+processed+checkpoints approach the ceiling before Phase 05, revisit hardware rather than silently letting `cache/`/`interim/` growth crowd out `raw/`. (iii) `Research_1`/`Research_2` being exFAT is fine functionally (large-file support, readable without extra drivers) but carries no Unix permission bits — not a blocker, noted for completeness.
+
+**Owner.** Research Lead (this entry). Layout implication is input to whoever executes T01.1.
+
+---
+
+## D-015 — T01.9 names five recovery-runbook failure modes but requires six
+**Status:** RESOLVED (2026-09-18, Claude, non-blocking editorial gap) · **Blocking:** no
+
+**Conflict.** `PHASE_01_INFRASTRUCTURE.md`'s T01.9 task row names five failure modes: *"SSH drop, OOM, crash, partial checkpoint, power loss."* Acceptance criterion 8 requires *"Recovery runbook covers all six failure modes."* The row and the criterion disagree on count.
+
+**Resolution.** The same phase file's Risks section names R-M07 (external SSD failure) as in-scope for Phase 01 specifically because "nothing irreplaceable is stored yet" — and R-M07 isn't covered by any of the five named modes ("crash" is process/host crash, not storage-media failure). Treating SSD/storage failure as the implied sixth mode is the only reading consistent with the rest of the same document, so `RECOVERY_RUNBOOK.md` covers six: SSH drop, OOM, process crash, partial/corrupt checkpoint, power loss, and external storage failure.
+
+**Consequence.** None — this is a documentation completeness question, not a scientific one. Flagging here rather than silently picking a number, per the confusion protocol, since it's a direct textual contradiction rather than a judgment call resolvable purely by reading harder.
+
+**Owner.** Research Lead may override if a different sixth mode was intended.
+
+---
+
 ## Ongoing entries
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
