@@ -28,5 +28,5 @@ jobs:
       - name: Check repository invariants
         run: python scripts/check_invariants.py
 
-      - name: Run unit tests
-        run: pytest tests/unit -q
+      - name: Run unit and regression tests
+        run: pytest tests/unit tests/regression -q
