@@ -7,11 +7,11 @@ Do not hand-edit the status block during an agent run — let the agent own it.
 current_phase: 02
 status: not-started       # not-started | in-progress | blocked | awaiting-integration | complete
 claude_tasks: not-started  # not-started | in-progress | done
-codex_tasks: not-started   # not-started | in-progress | done | none-this-phase
+codex_tasks: done          # not-started | in-progress | done | none-this-phase
 integration_mode: research-lead   # research-lead | agent
 blocked_on: null
 last_updated: 2026-09-18
-last_agent: claude
+last_agent: codex
 ```
 
 ## Field meanings
@@ -50,3 +50,4 @@ Append one line per agent run. Newest at the bottom.
 | 2026-09-18 | codex | 01 | Completed T01.3 on `agent/codex/p01-env-capture`: added the fourteen-field JSON environment fingerprint, explicit CPU-only/GPU-absent states, both dependency-lock states, and focused tests. Gate A passed with 40 unit tests, invariant scan, and pre-commit. |
 | 2026-09-18 | claude | 01 | Orchestrated both Codex sessions above via `codex exec` (T01.3's first attempt correctly stopped on an undefined lock format — logged D-016, uv/`requirements.lock.txt`, then re-ran). Merged both branches into `main` after independently re-running their tests. Ran `bootstrap_storage.py` for real on this machine (T01.2): `GLIOMA_STORAGE_ROOT=/Volumes/Research_2`, `data/external` symlinked to `/Volumes/Research_1` per D-014's two-drive accommodation; idempotent on a second run. Confirmed SSH to the home GPU server (`home-gpu`, Tailscale-authenticated). Wrote T01.9's `RECOVERY_RUNBOOK.md` (D-015: six failure modes, not the five named in the task row). T01.5/T01.7 still blocked on T01.4 (env capture run on the GPU server). |
 | 2026-09-18 | claude | 01 | Completed Phase 01. T01.4: captured environment on the GPU server — found and fixed a full root filesystem (28GB runaway log, unrelated project directory, both removed with sign-off), set up a scoped read-only GitHub deploy key, cloned the repo to `/data/glioma-idh/`. Measured VRAM 8GB / RAM 15.48GB vs. SPEC's 16-24GB/≥32GB targets — logged D-017 (OPEN, blocking Phase 06 on timeline only); Research Lead clarified the real Phase 06 training environment is upcoming NVIDIA Labs A100 access, not this machine. T01.5: pinned `torch>=2.4,<3`/`monai>=1.4,<2`, generated `requirements.lock.txt` via `uv pip compile --universal` (torch 2.14.0, monai 1.6.0). T01.6: installed the lock on both machines, confirmed identical hash and `torch.cuda.is_available()`/capability match on the server. T01.7: SegResNet forward+backward benchmark on the actual 8GB card — all four {96,128}³ × {1,2} cells fit comfortably (peak 4.66GB), framed explicitly as a smoke test, not the A100 sizing decision. All 8 acceptance criteria met (criterion 3, free space ≥500GB, met via D-014's logged deviation, not literally). Gate A/B verified on the merged tree: pre-commit, 40 unit tests, mypy, radon cc/mi, check_invariants.py all pass. Advancing to Phase 02. |
+| 2026-09-18 | codex | 02 | Completed T02.6 on `agent/codex/p02-integrity-verification`: added `scripts/verify_download_integrity.py` and synthetic NIfTI/gzip tests. The complete real-data run through `utils/paths.py` found UTSW 625 patients / 6,349 files and UCSF-PDGM 501 patients / 12,030 files; all 18,379 files have SHA-256 records, all 17,878 `.nii.gz` files pass gzip and NIfTI-header validation, and no failures were recorded. Counts match the provisional SPEC counts. Focused pre-commit, `scripts/check_invariants.py`, and 44 unit tests pass; full-tree pre-commit is blocked only by the read-only mounted `.agents/skills` files. |
