@@ -27,7 +27,7 @@ Raw cohorts; clinical-metadata files; UCSF-PDGM/BraTS-2021 ID map; BraTS-2021, T
 | ID | Objective | Owner | Solo fallback | Executor | Compute | Parallel | Blocks |
 |---|---|---|---|---|---|---|---|
 | T03.1 | ID normalization: case, padding, prefixes, separators — per cohort | A | — | Codex | CPU | no | T03.4 |
-| T03.2 | **Parse clinical metadata; count IDH / 1p19q per cohort from files** (**D-009**) | B | A+Codex (+3d) | Codex | CPU | yes | T03.3 |
+| T03.2 | **Parse clinical metadata; count IDH / 1p/19q per cohort from files** (**D-009**) | B | A+Codex (+3d) | Codex | CPU | yes | T03.3 |
 | T03.3 | SPEC-claimed vs. file-verified count table; explain every discrepancy | B | A (+2d) | Claude | CPU | no | Phase 05 |
 | T03.4 | **Full overlap matrix** — every cell, including expected-empty | B | A+Codex (+5d) | Codex | CPU | no | T03.5 |
 | T03.5 | **UCSF-PDGM ⇄ BraTS-2021 exclusion via the shipped ID map** | A | — | Codex | CPU | no | Phase 11 |
