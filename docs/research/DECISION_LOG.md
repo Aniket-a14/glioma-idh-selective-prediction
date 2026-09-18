@@ -307,6 +307,32 @@ Research Lead input once A100 access details are known — flag again then, not 
 
 ---
 
+## D-018 — EGD DUA submission (T02.1) explicitly deferred, not silently missed
+**Status:** RESOLVED (2026-09-18, Research Lead) · **Blocking:** no for now — revisit before
+Phase 11 · **Resolve by:** before Gate E (Phase 11) at the latest
+
+**Context.** `PHASE_02_DATASET_ACQUISITION.md` frames EGD DUA submission as the phase's single
+"DAY-1 ACTION" — the highest-priority item, specifically because its 4–8 week external latency
+(R-H01, Health-RI review time) cannot be compressed by working harder on anything else. It is the
+one task explicitly designed to start immediately, in parallel with everything else, precisely so
+the latency clock starts early.
+
+**Decision.** Research Lead explicitly deferred it (asked directly, answered "not ready to start
+EGD yet") rather than it slipping unnoticed. This is a real cost: every week of delay here is a
+week added to the critical path before Phase 11 (Gate E, external evaluation authorization) can
+close, since EGD is one of the two external test cohorts the SPEC's claims depend on.
+
+**Consequence.** Phase 02 otherwise closes out with 6/9 tasks complete (T02.3–T02.8 done, T02.9
+mostly populated) — this is the one open item, and it's open by choice, not oversight.
+`DATA_ACCESS_LOG.md`'s EGD section states this explicitly. No other phase is blocked by this deferral
+right now — Phase 03 explicitly "does not wait for EGD" per the phase file's own dependency note.
+The real deadline pressure lands at Phase 11, not sooner.
+
+**Owner.** Research Lead — resume T02.1 whenever ready; no agent should treat this as something to
+chase or escalate on its own.
+
+---
+
 ## Ongoing entries
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
