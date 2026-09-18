@@ -6,12 +6,12 @@ Do not hand-edit the status block during an agent run — let the agent own it.
 ```yaml
 current_phase: 03
 status: in-progress      # not-started | in-progress | blocked | awaiting-integration | complete
-claude_tasks: not-started  # not-started | in-progress | done
+claude_tasks: in-progress  # not-started | in-progress | done
 codex_tasks: done          # not-started | in-progress | done | none-this-phase
 integration_mode: research-lead   # research-lead | agent
 blocked_on: null
 last_updated: 2026-09-18
-last_agent: codex
+last_agent: claude
 ```
 
 ## Field meanings
@@ -58,3 +58,4 @@ Append one line per agent run. Newest at the bottom.
 | 2026-09-18 | codex | 03 | Completed T03.8 on `agent/codex/p03-duplicate-detection`: added adapter-backed within-cohort duplicate-scan detection, optional complete T02.6 hash-report fast path, independent hashing fallback, structured derived report, retention recommendation requiring Research Lead approval, and synthetic tests. Real-data result: no complete duplicate-scan groups in UTSW or UCSF-PDGM; UTSW has one shared ancillary-file hash signal requiring review (`tumorseg_FeTS.nii.gz`, byte-identical across BT0926/BT1016/BT1090 — an ancillary segmentation file, not a core sequence, verified as a likely shared empty/template mask rather than a patient duplicate). |
 | 2026-09-18 | codex | 03 | Completed T03.9 on `agent/codex/p03-missing-inventory` (`fce3e10`): added aggregate-only naturally-missing sequence reporting on top of the UTSW/UCSF-PDGM adapters, synthetic adapter fixtures, and a derived `paths.manifests_dir()` JSON report. Real-data run found UTSW 625/625 and UCSF-PDGM 501/501 complete, with zero naturally missing T1/T1ce/T2/FLAIR cases. Focused pre-commit, mypy, invariants, and 51 unit tests passed; full-tree pre-commit remains blocked by the read-only `.agents/skills/*` EOF-fixer inputs. No `leakage/` or `splits/` paths touched. |
 | 2026-09-18 | codex | 03 | Completed T03.2 on `agent/codex/p03-label-counts` (`adeb0af`): added literal per-marker metadata counting and synthetic TSV/CSV tests. Real report verified UTSW 625 rows with IDH NA=3, mutated=176, wild type=446 and UCSF-PDGM 501 rows with nine literal IDH categories and no blank/NA IDH — both independently cross-validate against T03.6's LABEL_DEFINITIONS.md counts computed earlier from the same files. Full unit suite passed (53 tests); all-files pre-commit remains blocked by the read-only mounted `.agents/skills/*` files, while changed-file hooks pass. |
+| 2026-09-18 | claude | 03 | Orchestrated all four Codex Phase 03 sessions above via `codex exec` and merged them into `main` after independent re-review (`leakage/id_normalization.py` and `leakage/duplicate_detection.py` reviewed in full per the mandatory-review rule for that directory; full unit suite, mypy, invariants, and pre-commit re-verified on the merged tree — 80 tests passing). Updated D-012 with T03.9's real finding (zero naturally-incomplete cases in UTSW/UCSF-PDGM; stays OPEN pending EGD). Completed T03.3 directly: wrote `docs/research/protocols/SPEC_VS_VERIFIED_COUNTS.md`, the formal SPEC-claimed-vs-file-verified table — every UTSW and UCSF-PDGM marker matches the SPEC exactly, the 625-vs-622 IDH gap is fully explained (3 `NA` rows), and D-009 is now resolved for both downloaded cohorts, staying `OPEN` only pending EGD. |

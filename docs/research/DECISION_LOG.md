@@ -119,7 +119,7 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 ---
 
 ## D-009 — Every label count in the SPEC is unverified
-**Status:** OPEN · **Resolve by:** Phase 03 · **Blocking:** YES
+**Status:** OPEN — resolved for UTSW/UCSF-PDGM, pending EGD only · **Resolve by:** Phase 03 · **Blocking:** YES (on EGD arrival, not on UTSW/UCSF-PDGM)
 
 **Conflict.** SPEC §9 step 1 instructs: *"independently verify (do not trust this document alone) the exact per-marker IDH/1p19q/MGMT counts by parsing the actual clinical-metadata files."* Yet the SPEC's own counts (625 patients, IDH 622 = 176/446, 1p19q 335 = 63/272, UCSF 501, EGD 774/467) are quoted throughout as if settled — and there is an internal wobble already: 625 patients but IDH n=622, which implies 3 unlabelled cases whose disposition is unspecified.
 
@@ -130,10 +130,18 @@ n=622" gap is now explained, from the actual UTSW metadata file, not assumption:
 have `IDH = NA` in `UTSW_Glioma_Metadata-2-1.tsv`. The remaining 622 split 176 mutated / 446
 wildtype, matching the SPEC's claimed breakdown exactly. UCSF-PDGM's IDH (103 mutant variants /
 398 wildtype) and 1p/19q (410 labeled, matching SPEC) also verified from its metadata CSV — see
-`docs/research/protocols/LABEL_DEFINITIONS.md` for the full per-cohort breakdown. **This is not
-the full D-009 resolution** — UTSW's 1p/19q/MGMT counts, the complete SPEC-vs-verified comparison
-table, and EGD (once it arrives) are still T03.3's job, a separate task. Status stays OPEN until
-T03.3 closes it out formally.
+`docs/research/protocols/LABEL_DEFINITIONS.md` for the full per-cohort breakdown.
+
+**T03.3 resolution (2026-09-18).** `docs/research/protocols/SPEC_VS_VERIFIED_COUNTS.md` is the
+formal SPEC-claimed vs. file-verified table this decision's acceptance criterion requires. Every
+UTSW marker (IDH, 1p/19q, MGMT) and every UCSF-PDGM marker (IDH, 1p/19q) matches the SPEC's claimed
+count exactly, computed independently twice (T03.2's `metadata.py` and T03.6's direct file
+counting agree). The SPEC's own internal wobble (625 patients, IDH n=622) is fully explained as 3
+literal `NA` rows, with no other unexplained residual anywhere in either cohort. **D-009 is
+resolved for both cohorts currently downloaded.** It stays formally `OPEN` only because EGD (n=774,
+IDH n=467 claimed) has not been downloaded — T02.1's DUA submission is deferred by Research Lead
+choice (D-018) — so its counts cannot be verified yet. Re-open the blocking flag if EGD's verified
+counts, once available, disagree materially with the SPEC's claim.
 
 ---
 
