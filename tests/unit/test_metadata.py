@@ -11,6 +11,7 @@ import pytest
 from glioma_selective.data.metadata import (
     MetadataFileSpec,
     count_metadata_file,
+    default_metadata_specs,
     write_label_count_report,
 )
 
@@ -221,3 +222,15 @@ def test_report_defaults_to_the_manifests_path(
     assert destination == tmp_path / "data" / "manifests" / "label_verification.json"
     payload = json.loads(destination.read_text(encoding="utf-8"))
     assert payload["cohorts"][0]["markers"]["IDH"]["category_counts"] == {"mutated": 1}
+
+
+def test_default_ucsf_spec_records_id_padding_note(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("GLIOMA_DATA_ROOT", str(tmp_path))
+    ucsf_spec = default_metadata_specs()[1]
+
+    assert ucsf_spec.notes == (
+        "Raw metadata IDs use three-digit padding while imaging folders use "
+        "four-digit padding; ID reconciliation is deferred to T03.1 and T03.3.",
+    )

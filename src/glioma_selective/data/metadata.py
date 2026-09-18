@@ -37,6 +37,7 @@ class MetadataFileSpec:
     delimiter: str
     identifier_column: str
     marker_columns: Mapping[str, str]
+    notes: tuple[str, ...] = ()
 
 
 def default_metadata_specs() -> tuple[MetadataFileSpec, ...]:
@@ -63,6 +64,11 @@ def default_metadata_specs() -> tuple[MetadataFileSpec, ...]:
                 "1p/19q": "1p/19q",
                 "MGMT": "MGMT status",
             },
+            notes=(
+                "Raw metadata IDs use three-digit padding while imaging folders "
+                "use four-digit padding; ID reconciliation is deferred to T03.1 "
+                "and T03.3.",
+            ),
         ),
     )
 
@@ -133,12 +139,15 @@ def count_metadata_file(
     }
     if "IDH" in marker_reports:
         marker_reports["IDH"]["unlabeled_source_rows"] = unlabeled_rows["IDH"]
-    return {
+    report: dict[str, object] = {
         "cohort": spec.cohort,
         "source_file": spec.path.name,
         "row_count": row_count,
         "markers": marker_reports,
     }
+    if spec.notes:
+        report["notes"] = list(spec.notes)
+    return report
 
 
 def build_label_count_report(
