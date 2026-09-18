@@ -229,6 +229,58 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 
 ---
 
+## D-017 — Measured GPU VRAM and system RAM are below SPEC §3.1/§3.5
+**Status:** OPEN · **Resolve by:** Phase 06 (before any real training run) · **Blocking:** YES
+
+**Conflict.** T01.4's environment capture on the home GPU server (`capture_environment.py`,
+recorded in `ENVIRONMENT_RECORD.md`) measured:
+
+| | SPEC target | Measured |
+|---|---|---|
+| VRAM (§3.1) | 16–24 GB (RTX 3090/4090, A5000, or equivalent) | **RTX 2060 SUPER, 8 GB** |
+| System RAM (§3.5) | ≥32 GB | **15.48 GB** |
+
+This is precisely the scenario `PHASE_01_INFRASTRUCTURE.md` names as a failure condition
+("Measured VRAM < 16 GB") and flags as needing Research Lead approval ("patch size if the
+benchmark forces a change from 128³ · whether cloud GPU fallback is provisioned now or
+deferred") — not something T01.5/T01.7 can silently accommodate on their own. SPEC §3.4 says
+96³/128³ patches at batch 1–2 fit "in 16–24 GB VRAM" — at 8 GB, neither patch size is guaranteed
+to fit even at batch 1 without measuring (T01.7's job), and the OOM ladder (R-H04:
+128³→96³→gradient accumulation→batch 1) may bottom out without headroom to spare. The RAM
+shortfall (15.48 GB vs. ≥32 GB) is arguably the more structural problem: it constrains data
+loading/preprocessing concurrency independent of anything patch-size tuning can fix.
+
+**Alternatives.** (a) Proceed on this hardware, accepting the OOM ladder's smallest rung (96³,
+batch 1, gradient accumulation) once T01.7 actually measures what fits, and treat the RAM
+constraint as a data-loader worker-count/prefetch limit rather than a hard blocker — SPEC §3.8
+already states compute is not expected to be the real bottleneck for this project, and this may
+still hold even at reduced settings. (b) Cloud GPU rental, sanctioned explicitly by SPEC §3.7 as
+"a reasonable fallback... not a structural requirement" — a single rented instance (16–24 GB
+class) for the training-heavy phases (06, 08, 09, 10), keeping the home GPU server for
+CPU-bound/lightweight work. (c) Different/upgraded local hardware before Phase 06.
+
+**Recommendation.** **(a) first, informed by T01.7's actual benchmark**, with **(b) held in
+reserve** exactly as SPEC §3.7 frames it — a fallback for intermittent access or a deadline
+crunch, not a default. Concretely: T01.5 pins a PyTorch/CUDA build compatible with this GPU's
+driver (CUDA 13.2 max, compute capability 7.5/Turing — no compatibility conflict expected, this
+GPU is well within range of any current PyTorch build); T01.7 benchmarks 96³/128³ × batch 1/2 on
+the *actual* 8 GB card, not the SPEC's assumed 16–24 GB one; whatever config survives that
+benchmark is what Phase 06 uses, recorded as a deviation from the SPEC's stated envelope (not
+from its scientific claims — patch size and batch size are engineering, not something RQ1–RQ4 or
+C1–C6 depend on). If T01.7 shows nothing workable even at batch 1 with gradient accumulation,
+that is the trigger for (b), decided then rather than preemptively now.
+
+**Consequence if unaddressed.** Silently training at whatever settings happen not to OOM, without
+recording the deviation, would be exactly the kind of unreviewed engineering-driven scientific
+change this log exists to prevent (same principle as R-H04's OOM-ladder rule and
+`RECOVERY_RUNBOOK.md`'s cross-cutting rule).
+
+**Owner.** Research Lead. Must be confirmed (or overridden toward (b)/(c)) before Phase 06 begins
+training; T01.5/T01.7 can proceed on hypothesis (a) in the meantime since they're measurement,
+not commitment.
+
+---
+
 ## Ongoing entries
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
