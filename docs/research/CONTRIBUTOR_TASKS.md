@@ -40,22 +40,23 @@ rather than acting on someone else's row or inventing a new task.
 
 | ID | Task | Allowed paths | Assigned to | Branch | Notes |
 |---|---|---|---|---|---|
-| C-005 | Draft a related-work paragraph summarizing 3–5 recent papers on missing-modality robustness in multimodal MRI deep learning | `paper/RELATED_WORK_MISSING_MODALITY_DRAFT.md` (new file) | udaypratapchauhan | `contrib/udaypratapchauhan/c-005-related-work-missing-modality` | Draft only, disjoint file from C-003 — citations and claims get checked by the Research Lead before anything moves into the actual manuscript. |
+| — | — | — | — | — | — |
 
 ## In progress
 
 | ID | Task | Assigned to | Branch | PR |
 |---|---|---|---|---|
-| C-003 | Draft a related-work paragraph summarizing 3–5 recent papers on selective prediction / conformal prediction in medical imaging | ShantanuTripathi2745 | `contrib/ShantanuTripathi2745/c-003-related-work` | [#5](../../../pull/5) |
-| C-001 | Add edge-case unit tests for `utils/paths.py` | solankisuryansh | `contrib/solankisuryansh/c-001-path-edge-cases` | [#1](../../../pull/1) (draft — flags that `utils/paths.py` currently accepts relative paths and nonexistent parents, out of this task's scope; needs Research Lead decision before the PR can leave draft) |
-| C-002 | Proofread top-level docs for typos, broken internal links, and inconsistent terminology | priyaagrawal2 | `contrib/priyaagrawal2/c-002-doc-proofread` | [#2](../../../pull/2) |
-| C-004 | Proofread the protocol docs for typos, broken internal links, and inconsistent terminology | Akshita1395 | `contrib/Akshita1395/c-004-protocol-doc-proofread` | [#4](../../../pull/4) |
+| — | — | — | — | — |
 
 ## Done
 
 | ID | Task | Closed by | PR | Merged |
 |---|---|---|---|---|
-| — | — | — | — | — |
+| C-001 | Add edge-case unit tests for `utils/paths.py` | solankisuryansh | [#1](../../../pull/1) | 2026-09-15 |
+| C-002 | Proofread top-level docs for typos, broken internal links, and inconsistent terminology | priyaagrawal2 | [#2](../../../pull/2) | 2026-09-17 |
+| C-004 | Proofread the protocol docs for typos, broken internal links, and inconsistent terminology | Akshita1395 | [#4](../../../pull/4) | 2026-09-18 |
+| C-003 | Draft a related-work paragraph summarizing 3–5 recent papers on selective prediction / conformal prediction in medical imaging | ShantanuTripathi2745 | [#5](../../../pull/5) | 2026-09-18 |
+| C-005 | Draft a related-work paragraph on missing-modality robustness | udaypratapchauhan | — (no PR) | closed 2026-09-18 by Research Lead decision, not completed — round closed out to start Phase 01; re-queue as a fresh row if this content is still wanted later |
 
 ---
 
