@@ -107,17 +107,18 @@ happens to provide — noted here so it's a visible choice, not a silent loss.
 
 **Relative co-deletion (UCSF-PDGM, n=6)** is folded into `1P19Q_CODELETED` for consistency with
 the binary framing UTSW's file provides, though "relative" co-deletion is arguably a distinct,
-weaker signal than the file's own separately-reported `co-deletion`/`Co-deletion` rows. This is a
-judgement call, not a verified equivalence — flagged for Research Lead review since 1p/19q is
-explicitly exploratory-only per the project's own invariants and D-007, so the practical stakes of
-this specific choice are low, but the choice itself should still be visible rather than buried in
-code.
+weaker signal than the file's own separately-reported `co-deletion`/`Co-deletion` rows. **Resolved
+by the Research Lead (D-019, T03.7):** fold into `CODELETED`. 1p/19q is explicitly exploratory-only
+per the project's own invariants and D-007, so the practical stakes of this classification are low;
+no patient is excluded by it.
 
 ---
 
 ## 5. What this document does not do
 
 Per the phase file's own scope boundary, this document defines the harmonized label vocabulary and
-flags heterogeneity. It does **not** decide which "ambiguous" labels get excluded (T03.7, a
-separate Human+Claude task) and does not compute post-exclusion class counts (T03.10/T03.11). Those
-consume this document's mapping table as an input, not the other way around.
+flags heterogeneity. The two concrete ambiguous cases it surfaced (UTSW's 3 no-IDH patients,
+UCSF-PDGM's relative co-deletion) were resolved by the Research Lead in T03.7/D-019, recorded
+above. This document does not build the exclusion manifest itself or compute post-exclusion class
+counts (T03.10/T03.11) — those consume this document's mapping table and D-019's decisions as
+input, not the other way around.

@@ -342,6 +342,32 @@ EGD yet") rather than it slipping unnoticed. This is a real cost: every week of 
 week added to the critical path before Phase 11 (Gate E, external evaluation authorization) can
 close, since EGD is one of the two external test cohorts the SPEC's claims depend on.
 
+---
+
+## D-019 — T03.7 ambiguous-label exclusion boundary (UTSW no-IDH, UCSF-PDGM relative co-deletion)
+**Status:** RESOLVED (2026-09-18, Research Lead) · **Blocking:** no · **Resolve by:** Phase 03
+
+**Context.** T03.6/T03.2 surfaced two concrete ambiguous-label cases, not a general policy
+question — no duplicate or conflicting patient rows exist in either the UTSW or UCSF-PDGM metadata
+files (verified directly: 625/625 and 501/501 unique `Subject ID`/`ID` values). The phase file
+names both cases explicitly under "Decisions requiring Research Lead approval."
+
+**Decision 1 — 3 UTSW patients with a literal blank/`NA` IDH result** (source TSV rows 140, 141,
+171 — row numbers only, no patient ID recorded here per `DATA_GOVERNANCE_PROTOCOL.md` §3).
+**Excluded from the cohort manifest entirely**, not just from IDH modeling. IDH is the primary
+endpoint; a patient with no IDH result contributes nothing to any analysis this project runs.
+Reason code for the exclusion manifest (T03.10): `label:idh_unavailable`.
+
+**Decision 2 — UCSF-PDGM's `relative co-deletion` 1p/19q value (n=6).** **Folded into
+`1P19Q_CODELETED`**, consistent with `LABEL_DEFINITIONS.md` §4's existing mapping — this decision
+formally resolves that document's "flagged for review" note rather than leaving it open. 1p/19q is
+exploratory-only (project invariant), so the practical stakes of this classification are low; no
+patient is excluded by this decision, only classified.
+
+**Consequence.** `LABEL_DEFINITIONS.md` updated to remove the "flagged for review" language on
+relative co-deletion (now settled). Feeds T03.10's exclusion manifest directly: 3 UTSW patients
+excluded (`label:idh_unavailable`); 0 patients excluded by the 1p/19q classification decision.
+
 **Consequence.** Phase 02 otherwise closes out with 6/9 tasks complete (T02.3–T02.8 done, T02.9
 mostly populated) — this is the one open item, and it's open by choice, not oversight.
 `DATA_ACCESS_LOG.md`'s EGD section states this explicitly. No other phase is blocked by this deferral
