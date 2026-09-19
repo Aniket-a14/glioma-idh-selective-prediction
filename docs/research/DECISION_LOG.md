@@ -813,6 +813,17 @@ as one full 0.01 band has zero failures; if a band has a failure, extend by one 
 bound were reached only through the random and stratified samples (0 failures in 24 UTSW random draws). UTSW
 exclusions: 5 of 622 (0.80%), UCSF-PDGM 0 of 202, far below the 10% stop threshold.
 
+**Update 3 (2026-09-19, Research Lead): sequential extension ends at 0.13; residual failure rate is measured by a random sample.**
+The 25 cases in [0.12, 0.13) gave 1 failure (`qc_0105`, brain fraction 0.129, `qc:skullstrip-over`; 24 passes), so the
+stopping rule of update 2 (stop after a band with no failure) would extend to 0.14, but band sizes grow (UTSW cases
+unreviewed: 50 in [0.13, 0.14), 80 in [0.14, 0.15), 111 in [0.15, 0.16)) while density stays near 4% per band, so the rule has no
+economical end point. Decision: `borderline_min_brain_fraction` stays at **0.13**; the Research Lead reviews a seeded
+random sample of **40** UTSW cases from above 0.13 (`verified-passthrough`, not yet reviewed), reason `residual_sample`.
+The QC report gives the observed failures and an exact (Clopper-Pearson) one-sided 95% upper bound for the failure
+rate above 0.13, from the residual sample alone and from all randomly selected reviewed cases above 0.13 (22 earlier
+IDH-stratified UTSW draws, 0 failures, plus the 40). These are estimates of residual risk for the Limitations section,
+not thresholds. Unreviewed cases above 0.13 stay in the cohort. UTSW exclusions: 6 of 622 (0.96%), UCSF-PDGM 0 of 202.
+
 **Owner.** Research Lead.
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
