@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import math
 import os
 import shutil
 import tempfile
+import uuid
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -157,13 +159,20 @@ class StageCache:
     ) -> Path:
         """Copy outputs from ``output_dir`` and atomically publish the entry."""
 
-        source = Path(output_dir)
-        if not source.is_dir():
-            raise ValueError(f"cache output directory does not exist: {source}")
         normalized_params = _canonicalize({} if params is None else params)
         if not isinstance(normalized_params, dict):
             raise TypeError("cache params must be a mapping")
         normalized_input_keys = self._validate_input_keys(input_keys)
+        self._validate_key_metadata(
+            stage,
+            key,
+            stage_version=stage_version,
+            params=params,
+            input_keys=normalized_input_keys,
+        )
+        source = Path(output_dir)
+        if not source.is_dir():
+            raise ValueError(f"cache output directory does not exist: {source}")
         temporary = self._temporary_directory(stage, key)
         try:
             self._copy_outputs(source, temporary)
@@ -191,14 +200,21 @@ class StageCache:
     ) -> Path:
         """Get a valid entry or compute and atomically publish a new one."""
 
-        cached = self.get(stage, key)
-        if cached is not None:
-            return cached
-
         normalized_params = _canonicalize({} if params is None else params)
         if not isinstance(normalized_params, dict):
             raise TypeError("cache params must be a mapping")
         normalized_input_keys = self._validate_input_keys(input_keys)
+        self._validate_key_metadata(
+            stage,
+            key,
+            stage_version=stage_version,
+            params=params,
+            input_keys=normalized_input_keys,
+        )
+        cached = self.get(stage, key)
+        if cached is not None:
+            return cached
+
         temporary = self._temporary_directory(stage, key)
         try:
             compute_fn(temporary)
@@ -239,6 +255,23 @@ class StageCache:
         if any(not isinstance(input_key, str) for input_key in normalized):
             raise TypeError("input_keys must contain only strings")
         return normalized
+
+    @staticmethod
+    def _validate_key_metadata(
+        stage: str,
+        key: str,
+        *,
+        stage_version: str | None,
+        params: Mapping[str, object] | None,
+        input_keys: Sequence[str],
+    ) -> None:
+        if stage_version is None or params is None:
+            return
+        expected_key = stage_cache_key(stage, stage_version, params, input_keys)
+        if expected_key != key:
+            raise ValueError(
+                "cache key does not match stage_version, params, and input_keys"
+            )
 
     @staticmethod
     def _copy_outputs(source: Path, destination: Path) -> None:
@@ -289,13 +322,56 @@ class StageCache:
         target = self._entry_path(stage, key)
         try:
             os.rename(temporary, target)
-        except FileExistsError:
+        except OSError as error:
+            if not self._is_target_exists_error(error):
+                raise
+            return self._recover_publish(stage, key, temporary, target, error)
+        return target
+
+    def _recover_publish(
+        self,
+        stage: str,
+        key: str,
+        temporary: Path,
+        target: Path,
+        initial_collision: OSError,
+    ) -> Path:
+        """Resolve a target collision with at most two replacement attempts."""
+
+        stale_paths: list[Path] = []
+        collision = initial_collision
+        try:
+            for _ in range(2):
+                if self.get(stage, key) is not None:
+                    shutil.rmtree(temporary, ignore_errors=True)
+                    return target
+
+                stale = target.parent / f".{key}.{uuid.uuid4().hex}.stale"
+                os.rename(target, stale)
+                stale_paths.append(stale)
+                try:
+                    os.rename(temporary, target)
+                except OSError as error:
+                    if not self._is_target_exists_error(error):
+                        raise
+                    collision = error
+                    continue
+                return target
+
             if self.get(stage, key) is not None:
                 shutil.rmtree(temporary, ignore_errors=True)
                 return target
-            shutil.rmtree(target, ignore_errors=True)
-            os.rename(temporary, target)
-        return target
+            raise collision
+        finally:
+            for stale in stale_paths:
+                shutil.rmtree(stale, ignore_errors=True)
+
+    @staticmethod
+    def _is_target_exists_error(error: OSError) -> bool:
+        return isinstance(error, FileExistsError) or error.errno in {
+            errno.EEXIST,
+            errno.ENOTEMPTY,
+        }
 
     @staticmethod
     def _safe_output_path(target: Path, relative_name: str) -> Path | None:

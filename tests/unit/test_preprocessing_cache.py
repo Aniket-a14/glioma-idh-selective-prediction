@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+import glioma_selective.preprocessing.cache as cache_module
 from glioma_selective.preprocessing.cache import (
     StageCache,
     hash_file,
@@ -184,6 +187,186 @@ def test_corrupt_or_deleted_output_is_a_miss(tmp_path: Path) -> None:
 
     output.unlink()
     assert cache.get("resample", key) is None
+
+
+def test_corrupt_output_is_recomputed_and_republished(tmp_path: Path) -> None:
+    cache = StageCache(tmp_path / "processed")
+    key = _key()
+    calls = 0
+
+    def compute(output_dir: Path) -> None:
+        nonlocal calls
+        calls += 1
+        _write_output(output_dir, f"computed-{calls}".encode())
+
+    result = cache.get_or_compute("resample", key, compute)
+    (result / "volume.bin").write_bytes(b"corrupted")
+
+    repaired = cache.get_or_compute("resample", key, compute)
+
+    assert repaired == result
+    assert calls == 2
+    assert repaired.is_dir()
+    assert (repaired / "volume.bin").read_bytes() == b"computed-2"
+    assert cache.get("resample", key) == repaired
+
+
+def test_deleted_output_is_recomputed_and_republished(tmp_path: Path) -> None:
+    cache = StageCache(tmp_path / "processed")
+    key = _key()
+    calls = 0
+
+    def compute(output_dir: Path) -> None:
+        nonlocal calls
+        calls += 1
+        _write_output(output_dir, f"computed-{calls}".encode())
+
+    result = cache.get_or_compute("resample", key, compute)
+    (result / "volume.bin").unlink()
+
+    repaired = cache.get_or_compute("resample", key, compute)
+
+    assert repaired == result
+    assert calls == 2
+    assert (repaired / "volume.bin").read_bytes() == b"computed-2"
+    assert cache.get("resample", key) == repaired
+
+
+def test_deleted_manifest_is_recomputed_and_republished(tmp_path: Path) -> None:
+    cache = StageCache(tmp_path / "processed")
+    key = _key()
+    calls = 0
+
+    def compute(output_dir: Path) -> None:
+        nonlocal calls
+        calls += 1
+        _write_output(output_dir, f"computed-{calls}".encode())
+
+    result = cache.get_or_compute("resample", key, compute)
+    (result / "manifest.json").unlink()
+
+    repaired = cache.get_or_compute("resample", key, compute)
+
+    assert repaired == result
+    assert calls == 2
+    assert (repaired / "volume.bin").read_bytes() == b"computed-2"
+    assert cache.get("resample", key) == repaired
+
+
+def test_put_race_loser_reuses_valid_entry_and_cleans_temporary(
+    tmp_path: Path,
+) -> None:
+    cache = StageCache(tmp_path / "processed")
+    source = tmp_path / "source"
+    _write_output(source, b"winner")
+    key = _key()
+    published = cache.put("resample", key, source)
+
+    result = cache.put("resample", key, source)
+
+    assert result == published
+    assert (result / "volume.bin").read_bytes() == b"winner"
+    assert not list(result.parent.glob(f".{key}.*.tmp"))
+    assert not list(result.parent.glob(f".{key}.*.stale"))
+
+
+def test_put_replaces_invalid_entry_and_cleans_stale_directory(
+    tmp_path: Path,
+) -> None:
+    cache = StageCache(tmp_path / "processed")
+    source = tmp_path / "source"
+    _write_output(source, b"replacement")
+    key = _key()
+    published = cache.put("resample", key, source)
+    (published / "volume.bin").write_bytes(b"invalid")
+
+    result = cache.put("resample", key, source)
+
+    assert result == published
+    assert (result / "volume.bin").read_bytes() == b"replacement"
+    assert cache.get("resample", key) == result
+    assert not list(result.parent.glob(f".{key}.*.tmp"))
+    assert not list(result.parent.glob(f".{key}.*.stale"))
+
+
+def test_inconsistent_key_and_metadata_is_rejected_by_put_and_compute(
+    tmp_path: Path,
+) -> None:
+    cache = StageCache(tmp_path / "processed")
+    source = tmp_path / "source"
+    _write_output(source)
+    key = _key()
+
+    with pytest.raises(ValueError, match="does not match"):
+        cache.put(
+            "resample",
+            key,
+            source,
+            stage_version="v1",
+            params={"parameter": 999},
+            input_keys=["raw"],
+        )
+    with pytest.raises(ValueError, match="does not match"):
+        cache.get_or_compute(
+            "resample",
+            key,
+            lambda output_dir: _write_output(output_dir),
+            stage_version="v1",
+            params={"parameter": 999},
+            input_keys=["raw"],
+        )
+
+
+def test_leftover_temporary_and_stale_directories_are_ignored(
+    tmp_path: Path,
+) -> None:
+    cache = StageCache(tmp_path / "processed")
+    key = _key()
+    parent = cache.root / "resample" / key[:2]
+    (parent / f".{key}.crashed.tmp" / "volume.bin").parent.mkdir(parents=True)
+    (parent / f".{key}.crashed.tmp" / "volume.bin").write_bytes(b"tmp")
+    (parent / f".{key}.old.stale" / "volume.bin").parent.mkdir(parents=True)
+    (parent / f".{key}.old.stale" / "volume.bin").write_bytes(b"stale")
+
+    assert cache.get("resample", key) is None
+
+
+def test_enotempty_race_with_valid_entry_returns_existing_entry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cache = StageCache(tmp_path / "processed")
+    source = tmp_path / "source"
+    _write_output(source, b"winner")
+    key = _key()
+    published = cache.put("resample", key, source)
+    replacement = tmp_path / "replacement"
+    shutil.copytree(published, replacement)
+    (published / "volume.bin").write_bytes(b"invalid")
+
+    original_rename = os.rename
+    rename_calls = 0
+
+    def racing_rename(
+        source_path: str | os.PathLike[str],
+        target_path: str | os.PathLike[str],
+    ) -> None:
+        nonlocal rename_calls
+        rename_calls += 1
+        if rename_calls == 1:
+            shutil.rmtree(published)
+            original_rename(replacement, target_path)
+            raise OSError(errno.ENOTEMPTY, "simulated race")
+        original_rename(source_path, target_path)
+
+    monkeypatch.setattr(cache_module.os, "rename", racing_rename)
+    result = cache.put("resample", key, source)
+
+    assert result == published
+    assert cache.get("resample", key) == published
+    assert (published / "volume.bin").read_bytes() == b"winner"
+    assert not list(result.parent.glob(f".{key}.*.tmp"))
+    assert not list(result.parent.glob(f".{key}.*.stale"))
 
 
 def test_invalid_json_values_are_rejected() -> None:
