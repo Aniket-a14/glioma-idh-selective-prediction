@@ -68,7 +68,19 @@ def test_from_verification_maps_statuses_and_initial_stages() -> None:
     assert manifest.cases[("utsw", "case-failed")].visual_qc == "pending"
     assert manifest.cases[("utsw", "case-not-run")].visual_qc == "not-required"
     assert manifest.cases[("utsw", "case-clean")].stages["verify"].state == "done"
+    assert manifest.cases[("utsw", "case-clean")].stages["mask"].state == "pending"
     assert "normalize" not in manifest.cases[("utsw", "case-clean")].stages
+
+
+def test_mask_stage_can_be_updated_and_round_trips(tmp_path: Path) -> None:
+    manifest = _manifest(_verification("case-mask", "verified-passthrough"))
+    updated = manifest.update_stage("utsw", "case-mask", "mask", "done", "mask-key")
+
+    path = tmp_path / "preprocessing_status.json"
+    updated.save(path)
+    loaded = PreprocessingStatusManifest.load(path)
+
+    assert loaded.cases[("utsw", "case-mask")].stages["mask"].cache_key == "mask-key"
 
 
 def test_qc_reason_accepts_only_current_categories() -> None:
