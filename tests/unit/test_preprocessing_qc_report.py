@@ -9,7 +9,13 @@ from pathlib import Path
 import pytest
 
 from glioma_selective.leakage.id_normalization import Cohort
-from glioma_selective.preprocessing.qc_report import QCReportError, build_qc_report
+from glioma_selective.preprocessing.qc_report import (
+    QCReportError,
+    _agreement,
+    _ReviewRow,
+    _VerificationCase,
+    build_qc_report,
+)
 from glioma_selective.preprocessing.status import PreprocessingStatusManifest
 from glioma_selective.preprocessing.verification import CaseVerification
 
@@ -172,6 +178,14 @@ def test_report_has_hand_computed_agreement_and_sensitivity_counts(
         "automated_clear__human_pass": 0,
         "automated_clear__human_fail": 1,
     }
+    assert report["screen_bounds"] == {
+        "original_lower_bound": 0.08,
+        "current_lower_bound": 0.12,
+        "provisional": True,
+    }
+    interpretation = report["automated_vs_human_agreement"]["interpretation"]
+    assert "recalibrated D-031 screen" in interpretation
+    assert "in-sample" in interpretation
     sensitivity = report["threshold_sensitivity"][
         "candidate_lower_brain_fraction_bounds"
     ]
@@ -180,6 +194,38 @@ def test_report_has_hand_computed_agreement_and_sensitivity_counts(
         "reviewed_cases_below": {"fail": 1, "pass": 2},
     }
     assert report["provenance"]["reviewed_rows_without_verdict"] == 0
+
+
+def test_agreement_distinguishes_original_and_current_screen_bounds() -> None:
+    rows = [
+        _ReviewRow("qc_0001", Cohort.UTSW, "tail", 0.05, "fail", "corrupt"),
+        _ReviewRow("qc_0002", Cohort.UTSW, "tail", 0.10, "fail", "corrupt"),
+    ]
+    verification = {
+        (Cohort.UTSW, "case-1"): _VerificationCase(
+            Cohort.UTSW, "case-1", "verified-borderline", 0.05, ("corrupt",)
+        ),
+        (Cohort.UTSW, "case-2"): _VerificationCase(
+            Cohort.UTSW, "case-2", "verified-borderline", 0.10, ("corrupt",)
+        ),
+    }
+
+    agreement = _agreement(
+        rows,
+        {"qc_0001": (Cohort.UTSW, "case-1"), "qc_0002": (Cohort.UTSW, "case-2")},
+        verification,
+    )
+    cohort = agreement["by_cohort"]["utsw"]
+    assert cohort["automated_flag_vs_human_verdict"] == {
+        "automated_flagged__human_pass": 0,
+        "automated_flagged__human_fail": 2,
+        "automated_clear__human_pass": 0,
+        "automated_clear__human_fail": 0,
+    }
+    assert cohort["human_failures_flagged_at_original_bound"] == 1
+    assert [
+        failure["flagged_at_original_bound"] for failure in cohort["human_failures"]
+    ] == [True, False]
 
 
 def test_serialized_report_contains_no_ids_or_notes(tmp_path: Path) -> None:

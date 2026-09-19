@@ -16,11 +16,23 @@ from typing import Final
 from glioma_selective.leakage.id_normalization import Cohort
 from glioma_selective.preprocessing.qc_overlays import load_qc_overlay_index
 from glioma_selective.preprocessing.status import PreprocessingStatusManifest
+from glioma_selective.preprocessing.verification import VerificationThresholds
 
 __all__ = ["QCReportError", "build_qc_report"]
 
 
-_BOUNDS: Final[tuple[float, ...]] = (0.05, 0.08, 0.10, 0.11, 0.12, 0.15)
+_ORIGINAL_LOWER_BOUND: Final[float] = 0.08
+_CURRENT_LOWER_BOUND: Final[float] = (
+    VerificationThresholds().borderline_min_brain_fraction
+)
+_BOUNDS: Final[tuple[float, ...]] = (
+    0.05,
+    _ORIGINAL_LOWER_BOUND,
+    0.10,
+    0.11,
+    0.12,
+    0.15,
+)
 _REVIEW_COLUMNS: Final[frozenset[str]] = frozenset(
     {
         "qc_key",
@@ -265,6 +277,7 @@ def _agreement(
         }
     )
     failures: dict[str, list[dict[str, object]]] = defaultdict(list)
+    failures_flagged_at_original_bound: Counter[str] = Counter()
     joinable = 0
     for row in rows:
         indexed = index.get(row.qc_key)
@@ -283,24 +296,37 @@ def _agreement(
         )
         tables[row.cohort.value][key] += 1
         if row.verdict == "fail":
+            flagged_at_original_bound = (
+                case.brain_voxel_fraction is not None
+                and case.brain_voxel_fraction < _ORIGINAL_LOWER_BOUND
+            )
+            failures_flagged_at_original_bound[row.cohort.value] += int(
+                flagged_at_original_bound
+            )
             failures[row.cohort.value].append(
                 {
                     "qc_key": row.qc_key,
                     "failure_category": row.failure_category,
                     "brain_voxel_fraction": case.brain_voxel_fraction,
                     "automated_flagged": automated_flag,
+                    "flagged_at_original_bound": flagged_at_original_bound,
                 }
             )
     return {
         "interpretation": (
-            "The reviewed sample was selected on the tails; these are counts, "
-            "not sensitivity or specificity estimates."
+            "The automated statuses shown are from the recalibrated D-031 screen "
+            "and are therefore in-sample for the human failure that motivated "
+            "recalibration. The reviewed sample was selected on the tails; these "
+            "are counts, not sensitivity or specificity estimates."
         ),
         "joinable_reviewed_case_count": joinable,
         "by_cohort": {
             cohort: {
                 "automated_flag_vs_human_verdict": dict(table),
                 "human_failures": failures.get(cohort, []),
+                "human_failures_flagged_at_original_bound": (
+                    failures_flagged_at_original_bound.get(cohort, 0)
+                ),
             }
             for cohort, table in sorted(tables.items())
         },
@@ -412,6 +438,11 @@ def build_qc_report(
         "cohorts": status_section,
         "reviewed_sample": _reviewed_counts(rows),
         "automated_vs_human_agreement": _agreement(rows, index, verification),
+        "screen_bounds": {
+            "original_lower_bound": _ORIGINAL_LOWER_BOUND,
+            "current_lower_bound": _CURRENT_LOWER_BOUND,
+            "provisional": True,
+        },
         "threshold_sensitivity": _sensitivity(verification, rows),
         "provenance": {
             "input_sha256": {

@@ -50,7 +50,10 @@ def main(argv: list[str] | None = None) -> int:
             output_path=arguments.output,
             cache_root=arguments.cache_root or paths.processed_data_dir(),
         )
-    except (OSError, RuntimeError, TypeError, ValueError, OutputAuditError):
+    except OutputAuditError as error:
+        print(f"audit_preprocessing_outputs.py: audit failed: {error}", file=sys.stderr)
+        return 1
+    except (OSError, RuntimeError, TypeError, ValueError):
         print("audit_preprocessing_outputs.py: audit failed", file=sys.stderr)
         return 1
     print(json.dumps(report, indent=2, sort_keys=True))

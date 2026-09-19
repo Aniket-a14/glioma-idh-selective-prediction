@@ -571,6 +571,5 @@ def audit_preprocessing_outputs(
         "passed": overall_passed and not failures,
     }
     _atomic_json_write(output_path, report)
-    if failures:
-        _atomic_json_write(selected_failures, {"failures": failures})
+    _atomic_json_write(selected_failures, {"failures": failures})
     return report

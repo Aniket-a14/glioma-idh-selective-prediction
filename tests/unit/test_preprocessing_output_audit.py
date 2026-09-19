@@ -236,6 +236,37 @@ def test_missing_cache_entry_is_reported(tmp_path: Path) -> None:
     assert "UTSW-BT0001" in failures.read_text(encoding="utf-8")
 
 
+def test_clean_audit_clears_previous_failure_log(tmp_path: Path) -> None:
+    outputs, manifest, output, failures = _make_fixture(tmp_path)
+    clean_payload = json.loads(outputs.read_text(encoding="utf-8"))
+    failed_payload = json.loads(json.dumps(clean_payload))
+    failed_payload["utsw"]["UTSW-BT0001"]["T2"] = "missing-key"
+    outputs.write_text(json.dumps(failed_payload), encoding="utf-8")
+
+    failed_report = audit_preprocessing_outputs(
+        outputs_path=outputs,
+        cohort_manifest_path=manifest,
+        output_path=output,
+        failures_path=failures,
+        cache_root=tmp_path / "cache",
+        expected=ExpectedGrid(shape=(16, 16, 16), input_orientation="RAS"),
+    )
+    assert failed_report["passed"] is False
+    assert json.loads(failures.read_text(encoding="utf-8"))["failures"]
+
+    outputs.write_text(json.dumps(clean_payload), encoding="utf-8")
+    clean_report = audit_preprocessing_outputs(
+        outputs_path=outputs,
+        cohort_manifest_path=manifest,
+        output_path=output,
+        failures_path=failures,
+        cache_root=tmp_path / "cache",
+        expected=ExpectedGrid(shape=(16, 16, 16), input_orientation="RAS"),
+    )
+    assert clean_report["passed"] is True
+    assert json.loads(failures.read_text(encoding="utf-8")) == {"failures": []}
+
+
 def test_wrong_orientation_and_affine_mismatch_are_caught(tmp_path: Path) -> None:
     outputs, manifest, output, failures = _make_fixture(tmp_path)
     cache = StageCache(tmp_path / "cache")

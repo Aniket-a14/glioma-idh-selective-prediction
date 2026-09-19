@@ -77,7 +77,10 @@ def main(argv: list[str] | None = None) -> int:
             ),
             output_path=arguments.output,
         )
-    except (OSError, RuntimeError, TypeError, ValueError, QCReportError):
+    except QCReportError as error:
+        print(f"build_qc_report.py: report build failed: {error}", file=sys.stderr)
+        return 1
+    except (OSError, RuntimeError, TypeError, ValueError):
         print("build_qc_report.py: report build failed", file=sys.stderr)
         return 1
     print(json.dumps(report, indent=2, sort_keys=True))
