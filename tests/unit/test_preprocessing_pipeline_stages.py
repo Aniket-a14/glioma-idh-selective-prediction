@@ -41,14 +41,19 @@ def _verification(
     )
 
 
-def _make_case(root: Path, patient_id: str) -> discovery.CaseRecord:
+def _make_case(
+    root: Path, patient_id: str, *, shape: tuple[int, int, int] = (8, 8, 8)
+) -> discovery.CaseRecord:
     case_root = root / patient_id
     case_root.mkdir(parents=True)
     affine = np.diag([-1.0, -1.0, 1.0, 1.0])
-    values = np.zeros((8, 8, 8), dtype=np.float32)
-    values[2:6, 2:6, 2:6] = 2.0
-    mask = np.zeros((8, 8, 8), dtype=np.uint8)
-    mask[3:5, 3:5, 3:5] = 1
+    values = np.zeros(shape, dtype=np.float32)
+    margin = 2
+    values[margin:-margin, margin:-margin, margin:-margin] = 2.0
+    mask = np.zeros(shape, dtype=np.uint8)
+    mask[
+        margin + 1 : -margin + 1, margin + 1 : -margin + 1, margin + 1 : -margin + 1
+    ] = 1
     sequence_files: dict[CanonicalSequence, Path] = {}
     for index, sequence in enumerate(CORE_SEQUENCES):
         volume = values.copy()
@@ -72,10 +77,13 @@ def _setup(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     patient_ids: tuple[str, ...],
+    *,
+    shape: tuple[int, int, int] = (8, 8, 8),
 ) -> tuple[dict[str, discovery.CaseRecord], Path, Path, Path]:
     input_root = tmp_path / "inputs"
     cases = {
-        patient_id: _make_case(input_root, patient_id) for patient_id in patient_ids
+        patient_id: _make_case(input_root, patient_id, shape=shape)
+        for patient_id in patient_ids
     }
 
     def discover(
@@ -162,6 +170,43 @@ def test_case_runs_end_to_end_and_report_has_no_identity_or_path(
     assert "case-a" not in json.dumps(result.to_dict())
     assert str(tmp_path) not in json.dumps(result.to_dict())
     assert cases["case-a"].patient_id == "case-a"
+
+
+def test_case_with_negative_t2_voxels_preserves_them_through_pipeline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cases, cache_root, status_path, outputs_path = _setup(
+        tmp_path, monkeypatch, ("case-a",), shape=(16, 16, 16)
+    )
+    t2_path = cases["case-a"].sequence_files[CanonicalSequence.T2]
+    t2_image = nib.load(t2_path)
+    t2_values = np.asarray(t2_image.dataobj, dtype=np.float32)
+    negative_indices = ((5, 5, 5), (6, 6, 6), (7, 7, 7))
+    for index in negative_indices:
+        t2_values[index] = -1.0
+    nib.save(nib.Nifti1Image(t2_values, t2_image.affine), t2_path)
+
+    result = pipeline.run_pipeline(
+        "utsw",
+        cache_root=cache_root,
+        status_path=status_path,
+        outputs_path=outputs_path,
+        n_threads=1,
+        n4_params=n4.N4Parameters(
+            shrink_factor=2, max_iterations=(1, 1, 1), histogram_bins=16
+        ),
+    )
+
+    assert result.exit_code == 0
+    output_index = json.loads(outputs_path.read_text(encoding="utf-8"))
+    t2_key = output_index["utsw"]["case-a"][CanonicalSequence.T2.value]
+    t2_output = nib.load(cache_root / "volume" / t2_key[:2] / t2_key / "volume.nii.gz")
+    output_values = np.asarray(t2_output.dataobj)
+    assert t2_output.get_data_dtype() == np.dtype(np.float32)
+    assert np.all(np.isfinite(output_values))
+    assert np.count_nonzero(output_values == 0.0) == output_values.size - 12**3
+    assert np.count_nonzero(output_values < 0) == len(negative_indices)
+    assert np.all(np.signbit(output_values[output_values < 0]))
 
 
 def test_excluded_case_is_skipped_and_failing_volume_does_not_stop_batch(

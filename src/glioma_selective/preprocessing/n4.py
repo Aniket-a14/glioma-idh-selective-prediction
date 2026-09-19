@@ -134,10 +134,12 @@ def correct_bias(
 ) -> sitk.Image:
     """Correct a scalar 3-D image while retaining its full-resolution grid.
 
-    N4 estimates the spline field from a shrunk image.  The estimated log field
-    is then evaluated on the original image grid and divided out there.  The
-    output is float32 and is exactly zero outside the supplied or implicit
-    non-zero mask.
+    N4 estimates the spline field from a shrunk image and an estimation mask
+    containing only strictly positive voxels inside the supplied or implicit
+    non-zero mask.  The estimated log field is then evaluated on the original
+    image grid and divided out across the whole non-zero mask, so negative
+    voxels retain their sign.  The output is float32 and is exactly zero
+    outside the supplied or implicit non-zero mask.
     """
 
     _validate_image(image, "image")
@@ -151,15 +153,18 @@ def correct_bias(
     if not np.any(mask_array):
         raise ValueError("mask must contain at least one non-zero voxel")
     image_array = sitk.GetArrayViewFromImage(full_image)
-    masked_values = image_array[mask_array]
-    if np.any(masked_values <= 0):
-        raise ValueError("image intensities inside the mask must be positive")
+    if not np.all(np.isfinite(image_array)):
+        raise ValueError("image contains non-finite voxels")
+    estimation_mask = sitk.Cast(binary_mask & (full_image > 0), sitk.sitkUInt8)
+    estimation_mask_array = sitk.GetArrayViewFromImage(estimation_mask) != 0
+    if not np.any(estimation_mask_array):
+        raise ValueError("mask contains no positive voxel")
 
     if any(size < params.shrink_factor for size in full_image.GetSize()):
         raise ValueError("image dimensions must be at least shrink_factor")
     shrink_factors = [params.shrink_factor] * 3
     shrunk_image = sitk.Shrink(full_image, shrink_factors)
-    shrunk_mask = sitk.Shrink(binary_mask, shrink_factors)
+    shrunk_mask = sitk.Shrink(estimation_mask, shrink_factors)
 
     correction = sitk.N4BiasFieldCorrectionImageFilter()
     correction.SetMaximumNumberOfIterations(params.max_iterations)

@@ -85,12 +85,106 @@ def test_bias_correction_reduces_within_tissue_cv_and_keeps_background_zero() ->
     assert corrected.GetSpacing() == image.GetSpacing()
 
 
-def test_bias_correction_rejects_negative_masked_intensity() -> None:
-    image = sitk.GetImageFromArray(
-        np.array([[[1.0, -1.0], [2.0, 0.0]]], dtype=np.float32)
+def test_bias_correction_allows_negative_masked_intensity() -> None:
+    values = np.zeros((16, 16, 16), dtype=np.float32)
+    values[2:14, 2:14, 2:14] = 2.0
+    negative_indices = ((5, 5, 5), (6, 6, 6), (7, 7, 7))
+    negative_values = (-1.0, -2.0, -0.5)
+    for index, value in zip(negative_indices, negative_values, strict=True):
+        values[index] = value
+    image = sitk.GetImageFromArray(values)
+    params = N4Parameters(shrink_factor=2, max_iterations=(1, 1, 1), histogram_bins=32)
+
+    corrected = correct_bias(image, params=params, n_threads=1)
+    result = sitk.GetArrayFromImage(corrected)
+
+    assert corrected.GetPixelID() == sitk.sitkFloat32
+    assert np.all(np.isfinite(result))
+    assert np.all(result[values == 0] == 0.0)
+    assert np.all(np.signbit(result[values < 0]))
+
+    full_image = sitk.Cast(image, sitk.sitkFloat32)
+    full_mask = sitk.Cast(full_image != 0, sitk.sitkUInt8)
+    shrunk_image = sitk.Shrink(full_image, [2, 2, 2])
+    estimation_mask = sitk.Cast(full_mask & (full_image > 0), sitk.sitkUInt8)
+    shrunk_estimation_mask = sitk.Shrink(estimation_mask, [2, 2, 2])
+    reference_filter = sitk.N4BiasFieldCorrectionImageFilter()
+    reference_filter.SetMaximumNumberOfIterations(params.max_iterations)
+    reference_filter.SetConvergenceThreshold(params.convergence_threshold)
+    reference_filter.SetNumberOfHistogramBins(params.histogram_bins)
+    reference_filter.SetNumberOfWorkUnits(1)
+    reference_filter.Execute(shrunk_image, shrunk_estimation_mask)
+    log_field = sitk.GetArrayFromImage(
+        reference_filter.GetLogBiasFieldAsImage(full_image)
     )
-    with pytest.raises(ValueError, match="inside the mask must be positive"):
-        correct_bias(image, params=N4Parameters(max_iterations=(1, 1, 1)))
+    expected_negative = values[values < 0] / np.exp(log_field[values < 0])
+    np.testing.assert_allclose(
+        result[values < 0], expected_negative, rtol=1e-5, atol=1e-6
+    )
+
+
+def test_bias_correction_rejects_image_with_no_positive_estimation_voxel() -> None:
+    image = sitk.GetImageFromArray(-np.ones((16, 16, 16), dtype=np.float32))
+    with pytest.raises(ValueError, match="mask contains no positive voxel"):
+        correct_bias(
+            image,
+            params=N4Parameters(
+                shrink_factor=2, max_iterations=(1, 1, 1), histogram_bins=32
+            ),
+        )
+
+
+def test_bias_correction_rejects_empty_mask() -> None:
+    image = sitk.GetImageFromArray(np.zeros((16, 16, 16), dtype=np.float32))
+    with pytest.raises(
+        ValueError, match="mask must contain at least one non-zero voxel"
+    ):
+        correct_bias(
+            image,
+            params=N4Parameters(
+                shrink_factor=2, max_iterations=(1, 1, 1), histogram_bins=32
+            ),
+        )
+
+
+def test_bias_correction_rejects_non_finite_image() -> None:
+    values = np.ones((16, 16, 16), dtype=np.float32)
+    values[5, 5, 5] = np.nan
+    with pytest.raises(ValueError, match="image contains non-finite voxels"):
+        correct_bias(
+            sitk.GetImageFromArray(values),
+            params=N4Parameters(
+                shrink_factor=2, max_iterations=(1, 1, 1), histogram_bins=32
+            ),
+        )
+
+
+def test_bias_correction_positive_volume_is_bit_identical_to_previous_path() -> None:
+    image, _, _ = _bias_phantom()
+    params = _small_params()
+
+    corrected = correct_bias(image, params=params, n_threads=1)
+
+    full_image = sitk.Cast(image, sitk.sitkFloat32)
+    full_mask = sitk.Cast(full_image != 0, sitk.sitkUInt8)
+    shrink_factors = [params.shrink_factor] * 3
+    shrunk_image = sitk.Shrink(full_image, shrink_factors)
+    shrunk_mask = sitk.Shrink(full_mask, shrink_factors)
+    reference_filter = sitk.N4BiasFieldCorrectionImageFilter()
+    reference_filter.SetMaximumNumberOfIterations(params.max_iterations)
+    reference_filter.SetConvergenceThreshold(params.convergence_threshold)
+    reference_filter.SetNumberOfHistogramBins(params.histogram_bins)
+    reference_filter.SetNumberOfWorkUnits(1)
+    reference_filter.Execute(shrunk_image, shrunk_mask)
+    reference_field = reference_filter.GetLogBiasFieldAsImage(full_image)
+    reference = sitk.Mask(
+        full_image / sitk.Exp(reference_field), full_mask, outsideValue=0.0
+    )
+    reference = sitk.Cast(reference, sitk.sitkFloat32)
+
+    assert np.array_equal(
+        sitk.GetArrayFromImage(corrected), sitk.GetArrayFromImage(reference)
+    )
 
 
 def test_bias_correction_is_deterministic() -> None:
