@@ -64,10 +64,12 @@ def _verification(patient_id: str) -> CaseVerification:
 
 
 def _setup(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    patient_ids: tuple[str, ...] = ("case-0", "case-1", "case-2", "case-3"),
 ) -> tuple[dict[str, discovery.CaseRecord], Path, Path, Path]:
     input_root = tmp_path / "inputs"
-    cases = {f"case-{index}": _case(input_root, f"case-{index}") for index in range(4)}
+    cases = {patient_id: _case(input_root, patient_id) for patient_id in patient_ids}
 
     def discover(
         cohort: Cohort | str,
@@ -230,6 +232,89 @@ def test_pipeline_resumes_and_invalidates_only_changed_inputs(
             assert image.shape == (8, 8, 8)
             assert nib.aff2axcodes(image.affine) == ("R", "A", "S")
         assert case.patient_id == patient_id
+
+
+@pytest.mark.integration
+def test_excluded_outputs_are_pruned_without_deleting_cache_or_status(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _cases, cache_root, status_path, outputs_path = _setup(
+        tmp_path, monkeypatch, ("case-0", "case-1")
+    )
+    monkeypatch.setattr(pipeline.n4, "correct_bias_nifti", _fast_n4)
+
+    first = pipeline.run_pipeline(
+        "utsw",
+        cache_root=cache_root,
+        status_path=status_path,
+        outputs_path=outputs_path,
+        n_threads=1,
+    )
+    assert first.exit_code == 0
+    first_outputs = json.loads(outputs_path.read_text(encoding="utf-8"))
+    excluded_output = first_outputs["utsw"]["case-1"]
+    before_dry_run = outputs_path.read_bytes()
+
+    manifest = PreprocessingStatusManifest.load(status_path).record_exclusion(
+        "utsw", "case-1", "corrupt"
+    )
+    manifest.save(status_path)
+
+    dry_run = pipeline.run_pipeline(
+        "utsw",
+        limit=1,
+        cache_root=cache_root,
+        status_path=status_path,
+        outputs_path=outputs_path,
+        n_threads=1,
+        dry_run=True,
+    )
+    assert dry_run.exit_code == 0
+    assert dry_run.cohorts["utsw"]["skipped_excluded"] == 1
+    assert dry_run.cohorts["utsw"]["outputs_pruned"] == 1
+    assert outputs_path.read_bytes() == before_dry_run
+
+    pruned = pipeline.run_pipeline(
+        "utsw",
+        limit=1,
+        cache_root=cache_root,
+        status_path=status_path,
+        outputs_path=outputs_path,
+        n_threads=1,
+    )
+    assert pruned.exit_code == 0
+    assert pruned.cohorts["utsw"]["outputs_pruned"] == 1
+    assert pruned.to_dict()["cohorts"]["utsw"]["outputs_pruned"] == 1
+    assert json.loads(outputs_path.read_text(encoding="utf-8"))["utsw"].keys() == {
+        "case-0"
+    }
+
+    for sequence in CORE_SEQUENCES:
+        volume_key = excluded_output[sequence.value]
+        assert (
+            cache_root / "volume" / volume_key[:2] / volume_key / "volume.nii.gz"
+        ).is_file()
+    mask_key = excluded_output["mask"]
+    assert (cache_root / "mask" / mask_key[:2] / mask_key / "mask.nii.gz").is_file()
+
+    excluded_status = PreprocessingStatusManifest.load(status_path).cases[
+        ("utsw", "case-1")
+    ]
+    assert excluded_status.visual_qc == "failed"
+    assert excluded_status.stages["n4"].state == "done"
+    assert excluded_status.stages["reorient"].state == "done"
+    assert excluded_status.stages["mask"].state == "done"
+
+    second = pipeline.run_pipeline(
+        "utsw",
+        limit=1,
+        cache_root=cache_root,
+        status_path=status_path,
+        outputs_path=outputs_path,
+        n_threads=1,
+    )
+    assert second.exit_code == 0
+    assert second.cohorts["utsw"]["outputs_pruned"] == 0
 
 
 @pytest.mark.integration
