@@ -51,6 +51,7 @@ __all__ = [
     "QCVerificationSummary",
     "compute_t1ce_shape_metrics",
     "load_verification_cases",
+    "load_verification_statuses",
     "load_qc_overlay_index",
     "mask_closing_gain",
     "mask_solidity",
@@ -59,6 +60,7 @@ __all__ = [
     "review_sheet_has_selection_reason",
     "select_qc_tail",
     "select_qc_sample",
+    "select_new_borderline",
     "assign_continuing_qc_keys",
     "append_qc_overlay_index",
     "append_qc_review_sheet",
@@ -303,10 +305,10 @@ def load_verification_cases(
     return result
 
 
-def _borderline_from_verification(
+def load_verification_statuses(
     verification_path: Path,
-) -> tuple[QCSelection, ...]:
-    """Read every visual-QC borderline record from the private report."""
+) -> dict[tuple[Cohort, str], str]:
+    """Load current per-case statuses from the private verification report."""
 
     try:
         payload = json.loads(verification_path.read_text(encoding="utf-8"))
@@ -324,25 +326,36 @@ def _borderline_from_verification(
         raise QCOverlayError(
             "preprocessing verification cases are missing their case list"
         )
-    result: list[QCSelection] = []
+    result: dict[tuple[Cohort, str], str] = {}
     for raw_case in raw_cases:
-        if (
-            not isinstance(raw_case, dict)
-            or raw_case.get("status") != "verified-borderline"
-        ):
-            continue
+        if not isinstance(raw_case, dict):
+            raise QCOverlayError("preprocessing verification case is not an object")
         raw_cohort = raw_case.get("cohort")
         patient_id = raw_case.get("patient_id")
-        if not isinstance(raw_cohort, str) or not isinstance(patient_id, str):
-            raise QCOverlayError("borderline verification case identity is malformed")
-        result.append(
-            QCSelection(
-                cohort=_cohort(raw_cohort),
-                patient_id=patient_id,
-                selection_reason="borderline",
-            )
-        )
-    return tuple(result)
+        status = raw_case.get("status")
+        if (
+            not isinstance(raw_cohort, str)
+            or not isinstance(patient_id, str)
+            or not isinstance(status, str)
+        ):
+            raise QCOverlayError("preprocessing verification case status is malformed")
+        key = (_cohort(raw_cohort), patient_id)
+        if key in result:
+            raise QCOverlayError("preprocessing verification cases contain a duplicate")
+        result[key] = status
+    return result
+
+
+def _borderline_from_verification(
+    verification_path: Path,
+) -> tuple[QCSelection, ...]:
+    """Read every visual-QC borderline record from the private report."""
+    statuses = load_verification_statuses(verification_path)
+    return tuple(
+        QCSelection(cohort, patient_id, "borderline")
+        for (cohort, patient_id), status in statuses.items()
+        if status == "verified-borderline"
+    )
 
 
 def _idh_class(value: str) -> Literal["mutant", "wildtype"]:
@@ -541,6 +554,37 @@ def select_qc_sample(
     return tuple(
         replace(selection, qc_key=f"qc_{index:04d}")
         for index, selection in enumerate(selections, start=1)
+    )
+
+
+def select_new_borderline(
+    *,
+    retained_patient_ids: Mapping[Cohort, Iterable[str]] | Mapping[str, Iterable[str]],
+    verification_statuses: Mapping[tuple[Cohort, str], str],
+    indexed_cases: Iterable[tuple[Cohort, str]] = (),
+) -> tuple[QCSelection, ...]:
+    """Select retained, newly borderline cases in deterministic order.
+
+    Selection is based only on the current verification status, the retained
+    roster, and the existing ``(cohort, patient_id)`` index.  QC keys are
+    assigned separately so this pure selector remains idempotent.
+    """
+
+    retained = _retained_ids(retained_patient_ids)
+    retained_cases = {
+        (cohort, patient_id)
+        for cohort, patient_ids in retained.items()
+        for patient_id in patient_ids
+    }
+    indexed = set(indexed_cases)
+    return tuple(
+        QCSelection(cohort, patient_id, "borderline")
+        for cohort, patient_id in sorted(
+            verification_statuses, key=lambda item: (item[0].value, item[1])
+        )
+        if verification_statuses[(cohort, patient_id)] == "verified-borderline"
+        and (cohort, patient_id) in retained_cases
+        and (cohort, patient_id) not in indexed
     )
 
 

@@ -40,9 +40,11 @@ from glioma_selective.preprocessing.qc_overlays import (  # noqa: E402
     compute_t1ce_shape_metrics,
     load_qc_overlay_index,
     load_verification_cases,
+    load_verification_statuses,
     read_utsw_idh_labels,
     render_qc_overlay,
     review_sheet_has_selection_reason,
+    select_new_borderline,
     select_qc_sample,
     select_qc_shape_tail,
     select_qc_tail,
@@ -120,6 +122,7 @@ def _report(
     tail: int | None,
     shape_tail: int | None = None,
     shape_tail_cohort: Cohort | None = None,
+    new_borderline: bool = False,
 ) -> None:
     report: dict[str, object] = {
         "selected_cases": len(selections),
@@ -149,7 +152,14 @@ def _report(
                 "union_size": len(selections),
             }
         )
+    if new_borderline:
+        report["new_borderline"] = True
     print(json.dumps(report, sort_keys=True))
+
+
+def _require_complete_overlay_artifacts(index_path: Path, review_path: Path) -> None:
+    if not index_path.exists() or not review_path.exists():
+        raise QCOverlayError("QC overlay artifacts are incomplete")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -169,6 +179,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=_nonnegative_integer,
         default=None,
         help="append N lowest-solidity and highest-closing-gain cases (0 disables)",
+    )
+    tail_group.add_argument(
+        "--new-borderline",
+        action="store_true",
+        help="append currently borderline cases not already in the QC index",
     )
     parser.add_argument(
         "--shape-tail-cohort",
@@ -197,11 +212,61 @@ def main(argv: Sequence[str] | None = None) -> int:
         verification = load_verification_cases(verification_path)
         retained = build_real_retained_rosters()
         output_directory = paths.figures_dir() / "qc"
-        output_directory.mkdir(parents=True, exist_ok=True)
         index_path = paths.private_data_dir() / "qc_overlay_index.json"
         review_path = output_directory / "qc_review_sheet.csv"
 
+        if arguments.new_borderline:
+            _require_complete_overlay_artifacts(index_path, review_path)
+            existing_index = load_qc_overlay_index(index_path)
+            statuses = load_verification_statuses(verification_path)
+            selections = select_new_borderline(
+                retained_patient_ids=retained,
+                verification_statuses=statuses,
+                indexed_cases=existing_index.values(),
+            )
+            selections = assign_continuing_qc_keys(selections, existing_index)
+            if not selections:
+                _report(
+                    selections=(),
+                    total_bytes=0,
+                    elapsed=time.perf_counter() - started,
+                    tail=None,
+                    new_borderline=True,
+                )
+                return 0
+            output_directory.mkdir(parents=True, exist_ok=True)
+            cases = {}
+            for cohort in (Cohort.UTSW, Cohort.UCSF_PDGM):
+                cohort_ids = [
+                    selection.patient_id
+                    for selection in selections
+                    if selection.cohort is cohort
+                ]
+                if cohort_ids:
+                    cases.update(
+                        {
+                            (cohort, case.patient_id): case
+                            for case in discover_cases(
+                                cohort, retained_patient_ids=cohort_ids
+                            )
+                        }
+                    )
+            total_bytes = _render_selections(
+                selections, verification, output_directory, cases
+            )
+            append_qc_overlay_index(selections, index_path)
+            append_qc_review_sheet(selections, verification, review_path)
+            _report(
+                selections=selections,
+                total_bytes=total_bytes,
+                elapsed=time.perf_counter() - started,
+                tail=None,
+                new_borderline=True,
+            )
+            return 0
+
         if arguments.shape_tail is not None:
+            output_directory.mkdir(parents=True, exist_ok=True)
             selected_cohort = Cohort(arguments.shape_tail_cohort)
             if index_path.exists() != review_path.exists():
                 raise QCOverlayError("QC overlay artifacts are incomplete")
@@ -266,6 +331,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
         if arguments.tail is not None:
+            output_directory.mkdir(parents=True, exist_ok=True)
             existing_index = load_qc_overlay_index(index_path)
             selections = select_qc_tail(
                 retained_patient_ids=retained,
@@ -304,6 +370,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             append_qc_overlay_index(selections, index_path)
             append_qc_review_sheet(selections, verification, review_path)
         else:
+            output_directory.mkdir(parents=True, exist_ok=True)
             # A completed base sample is never regenerated: doing so would
             # overwrite human verdicts on a rerun without --tail.
             if index_path.exists() or review_path.exists():
