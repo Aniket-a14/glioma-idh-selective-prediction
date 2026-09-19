@@ -30,6 +30,7 @@ from glioma_selective.preprocessing.discovery import CaseRecord
 __all__ = [
     "CaseVerification",
     "ExpectedGrid",
+    "SegmentationFinding",
     "VerificationCheck",
     "VerificationThresholds",
     "build_verification_report",
@@ -45,7 +46,7 @@ FailureCategory = Literal[
     "skullstrip-under",
 ]
 
-_SCHEMA_VERSION: Final[int] = 1
+_SCHEMA_VERSION: Final[int] = 2
 _AFFINE_ATOL: Final[float] = 1e-4
 _SPACING_ATOL: Final[float] = 1e-4
 _FAILURE_CATEGORIES: tuple[FailureCategory, ...] = (
@@ -86,21 +87,26 @@ class ExpectedGrid:
 class VerificationThresholds:
     """Thresholds for automated checks.
 
-    The brain-fraction bounds are deliberately wide and provisional, not
-    calibrated: D-026 measured roughly 0.11--0.20, and T04.9 human visual QC
-    must calibrate these bounds later.  The cross-sequence Dice threshold is
-    also recorded per case so a later calibration can audit its effect.
+    All thresholds are provisional and uncalibrated.  The fail bounds decide
+    whether a core-volume check fails.  A value that passes its fail bound but
+    falls outside the tighter borderline band is sent to visual QC by T04.9.
     """
 
-    min_cross_sequence_mask_dice: float = 0.99
+    min_cross_sequence_mask_dice: float = 0.90
     max_brain_fraction: float = 0.35
     min_brain_fraction: float = 0.05
+    borderline_cross_sequence_mask_dice: float = 0.995
+    borderline_max_brain_fraction: float = 0.30
+    borderline_min_brain_fraction: float = 0.08
 
     def __post_init__(self) -> None:
         values = (
             self.min_cross_sequence_mask_dice,
-            self.max_brain_fraction,
             self.min_brain_fraction,
+            self.max_brain_fraction,
+            self.borderline_cross_sequence_mask_dice,
+            self.borderline_min_brain_fraction,
+            self.borderline_max_brain_fraction,
         )
         if not all(np.isfinite(value) for value in values):
             raise ValueError("verification thresholds must be finite")
@@ -108,6 +114,24 @@ class VerificationThresholds:
             raise ValueError("minimum mask Dice must be between zero and one")
         if not 0 <= self.min_brain_fraction <= self.max_brain_fraction <= 1:
             raise ValueError("brain-fraction bounds must be ordered in [0, 1]")
+        if not 0 <= self.borderline_cross_sequence_mask_dice <= 1:
+            raise ValueError("borderline mask Dice must be between zero and one")
+        if not (
+            self.min_cross_sequence_mask_dice
+            <= self.borderline_cross_sequence_mask_dice
+        ):
+            raise ValueError("borderline mask Dice must not be below the fail Dice")
+        if not (
+            0
+            <= self.min_brain_fraction
+            <= self.borderline_min_brain_fraction
+            <= self.borderline_max_brain_fraction
+            <= self.max_brain_fraction
+            <= 1
+        ):
+            raise ValueError(
+                "brain-fraction borderline bounds must be inside fail bounds"
+            )
 
 
 @dataclass(frozen=True)
@@ -117,6 +141,24 @@ class VerificationCheck:
     passed: bool
     measured: object | None
     failure_category: FailureCategory | None = None
+    borderline: bool = False
+
+
+@dataclass(frozen=True)
+class SegmentationFinding:
+    """Informational findings for one segmentation role.
+
+    These findings never determine case status.  ``None`` means that a value
+    was not measurable, such as for an unreadable mask or a missing T1ce
+    reference.  An all-zero, readable mask has ``empty=True`` and a valid
+    ``dice_self`` but no inside-brain fraction.
+    """
+
+    readable: bool
+    empty: bool | None
+    grid_matches_t1ce: bool | None
+    inside_brain_fraction: float | None
+    dice_self: float | None
 
 
 @dataclass(frozen=True)
@@ -128,9 +170,10 @@ class CaseVerification:
     status: str
     checks: Mapping[str, VerificationCheck]
     failure_categories: tuple[FailureCategory, ...]
+    borderline_checks: tuple[str, ...]
     brain_voxel_fraction: float | None
     cross_sequence_dice: Mapping[str, float]
-    segmentation_inside_brain_fraction: Mapping[str, float]
+    segmentation_findings: Mapping[str, SegmentationFinding]
 
     @property
     def passed(self) -> bool:
@@ -228,11 +271,54 @@ def _new_check(
     passed: bool,
     measured: object | None,
     failure_category: FailureCategory | None = None,
+    borderline: bool = False,
 ) -> None:
     checks[name] = VerificationCheck(
         passed=bool(passed),
         measured=measured,
         failure_category=failure_category if not passed else None,
+        borderline=borderline,
+    )
+
+
+def _read_segmentation(path: Path) -> _VolumeMeasurement:
+    """Read a segmentation while allowing an all-zero mask.
+
+    Segmentation emptiness is an informational finding, not corruption.  The
+    reader still rejects unreadable, non-finite, non-3D, and unsupported files.
+    """
+
+    image = nib.load(path)
+    if not isinstance(image, nib.Nifti1Image | nib.Nifti2Image):
+        raise ValueError("unsupported NIfTI image type")
+    if len(image.shape) != 3:
+        raise ValueError("segmentation is not three-dimensional")
+    voxels = np.asarray(image.get_fdata(dtype=np.float32))
+    if not np.all(np.isfinite(voxels)):
+        raise ValueError("segmentation contains non-finite voxels")
+
+    zooms = image.header.get_zooms()
+    if len(zooms) < 3:
+        raise ValueError("segmentation has fewer than three spatial spacings")
+    shape = (int(image.shape[0]), int(image.shape[1]), int(image.shape[2]))
+    spacing = (
+        round(float(zooms[0]), 4),
+        round(float(zooms[1]), 4),
+        round(float(zooms[2]), 4),
+    )
+    orientation = "".join(
+        code if code is not None else "?" for code in nib.aff2axcodes(image.affine)
+    )
+    affine = np.asarray(image.affine, dtype=np.float64).copy()
+    mask = np.asarray(voxels != 0, dtype=bool)
+    del voxels
+    del image
+    return _VolumeMeasurement(
+        mask=mask,
+        shape=shape,
+        spacing=spacing,
+        orientation=orientation,
+        affine=affine,
     )
 
 
@@ -246,14 +332,17 @@ def verify_case(
     Missing or unreadable core sequences are ``corrupt``.  Shape, spacing,
     orientation, and within-case affine mismatches are ``orientation-wrong``.
     Cross-sequence non-zero-mask disagreement is ``registration-failed``.
-    Brain-fraction threshold failures are ``skullstrip-over`` or
-    ``skullstrip-under``.  Modality mislabelling is not inferable from these
-    measurements and is intentionally never emitted.
+    Brain-fraction threshold failures are ``skullstrip-over`` when brain is
+    removed and ``skullstrip-under`` when skull is retained.  Segmentation
+    findings are informational and never affect case status.  Modality
+    mislabelling is not inferable from these measurements and is intentionally
+    never emitted.
     """
 
     checks: dict[str, VerificationCheck] = {}
     measurements: dict[CanonicalSequence, _VolumeMeasurement] = {}
     failure_categories: set[FailureCategory] = set()
+    borderline_checks: set[str] = set()
     cross_sequence_dice: dict[str, float] = {}
 
     for sequence in CORE_SEQUENCES:
@@ -265,7 +354,13 @@ def verify_case(
             continue
         try:
             measurement = _read_volume(path)
-        except (OSError, RuntimeError, ValueError, TypeError):
+        except (
+            OSError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+            nib.filebasedimages.ImageFileError,
+        ):
             _new_check(checks, f"{name}.readable", False, None, "corrupt")
             failure_categories.add("corrupt")
             continue
@@ -297,11 +392,18 @@ def verify_case(
         brain_fraction = float(np.count_nonzero(t1ce.mask) / t1ce.mask.size)
         brain_category: FailureCategory | None
         if brain_fraction > thresholds.max_brain_fraction:
-            brain_category = "skullstrip-over"
-            brain_passed = False
-        elif brain_fraction < thresholds.min_brain_fraction:
             brain_category = "skullstrip-under"
             brain_passed = False
+        elif brain_fraction < thresholds.min_brain_fraction:
+            brain_category = "skullstrip-over"
+            brain_passed = False
+        elif (
+            brain_fraction < thresholds.borderline_min_brain_fraction
+            or brain_fraction > thresholds.borderline_max_brain_fraction
+        ):
+            brain_category = None
+            brain_passed = True
+            borderline_checks.add("T1ce.brain_fraction")
         else:
             brain_category = None
             brain_passed = True
@@ -311,6 +413,7 @@ def verify_case(
             brain_passed,
             brain_fraction,
             brain_category,
+            borderline="T1ce.brain_fraction" in borderline_checks,
         )
         if brain_category is not None:
             failure_categories.add(brain_category)
@@ -351,34 +454,53 @@ def verify_case(
             dice = _dice(sequence_measurement.mask, t1ce.mask)
             cross_sequence_dice[sequence.value] = dice
             dice_passed = dice >= thresholds.min_cross_sequence_mask_dice
+            dice_borderline = (
+                dice_passed and dice < thresholds.borderline_cross_sequence_mask_dice
+            )
+            check_name = f"{sequence.value}.cross_sequence_mask_dice"
+            if dice_borderline:
+                borderline_checks.add(check_name)
             _new_check(
                 checks,
-                f"{sequence.value}.cross_sequence_mask_dice",
+                check_name,
                 dice_passed,
                 dice,
                 "registration-failed",
+                dice_borderline,
             )
             if not dice_passed:
                 failure_categories.add("registration-failed")
 
-    segmentation_inside: dict[str, float] = {}
+    segmentation_findings: dict[str, SegmentationFinding] = {}
     for role, path in sorted(case.segmentation_files.items()):
         try:
-            segmentation = _read_volume(path)
-        except (OSError, RuntimeError, ValueError, TypeError):
+            segmentation = _read_segmentation(path)
+        except (
+            OSError,
+            RuntimeError,
+            ValueError,
+            TypeError,
+            nib.filebasedimages.ImageFileError,
+        ):
+            segmentation_findings[role] = SegmentationFinding(
+                readable=False,
+                empty=None,
+                grid_matches_t1ce=None,
+                inside_brain_fraction=None,
+                dice_self=None,
+            )
             _new_check(
                 checks,
                 f"segmentation.{role}.readable",
                 False,
                 None,
-                "corrupt",
             )
-            failure_categories.add("corrupt")
             continue
 
-        shape_matches = t1ce is not None and segmentation.shape == t1ce.shape
-        affine_matches = bool(
+        empty = not bool(np.any(segmentation.mask))
+        grid_matches = bool(
             t1ce is not None
+            and segmentation.shape == t1ce.shape
             and np.allclose(
                 segmentation.affine,
                 t1ce.affine,
@@ -386,70 +508,61 @@ def verify_case(
                 rtol=0,
             )
         )
-        # With a corrupt/missing T1ce there is no reference geometry to test;
-        # the core-volume failure already records the case as corrupt.
-        alignment_passed = bool(t1ce is None or (shape_matches and affine_matches))
+        inside_fraction: float | None = None
+        if not empty and grid_matches and t1ce is not None:
+            inside_fraction = float(
+                np.count_nonzero(segmentation.mask & t1ce.mask)
+                / np.count_nonzero(segmentation.mask)
+            )
+        self_dice = _dice(segmentation.mask, segmentation.mask)
+        segmentation_findings[role] = SegmentationFinding(
+            readable=True,
+            empty=empty,
+            grid_matches_t1ce=grid_matches if t1ce is not None else None,
+            inside_brain_fraction=inside_fraction,
+            dice_self=self_dice,
+        )
+        _new_check(checks, f"segmentation.{role}.readable", True, True)
         _new_check(
             checks,
             f"segmentation.{role}.alignment",
-            alignment_passed,
+            grid_matches,
             {
                 "shape": list(segmentation.shape),
-                "shape_matches_t1ce": shape_matches,
-                "affine_matches_t1ce": affine_matches,
+                "grid_matches_t1ce": grid_matches,
             },
-            "orientation-wrong",
+            None,
         )
-        if not alignment_passed:
-            failure_categories.add("orientation-wrong")
-
-        if t1ce is not None and segmentation.shape == t1ce.shape:
-            segmentation_voxels = int(np.count_nonzero(segmentation.mask))
-            if segmentation_voxels == 0:
-                inside_fraction = 1.0
-            else:
-                inside_fraction = float(
-                    np.count_nonzero(segmentation.mask & t1ce.mask)
-                    / segmentation_voxels
-                )
-            segmentation_inside[role] = inside_fraction
-            _new_check(
-                checks,
-                f"segmentation.{role}.inside_brain_fraction",
-                True,
-                inside_fraction,
-            )
-            self_dice = _dice(segmentation.mask, segmentation.mask)
-            self_dice_passed = self_dice == 1.0
-            _new_check(
-                checks,
-                f"segmentation.{role}.dice_self",
-                self_dice_passed,
-                self_dice,
-                "corrupt",
-            )
-            if not self_dice_passed:
-                failure_categories.add("corrupt")
-        elif t1ce is not None:
-            _new_check(
-                checks,
-                f"segmentation.{role}.inside_brain_fraction",
-                False,
-                None,
-                "orientation-wrong",
-            )
-            failure_categories.add("orientation-wrong")
+        _new_check(
+            checks,
+            f"segmentation.{role}.inside_brain_fraction",
+            True,
+            inside_fraction,
+        )
+        _new_check(
+            checks,
+            f"segmentation.{role}.dice_self",
+            True,
+            self_dice,
+        )
 
     ordered_categories = tuple(sorted(failure_categories))
+    if ordered_categories:
+        status = "failed"
+    elif borderline_checks:
+        status = "verified-borderline"
+    else:
+        status = "verified-passthrough"
     return CaseVerification(
         cohort=case.cohort,
         patient_id=case.patient_id,
-        status="verified-passthrough" if not ordered_categories else "failed",
+        status=status,
         checks=checks,
         failure_categories=ordered_categories,
+        borderline_checks=tuple(sorted(borderline_checks)),
         brain_voxel_fraction=brain_fraction,
         cross_sequence_dice=cross_sequence_dice,
-        segmentation_inside_brain_fraction=segmentation_inside,
+        segmentation_findings=segmentation_findings,
     )
 
 
@@ -482,6 +595,7 @@ def build_verification_report(
     for cohort in sorted(grouped, key=lambda item: item.value):
         cohort_results = grouped[cohort]
         failure_counts: dict[str, int] = defaultdict(int)
+        borderline_counts: dict[str, int] = defaultdict(int)
         brain_fractions = [
             result.brain_voxel_fraction
             for result in cohort_results
@@ -492,24 +606,46 @@ def build_verification_report(
             for result in cohort_results
             for value in result.cross_sequence_dice.values()
         ]
-        segmentation_values: dict[str, list[float]] = defaultdict(list)
+        segmentation_by_role: dict[str, list[SegmentationFinding]] = defaultdict(list)
         for result in cohort_results:
-            for role, value in result.segmentation_inside_brain_fraction.items():
-                segmentation_values[role].append(value)
+            for role, finding in result.segmentation_findings.items():
+                segmentation_by_role[role].append(finding)
             for category in result.failure_categories:
                 failure_counts[category] += 1
+            for check in result.borderline_checks:
+                borderline_counts[check] += 1
         for category in _FAILURE_CATEGORIES:
             failure_counts.setdefault(category, 0)
 
         cohort_reports[cohort.value] = {
             "case_count": len(cohort_results),
-            "pass_count": sum(result.passed for result in cohort_results),
+            "pass_count": sum(
+                result.status == "verified-passthrough" for result in cohort_results
+            ),
+            "borderline_count": sum(
+                result.status == "verified-borderline" for result in cohort_results
+            ),
+            "failed_count": sum(result.status == "failed" for result in cohort_results),
             "failure_counts_by_category": dict(sorted(failure_counts.items())),
+            "borderline_counts_by_check": dict(sorted(borderline_counts.items())),
             "brain_voxel_fraction_distribution": _distribution(brain_fractions),
             "cross_sequence_dice_distribution": _distribution(cross_dice),
-            "segmentation_inside_brain_fraction_distribution": {
-                role: _distribution(values)
-                for role, values in sorted(segmentation_values.items())
+            "segmentation": {
+                role: {
+                    "readable": sum(finding.readable for finding in findings),
+                    "empty": sum(finding.empty is True for finding in findings),
+                    "grid_matches_t1ce": sum(
+                        finding.grid_matches_t1ce is True for finding in findings
+                    ),
+                    "inside_brain_fraction_distribution": _distribution(
+                        [
+                            finding.inside_brain_fraction
+                            for finding in findings
+                            if finding.inside_brain_fraction is not None
+                        ]
+                    ),
+                }
+                for role, findings in sorted(segmentation_by_role.items())
             },
         }
 

@@ -21,6 +21,7 @@ from glioma_selective.preprocessing.discovery import (  # noqa: E402
 from glioma_selective.preprocessing.verification import (  # noqa: E402
     CaseVerification,
     ExpectedGrid,
+    SegmentationFinding,
     VerificationCheck,
     VerificationThresholds,
     build_verification_report,
@@ -36,6 +37,21 @@ def _serialize_check(check: VerificationCheck) -> dict[str, object]:
         "passed": check.passed,
         "measured": check.measured,
         "failure_category": check.failure_category,
+        "borderline": check.borderline,
+    }
+
+
+def _serialize_segmentation_finding(
+    finding: SegmentationFinding,
+) -> dict[str, object]:
+    """Serialize one segmentation finding without paths or exceptions."""
+
+    return {
+        "readable": finding.readable,
+        "empty": finding.empty,
+        "grid_matches_t1ce": finding.grid_matches_t1ce,
+        "inside_brain_fraction": finding.inside_brain_fraction,
+        "dice_self": finding.dice_self,
     }
 
 
@@ -47,11 +63,13 @@ def _serialize_case(result: CaseVerification) -> dict[str, object]:
         "patient_id": result.patient_id,
         "status": result.status,
         "failure_categories": list(result.failure_categories),
+        "borderline_checks": list(result.borderline_checks),
         "brain_voxel_fraction": result.brain_voxel_fraction,
         "cross_sequence_dice": dict(result.cross_sequence_dice),
-        "segmentation_inside_brain_fraction": dict(
-            result.segmentation_inside_brain_fraction
-        ),
+        "segmentation_findings": {
+            role: _serialize_segmentation_finding(finding)
+            for role, finding in sorted(result.segmentation_findings.items())
+        },
         "checks": {
             name: _serialize_check(check)
             for name, check in sorted(result.checks.items())
