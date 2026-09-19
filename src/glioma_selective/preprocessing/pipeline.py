@@ -3,8 +3,9 @@
 The pipeline deliberately keeps N4 correction and RAS canonicalization in one
 content-addressed ``volume`` entry.  The source file is the direct input to
 N4; no intermediate N4 cache entry is created.  Reports contain aggregate
-counts only.  Canonical identifiers are written only to the private output
-index, never to stdout.
+counts and exception-class summaries only.  Canonical identifiers and
+exception messages are written only to private output indexes, never to
+stdout.
 """
 
 from __future__ import annotations
@@ -57,8 +58,9 @@ class _CohortCounts:
     volumes_reused: int = 0
     masks_computed: int = 0
     masks_reused: int = 0
+    failure_reasons: dict[str, dict[str, int]] = field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, int]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "cases_processed": self.cases_processed,
             "cases_reused": self.cases_reused,
@@ -68,6 +70,10 @@ class _CohortCounts:
             "volumes_reused": self.volumes_reused,
             "masks_computed": self.masks_computed,
             "masks_reused": self.masks_reused,
+            "failure_reasons": {
+                stage: dict(sorted(reasons.items()))
+                for stage, reasons in sorted(self.failure_reasons.items())
+            },
         }
 
 
@@ -75,7 +81,7 @@ class _CohortCounts:
 class PipelineResult:
     """Aggregate result of one pipeline invocation."""
 
-    cohorts: Mapping[str, Mapping[str, int]]
+    cohorts: Mapping[str, Mapping[str, object]]
     wall_clock_seconds: float
 
     @property
@@ -106,6 +112,8 @@ class _CaseOutcome:
     volume_reused: int = 0
     mask_computed: int = 0
     mask_reused: int = 0
+    failures: list[dict[str, str]] = field(default_factory=list)
+    failure_reasons: dict[str, dict[str, int]] = field(default_factory=dict)
 
     @property
     def failed(self) -> bool:
@@ -118,6 +126,28 @@ class _CaseOutcome:
     @property
     def all_reused(self) -> bool:
         return self.complete and self.volume_computed == 0 and self.mask_computed == 0
+
+
+def _record_failure(
+    outcome: _CaseOutcome,
+    case: discovery.CaseRecord,
+    stage: str,
+    error: Exception,
+) -> None:
+    """Record aggregate diagnostics and private detail for one stage failure."""
+
+    exception_class = type(error).__name__
+    reasons = outcome.failure_reasons.setdefault(stage, {})
+    reasons[exception_class] = reasons.get(exception_class, 0) + 1
+    outcome.failures.append(
+        {
+            "cohort": case.cohort.value,
+            "canonical_id": case.canonical_patient_id,
+            "stage": stage,
+            "exception_class": exception_class,
+            "message": str(error),
+        }
+    )
 
 
 def _volume_params(
@@ -272,8 +302,9 @@ def _run_case(
                     raise ValueError("volume cache entry did not publish volume.nii.gz")
                 outcome.volume_computed += 1
             outcome.volume_keys[sequence.value] = key
-        except Exception:
+        except Exception as error:
             outcome.volume_failures += 1
+            _record_failure(outcome, case, f"volume:{sequence.value}", error)
 
     try:
         key = _mask_key(case)
@@ -292,8 +323,9 @@ def _run_case(
             outcome.mask_computed += 1
             outcome.has_segmentation = _read_has_segmentation(entry)
         outcome.mask_key = key
-    except Exception:
+    except Exception as error:
         outcome.mask_failed = True
+        _record_failure(outcome, case, "mask", error)
     return outcome
 
 
@@ -334,6 +366,32 @@ def _save_outputs(
         ) as handle:
             temporary_path = Path(handle.name)
             json.dump(outputs, handle, ensure_ascii=True, indent=2, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+
+
+def _save_failure_log(path: Path, failures: list[dict[str, str]]) -> None:
+    """Atomically replace the private raw-identifier failure log."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temporary_path = Path(handle.name)
+            json.dump(failures, handle, ensure_ascii=True, indent=2, sort_keys=True)
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
@@ -406,6 +464,7 @@ def run_pipeline(
     selected_n4 = n4_params or n4.N4Parameters()
     selected_reorient = reorient_params or reorient.ReorientParameters()
     counts = {selected.value: _CohortCounts() for selected in selected_cohorts}
+    failure_records: list[dict[str, str]] = []
     start = time.monotonic()
 
     for selected in selected_cohorts:
@@ -425,6 +484,13 @@ def run_pipeline(
             cohort_counts.volumes_reused += outcome.volume_reused
             cohort_counts.masks_computed += outcome.mask_computed
             cohort_counts.masks_reused += outcome.mask_reused
+            for stage, reasons in outcome.failure_reasons.items():
+                cohort_reasons = cohort_counts.failure_reasons.setdefault(stage, {})
+                for exception_class, count in reasons.items():
+                    cohort_reasons[exception_class] = (
+                        cohort_reasons.get(exception_class, 0) + count
+                    )
+            failure_records.extend(outcome.failures)
 
             if outcome.failed:
                 cohort_counts.failed += 1
@@ -475,4 +541,8 @@ def run_pipeline(
         cohort_name: cohort_counts.to_dict()
         for cohort_name, cohort_counts in counts.items()
     }
+    if not dry_run:
+        _save_failure_log(
+            paths.private_data_dir() / "preprocessing_failures.json", failure_records
+        )
     return PipelineResult(result_counts, time.monotonic() - start)

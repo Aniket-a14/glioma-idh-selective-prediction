@@ -93,6 +93,9 @@ def _setup(
     status_path = tmp_path / "manifests" / "preprocessing_status.json"
     outputs_path = tmp_path / "manifests" / "preprocessing_outputs.json"
     cache_root = tmp_path / "processed"
+    monkeypatch.setattr(
+        pipeline.paths, "private_data_dir", lambda: tmp_path / "private"
+    )
     PreprocessingStatusManifest.from_verification(
         tuple(_verification(patient_id) for patient_id in patient_ids)
     ).save(status_path)
@@ -210,12 +213,101 @@ def test_excluded_case_is_skipped_and_failing_volume_does_not_stop_batch(
     assert cases["case-excluded"].patient_id == "case-excluded"
 
 
+def test_failures_are_aggregated_and_private_log_is_replaced_on_success(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    cases, cache_root, status_path, outputs_path = _setup(
+        tmp_path, monkeypatch, ("case-a", "case-b")
+    )
+    private_dir = tmp_path / "private"
+    monkeypatch.setattr(pipeline.paths, "private_data_dir", lambda: private_dir)
+    case_b_mask = cases["case-b"].segmentation_files["tumorseg_FeTS"]
+    changed_mask_bytes = bytearray(case_b_mask.read_bytes())
+    changed_mask_bytes[4] ^= 1
+    case_b_mask.write_bytes(changed_mask_bytes)
+
+    volume_calls = 0
+
+    def fail_first_volume(
+        image: nib.Nifti1Image, params: n4.N4Parameters, *, n_threads: int
+    ) -> nib.Nifti1Image:
+        nonlocal volume_calls
+        volume_calls += 1
+        if volume_calls == 1:
+            raise RuntimeError("volume detail /private/case-a")
+        return _fast_n4(image, params, n_threads=n_threads)
+
+    original_mask_stage = pipeline.masks.run_mask_stage
+
+    def fail_case_b_mask(
+        cache: object, case: discovery.CaseRecord, params: object = None
+    ) -> Path:
+        if case.patient_id == "case-b":
+            raise ValueError("mask detail /private/case-b")
+        return original_mask_stage(cache, case, params)
+
+    monkeypatch.setattr(pipeline.n4, "correct_bias_nifti", fail_first_volume)
+    monkeypatch.setattr(pipeline.masks, "run_mask_stage", fail_case_b_mask)
+    arguments = [
+        "--cohort",
+        "utsw",
+        "--cache-root",
+        str(cache_root),
+        "--status-path",
+        str(status_path),
+        "--outputs-path",
+        str(outputs_path),
+    ]
+    assert run_script.main(arguments) == 1
+    printed = capsys.readouterr().out
+    report = json.loads(printed)
+    reasons = report["cohorts"]["utsw"]["failure_reasons"]
+    assert reasons == {
+        "mask": {"ValueError": 1},
+        "volume:T1": {"RuntimeError": 1},
+    }
+    assert "case-a" not in printed
+    assert "case-b" not in printed
+    assert "volume detail" not in printed
+    assert "mask detail" not in printed
+    assert str(tmp_path) not in printed
+
+    failure_log = private_dir / "preprocessing_failures.json"
+    failures = json.loads(failure_log.read_text(encoding="utf-8"))
+    assert failures == [
+        {
+            "canonical_id": "case-a",
+            "cohort": "utsw",
+            "exception_class": "RuntimeError",
+            "message": "volume detail /private/case-a",
+            "stage": "volume:T1",
+        },
+        {
+            "canonical_id": "case-b",
+            "cohort": "utsw",
+            "exception_class": "ValueError",
+            "message": "mask detail /private/case-b",
+            "stage": "mask",
+        },
+    ]
+
+    monkeypatch.setattr(pipeline.n4, "correct_bias_nifti", _fast_n4)
+    monkeypatch.setattr(pipeline.masks, "run_mask_stage", original_mask_stage)
+    assert run_script.main(arguments) == 0
+    clean_printed = capsys.readouterr().out
+    clean_report = json.loads(clean_printed)
+    assert clean_report["cohorts"]["utsw"]["failure_reasons"] == {}
+    assert json.loads(failure_log.read_text(encoding="utf-8")) == []
+
+
 def test_cli_dry_run_writes_nothing_and_prints_counts_only(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     _cases, cache_root, status_path, outputs_path = _setup(
         tmp_path, monkeypatch, ("case-a",)
     )
+    private_dir = tmp_path / "private"
+    monkeypatch.setattr(pipeline.paths, "private_data_dir", lambda: private_dir)
     result = run_script.main(
         [
             "--cohort",
@@ -235,6 +327,8 @@ def test_cli_dry_run_writes_nothing_and_prints_counts_only(
     assert "case-a" not in printed
     assert str(tmp_path) not in printed
     assert not outputs_path.exists()
+    assert not cache_root.exists()
+    assert not (private_dir / "preprocessing_failures.json").exists()
     assert (
         PreprocessingStatusManifest.load(status_path)
         .cases[("utsw", "case-a")]

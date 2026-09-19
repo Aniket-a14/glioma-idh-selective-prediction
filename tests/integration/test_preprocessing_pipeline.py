@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 from typing import cast
 
@@ -82,6 +84,9 @@ def _setup(
     status_path = tmp_path / "manifests" / "preprocessing_status.json"
     outputs_path = tmp_path / "manifests" / "preprocessing_outputs.json"
     cache_root = tmp_path / "processed"
+    monkeypatch.setattr(
+        pipeline.paths, "private_data_dir", lambda: tmp_path / "private"
+    )
     PreprocessingStatusManifest.from_verification(
         tuple(_verification(patient_id) for patient_id in cases)
     ).save(status_path)
@@ -95,6 +100,27 @@ def _fast_n4(
     return nib.Nifti1Image(
         np.asarray(image.dataobj, dtype=np.float32), np.asarray(image.affine)
     )
+
+
+@pytest.mark.integration
+def test_unit_and_integration_pipeline_modules_collect_together() -> None:
+    repository_root = Path(__file__).parents[2]
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "--collect-only",
+            "-q",
+            "tests/unit/test_preprocessing_pipeline_stages.py",
+            "tests/integration/test_preprocessing_pipeline.py",
+        ],
+        cwd=repository_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 @pytest.mark.integration
