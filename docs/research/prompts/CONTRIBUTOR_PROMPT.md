@@ -61,13 +61,18 @@ Read `docs/research/CONTRIBUTOR_TASKS.md`, `## Open` table only, and find the ro
 - If no row names you, stop and report that — there's nothing to pick up right now, and you
   should not invent your own task or act on someone else's row.
 - If a row names you, **that is your task.** Its "Branch" column already gives you the exact
-  branch name to use — don't invent your own slug.
+  branch name to use — don't invent your own slug. If several rows name you, take the one with the
+  lowest ID first; the others wait (see the last bullet of this list).
 - **Do not edit `CONTRIBUTOR_TASKS.md` for any reason** — not to move your row, not to add a PR
   link later. It's Research-Lead-only now. (It used to be a contributor-edited file; that caused
   a real merge conflict between two contributors' branches that both touched it. Assignment and
   branch names are fixed up front precisely so this step can be read-only.)
-- Only one row will ever name you at a time. If you already have work in flight under your name
-  in the `## In progress` table, finish that first — don't start a second one.
+- More than one row can name you. Work them one at a time in ascending ID order, one branch and
+  one pull request per row, never combined. Open the pull request for one row (and stop that row)
+  before you start the next; it does not have to be merged first, because rows have disjoint
+  allowed paths. Each new row starts again from a fresh `git checkout main && git pull --ff-only`.
+  If you already have work in flight under your name in the `## In progress` table, finish that
+  first.
 
 ## 4. Branch
 
