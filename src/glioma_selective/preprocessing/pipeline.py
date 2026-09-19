@@ -30,7 +30,10 @@ from glioma_selective.preprocessing.cache import (
     hash_file,
     stage_cache_key,
 )
-from glioma_selective.preprocessing.status import PreprocessingStatusManifest
+from glioma_selective.preprocessing.status import (
+    CaseStatus,
+    PreprocessingStatusManifest,
+)
 from glioma_selective.utils import paths
 
 __all__ = ["PipelineResult", "run_pipeline"]
@@ -53,6 +56,7 @@ class _CohortCounts:
     cases_processed: int = 0
     cases_reused: int = 0
     skipped_excluded: int = 0
+    outputs_pruned: int = 0
     failed: int = 0
     volumes_computed: int = 0
     volumes_reused: int = 0
@@ -65,6 +69,7 @@ class _CohortCounts:
             "cases_processed": self.cases_processed,
             "cases_reused": self.cases_reused,
             "skipped_excluded": self.skipped_excluded,
+            "outputs_pruned": self.outputs_pruned,
             "failed": self.failed,
             "volumes_computed": self.volumes_computed,
             "volumes_reused": self.volumes_reused,
@@ -409,16 +414,8 @@ def _selected_cases(
 ) -> tuple[tuple[discovery.CaseRecord, ...], int]:
     statuses = [case for case in manifest.cases.values() if case.cohort == cohort.value]
     statuses.sort(key=lambda case: case.patient_id)
-    excluded = [
-        case
-        for case in statuses
-        if case.verification_status == "failed" or bool(case.qc_reasons)
-    ]
-    retained = [
-        case
-        for case in statuses
-        if case.verification_status != "failed" and not case.qc_reasons
-    ]
+    excluded = [case for case in statuses if _is_excluded(case)]
+    retained = [case for case in statuses if not _is_excluded(case)]
     if limit is not None:
         retained = retained[:limit]
     if not retained:
@@ -428,6 +425,33 @@ def _selected_cases(
         retained_patient_ids=[case.patient_id for case in retained],
     )
     return cases, len(excluded)
+
+
+def _is_excluded(case: CaseStatus) -> bool:
+    """Return whether the status manifest excludes a case from processing."""
+
+    return case.verification_status == "failed" or bool(case.qc_reasons)
+
+
+def _prune_excluded_outputs(
+    outputs: dict[str, dict[str, dict[str, object]]],
+    manifest: PreprocessingStatusManifest,
+    cohort: Cohort,
+) -> int:
+    """Remove output-index entries for excluded cases in one selected cohort."""
+
+    cohort_outputs = outputs.get(cohort.value)
+    if cohort_outputs is None:
+        return 0
+    excluded_patient_ids = {
+        case.patient_id
+        for case in manifest.cases.values()
+        if case.cohort == cohort.value and _is_excluded(case)
+    }
+    pruned = excluded_patient_ids.intersection(cohort_outputs)
+    for patient_id in pruned:
+        del cohort_outputs[patient_id]
+    return len(pruned)
 
 
 def run_pipeline(
@@ -459,7 +483,7 @@ def run_pipeline(
         paths.manifests_dir() / "preprocessing_outputs.json"
     )
     manifest = PreprocessingStatusManifest.load(selected_status_path)
-    outputs = {} if dry_run else _load_outputs(selected_outputs_path)
+    outputs = _load_outputs(selected_outputs_path)
     cache = StageCache(cache_root or paths.processed_data_dir())
     selected_n4 = n4_params or n4.N4Parameters()
     selected_reorient = reorient_params or reorient.ReorientParameters()
@@ -469,8 +493,13 @@ def run_pipeline(
 
     for selected in selected_cohorts:
         cohort_counts = counts[selected.value]
+        cohort_counts.outputs_pruned = _prune_excluded_outputs(
+            outputs, manifest, selected
+        )
         cases, excluded_count = _selected_cases(manifest, selected, limit)
         cohort_counts.skipped_excluded = excluded_count
+        if not dry_run and cohort_counts.outputs_pruned:
+            _save_outputs(selected_outputs_path, outputs)
         for case in cases:
             outcome = _run_case(
                 cache,
