@@ -652,9 +652,9 @@ are unaffected.
 ---
 
 ## D-027 — The lock and the local venv are Python ≥3.12 in practice; the project and CI say 3.11
-**Status:** OPEN · **Blocking:** no · **Resolve by:** before the Phase 06 environment freeze
+**Status:** RESOLVED (2026-09-19, Research Lead: option (a)) · **Blocking:** no · **Resolve by:** before the Phase 06 environment freeze
 
-**Conflict.** `pyproject.toml` says `requires-python = ">=3.11"` and CI runs Python 3.11, but
+**Conflict.** `pyproject.toml` said `requires-python = ">=3.11"` and CI runs Python 3.11, but
 `requirements.lock.txt` pins `numpy==2.5.3` and `contourpy==1.4.0`, which need Python ≥3.12
 (`uv pip install --python-version 3.11 -r requirements.lock.txt` reports the lock unsatisfiable). The
 local venv is Python 3.14. CI installs `.[dev]` rather than the lock, so it resolves `numpy==2.4.6` on
@@ -674,6 +674,13 @@ code defect.
 already runs a newer Python, and the lock is what the reproducibility protocol installs from. It is a
 `pyproject.toml` and CI edit, so it needs your approval; until then, run local mypy with
 `--python-version 3.12`.
+
+**Resolution (2026-09-19).** Option (a) applied: `requires-python = ">=3.12"`, `[tool.ruff] target-version =
+"py312"`, `[tool.mypy] python_version = "3.12"`, and Python 3.12 in `gate_a.yml` and `gate_b.yml`. The lock
+needed no change (same pins; `uv pip install --dry-run --python-version 3.12 -r requirements.lock.txt`
+resolves). Verified on a fresh Python 3.12.14 venv installed the way CI installs (`pip install -e ".[dev]"`,
+numpy 2.5.3): full-tree pre-commit passes, `mypy` reports no issues in 17 files, invariants pass, 100 tests
+pass with 6 skipped. The local Python 3.14 venv also passes `mypy` without a flag now.
 
 **Owner.** Research Lead.
 
