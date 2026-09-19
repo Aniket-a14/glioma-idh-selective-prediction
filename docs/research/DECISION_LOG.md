@@ -684,4 +684,43 @@ pass with 6 skipped. The local Python 3.14 venv also passes `mypy` without a fla
 
 **Owner.** Research Lead.
 
+---
+
+## D-028 — Phase 04 segmentation policy, QC reason codes, and how the visual-QC sample is drawn
+**Status:** RESOLVED (2026-09-19, Research Lead) · **Blocking:** no · **Resolve by:** Phase 04
+
+**T04.7 — which segmentation labels feed the auxiliary head (SPEC §4.3).** Decision: **FeTS labels
+only** (`tumorseg_FeTS` for UTSW). Evidence from the real files (sampled, aggregate only): FeTS masks use
+the BraTS labels {1, 2, 4}; UCSF-PDGM `tumor_segmentation` uses the same convention; the UTSW
+manual-correction masks contain an extra label 3 in 12 of 29 sampled masks (a few are label-3-only) whose
+meaning is not documented in anything checked here. FeTS vs registered manual whole-tumour Dice over 24
+sampled patients: median 0.986, p10 0.877, min 0.025. Benefits: one label vocabulary, one provenance, 619 of
+622 patients, the SPEC's multi-label head, and auxiliary Dice comparable across cohorts. The manual-correction
+masks are **not used for training**; they remain available for a later sensitivity check once the label-3
+meaning is confirmed against the UTSW-Glioma paper, which is an open follow-up, not a Phase 04 blocker.
+Alternatives rejected: best-available manual-else-FeTS (needs a label-3 mapping; a wrong one silently corrupts
+subregion targets and mixes two annotation sources) and whole-tumour binary (deviates from the SPEC's
+multi-label head).
+
+**No-mask cases.** Three UTSW patients have an all-zero FeTS mask and no manual mask. Decision: **kept** in
+the 622-patient cohort for classification; their segmentation loss is masked (zero weight), never imputed.
+The cohort manifest and its hashes are unchanged. Phase 06 must implement the masked loss and record the
+count of affected patients.
+
+**QC reason codes.** `DATA_GOVERNANCE_PROTOCOL.md` §5 lists `qc:registration-failed`, `qc:skullstrip-failed`,
+`qc:corrupt`, `qc:orientation`; the Phase 04 file defines seven failure categories. Decision: reasons are
+`qc:<category>` with the phase file's categories (`registration-failed`, `skullstrip-over`, `skullstrip-under`,
+`n4-artifact`, `orientation-wrong`, `corrupt`, `modality-mislabelled`); the governance table was updated to match.
+
+**Visual-QC sample (T04.9).** The phase file asks for ≥30 cases "stratified by cohort and IDH status", but
+`EXTERNAL_VALIDATION_PROTOCOL.md` blocks any operation that needs the external label column before Gate E.
+Decision: IDH stratification is applied to **UTSW only**; UCSF-PDGM cases are drawn by seeded random sampling
+without reading its labels. Every borderline case (currently 4) is included regardless.
+
+**Dependency.** `matplotlib>=3.9,<4` was added to `pyproject.toml` for the QC overlay figures. It was already
+pinned in the lock (3.11.2) as a transitive dependency of `nnunetv2`, so the resolved environment is unchanged; it is
+declared because `src/` imports it directly. Flagged here because dependency edits are Research-Lead territory.
+
+**Owner.** Research Lead.
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.

@@ -30,6 +30,9 @@ dependencies = [
     "SimpleITK>=2.4,<3",
     "nibabel>=5,<6",
     "hd-bet==2.0.1",
+    # Phase 04 QC overlay figures (D-028). Already in the lock as a transitive
+    # dependency; declared here because src/ imports it directly.
+    "matplotlib>=3.9,<4",
 ]
 
 [project.optional-dependencies]

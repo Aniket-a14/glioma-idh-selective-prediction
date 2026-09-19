@@ -117,6 +117,7 @@ markupsafe==3.0.3
     # via jinja2
 matplotlib==3.11.2
     # via
+    #   glioma-selective (pyproject.toml)
     #   nnunetv2
     #   seaborn
 mdurl==0.1.2

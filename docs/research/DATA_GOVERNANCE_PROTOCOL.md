@@ -74,7 +74,7 @@ Every excluded patient carries a machine-readable reason. Free text is not accep
 | `label:ambiguous` | Conflicting or uncertain in the source record — **excluded, never imputed** (SPEC §5.4) |
 | `label:definition-mismatch` | Assay/era incompatible with the harmonized definition (SPEC §5.7) |
 | `missing:sequence` | Naturally incomplete four-sequence study (see **D-012**) |
-| `qc:registration-failed` / `qc:skullstrip-failed` / `qc:corrupt` / `qc:orientation` | Preprocessing QC failure |
+| `qc:registration-failed` / `qc:skullstrip-over` / `qc:skullstrip-under` / `qc:n4-artifact` / `qc:orientation-wrong` / `qc:corrupt` / `qc:modality-mislabelled` | Preprocessing QC failure (Phase 04 categories, D-028) |
 | `duplicate:scan` | Same patient, multiple studies — one retained, selection rule recorded |
 
 ---
