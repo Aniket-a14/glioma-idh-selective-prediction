@@ -2,6 +2,8 @@
 
 **Duration:** ~12 days (mostly overnight CPU) · **Gate:** D · **Compute:** CPU
 
+> **D-026 (2026-09-19):** the UTSW and UCSF-PDGM downloads are already skull-stripped, co-registered and on a common 240×240×155, 1 mm grid, so T04.2, T04.3 and T04.5 run there as *verification* (`verified-passthrough`), not as transformations. The stages are still built and tested for failing cases and for EGD. See `DECISION_LOG.md` D-026.
+
 ## Scientific purpose
 Produce co-registered, skull-stripped, bias-corrected, resampled, normalized volumes on a common footing across three cohorts — without leaking test or external distribution information into the normalization, and without silently accepting preprocessing failures that a loss curve would never reveal.
 

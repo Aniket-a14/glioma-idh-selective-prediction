@@ -598,4 +598,55 @@ once per machine and is recorded in `ENVIRONMENT_RECORD.md` when the first real 
 
 **Owner.** Research Lead.
 
+---
+
+## D-026 — UTSW and UCSF-PDGM core volumes are already pre-processed; Phase 04 verifies instead of redoing
+**Status:** RESOLVED (2026-09-19, Research Lead) · **Blocking:** no · **Resolve by:** Phase 04
+
+**Conflict.** `PHASE_04_PREPROCESSING.md` (T04.2, T04.3, T04.5) and D-024 assume raw scans: register
+each sequence to T1CE, skull-strip with HD-BET, resample to ~1 mm isotropic. Inspecting the real files
+(headers and voxel statistics only, first 60 patients per cohort for geometry, first 40 for alignment)
+shows the four core volumes of **both** cohorts are already in a BraTS-style common space:
+
+| Check | UTSW-Glioma (`brain_t1/t1ce/t2/flair`) | UCSF-PDGM (`_T1/_T1c/_T2/_FLAIR`) |
+|---|---|---|
+| Shape / spacing | 240×240×155, 1.0 mm isotropic (60/60) | 240×240×155, 1.0 mm isotropic (60/60) |
+| Orientation | LPS | LPS |
+| Data type | float32 | int16 |
+| Affine identical across the 4 sequences | 40/40 | 40/40 |
+| Non-zero mask overlap across sequences (Dice) | 1.000 (a single shared brain mask) | 1.000 |
+| Zero-voxel fraction | ~85% (background outside the brain is zero) | ~84% |
+
+The affine differs between the two cohorts (one distinct affine in each sample), so the grids share
+shape and spacing but not necessarily origin metadata. UCSF-PDGM additionally ships `_bias` variants
+(N4-corrected by the dataset authors); the adapter uses the non-bias files. UTSW ships `*_ants`
+registered variants that the adapter ignores. No claim is made about how the authors produced these
+volumes beyond what the headers and voxel statistics show.
+
+**Alternatives.** (a) Verify, do not redo: assert the expected geometry, skull-strip state and
+cross-sequence alignment; skip re-registration, HD-BET and resampling on volumes that pass; lossless
+LPS→RAS reorientation; uniform N4; run the heavy stages only on a case that fails verification and on
+EGD if its files turn out to be raw. (b) Redo everything per the phase file: a second interpolation on
+already-resampled data and HD-BET on stripped images. (c) (a) plus rigid refinement on cases whose
+measured misalignment exceeds a threshold.
+
+**Decision.** (a). Consequences for Phase 04:
+- T04.2/T04.3/T04.5 are built and unit-tested as designed (registration, HD-BET, resample), but the
+  production run on UTSW and UCSF-PDGM executes a **verification** for each of them, recorded per case in
+  the T04.11 status manifest as `verified-passthrough`, not a transformation.
+- A case that fails verification is a QC event: correct and re-run if systematic, exclude with the
+  matching `qc:*` reason if individual (D-024's rule). Whether the failure rate exceeds 10% per cohort is
+  measured on these verification results.
+- T04.4 (N4) still runs, uniformly, on the non-bias volumes of both cohorts, so the two cohorts do not
+  differ in bias-field treatment. Using UCSF's `_bias` files for one cohort only was rejected for that reason.
+- Orientation: LPS→RAS is done by axis flips only (no interpolation) and asserted after the pipeline
+  (acceptance criterion 5).
+- HD-BET stays a pinned dependency (D-025) because EGD, and any failing case, may still need it.
+- The per-cohort verification reports, not "the pipeline exited 0", are what acceptance criteria 5 and 6
+  are checked against; T04.9 visual QC is unchanged.
+
+**Owner.** Research Lead. This changes how Phase 04 is engineered, not what the study asks; the
+scientific invariants (normalization from UTSW-train only, zeroed missing modalities, no external labels)
+are unaffected.
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
