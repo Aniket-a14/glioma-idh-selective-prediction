@@ -180,7 +180,7 @@ def test_report_has_hand_computed_agreement_and_sensitivity_counts(
     }
     assert report["screen_bounds"] == {
         "original_lower_bound": 0.08,
-        "current_lower_bound": 0.12,
+        "current_lower_bound": 0.13,
         "provisional": True,
     }
     interpretation = report["automated_vs_human_agreement"]["interpretation"]
