@@ -38,6 +38,7 @@ from glioma_selective.preprocessing.qc_overlays import (
     select_qc_sample,
     select_qc_shape_tail,
     select_qc_tail,
+    select_residual_sample,
     write_qc_overlay_index,
     write_qc_review_sheet,
 )
@@ -428,6 +429,93 @@ def test_tail_append_preserves_review_bytes_index_values_and_existing_png(
     assert review_sheet_has_tail(review_path)
 
 
+def _residual_fixture() -> tuple[
+    dict[Cohort, tuple[str, ...]],
+    dict[tuple[Cohort, str], str],
+    dict[tuple[Cohort, str], QCVerificationSummary],
+]:
+    rosters = {
+        Cohort.UTSW: tuple(f"UTSW-BT{index:04d}" for index in range(1, 7)),
+        Cohort.UCSF_PDGM: ("UCSF-PDGM-0001",),
+    }
+    statuses = {
+        (Cohort.UTSW, "UTSW-BT0001"): "verified-passthrough",
+        (Cohort.UTSW, "UTSW-BT0002"): "verified-passthrough",
+        (Cohort.UTSW, "UTSW-BT0003"): "verified-borderline",
+        (Cohort.UTSW, "UTSW-BT0004"): "verified-passthrough",
+        (Cohort.UTSW, "UTSW-BT0005"): "failed",
+        (Cohort.UTSW, "UTSW-BT0006"): "verified-passthrough",
+        (Cohort.UCSF_PDGM, "UCSF-PDGM-0001"): "verified-passthrough",
+    }
+    verification = {
+        (Cohort.UTSW, "UTSW-BT0001"): QCVerificationSummary(0.20, 1.0),
+        (Cohort.UTSW, "UTSW-BT0002"): QCVerificationSummary(0.129, 1.0),
+        (Cohort.UTSW, "UTSW-BT0003"): QCVerificationSummary(0.20, 1.0),
+        (Cohort.UTSW, "UTSW-BT0004"): QCVerificationSummary(0.21, 1.0),
+        (Cohort.UTSW, "UTSW-BT0005"): QCVerificationSummary(0.22, 1.0),
+        (Cohort.UTSW, "UTSW-BT0006"): QCVerificationSummary(0.23, 1.0),
+        (Cohort.UCSF_PDGM, "UCSF-PDGM-0001"): QCVerificationSummary(0.24, 1.0),
+    }
+    return rosters, statuses, verification
+
+
+def test_residual_sample_is_deterministic_without_replacement_and_filtered() -> None:
+    rosters, statuses, verification = _residual_fixture()
+    kwargs = {
+        "retained_patient_ids": rosters,
+        "verification_statuses": statuses,
+        "verification": verification,
+        "indexed_cases": ((Cohort.UTSW, "UTSW-BT0001"),),
+        "sample_size": 2,
+    }
+    first = select_residual_sample(**kwargs)
+    second = select_residual_sample(**kwargs)
+
+    assert first == second
+    assert len(first) == 2
+    assert len({item.patient_id for item in first}) == 2
+    assert all(item.cohort is Cohort.UTSW for item in first)
+    assert all(item.selection_reason == "residual_sample" for item in first)
+    assert {item.patient_id for item in first} <= {
+        "UTSW-BT0004",
+        "UTSW-BT0006",
+    }
+
+
+def test_residual_sample_excludes_case_just_below_bound_and_raises_when_short() -> None:
+    rosters, statuses, verification = _residual_fixture()
+    verification[(Cohort.UTSW, "UTSW-BT0002")] = QCVerificationSummary(0.13, 1.0)
+    selected = select_residual_sample(
+        retained_patient_ids=rosters,
+        verification_statuses=statuses,
+        verification=verification,
+        indexed_cases=((Cohort.UTSW, "UTSW-BT0001"),),
+        sample_size=3,
+    )
+    assert "UTSW-BT0002" in {item.patient_id for item in selected}
+    verification[(Cohort.UTSW, "UTSW-BT0002")] = QCVerificationSummary(0.129, 1.0)
+    selected = select_residual_sample(
+        retained_patient_ids=rosters,
+        verification_statuses=statuses,
+        verification=verification,
+        indexed_cases=((Cohort.UTSW, "UTSW-BT0001"),),
+        sample_size=2,
+    )
+    assert "UTSW-BT0002" not in {item.patient_id for item in selected}
+    with pytest.raises(QCOverlayError, match="fewer candidates"):
+        select_residual_sample(
+            retained_patient_ids=rosters,
+            verification_statuses=statuses,
+            verification=verification,
+            indexed_cases=(
+                (Cohort.UTSW, "UTSW-BT0001"),
+                (Cohort.UTSW, "UTSW-BT0004"),
+                (Cohort.UTSW, "UTSW-BT0006"),
+            ),
+            sample_size=1,
+        )
+
+
 def test_review_sheet_reason_guard_detects_shape_tail(tmp_path: Path) -> None:
     selection = QCSelection(
         Cohort.UTSW,
@@ -656,6 +744,115 @@ def test_new_borderline_script_appends_only_new_overlays_and_is_idempotent(
     } == files_before_second_run
 
 
+def test_residual_sample_script_appends_continuing_key_and_is_idempotent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    private_directory = tmp_path / "private"
+    figure_directory = tmp_path / "figures"
+    output_directory = figure_directory / "qc"
+    verification_path = private_directory / "preprocessing_verification_cases.json"
+    index_path = private_directory / "qc_overlay_index.json"
+    review_path = output_directory / "qc_review_sheet.csv"
+    indexed = QCSelection(
+        Cohort.UTSW,
+        "UTSW-BT0001",
+        "stratified",
+        qc_key="qc_0007",
+    )
+    residual_id = "UTSW-BT0002"
+    below_id = "UTSW-BT0003"
+    verification = {
+        (Cohort.UTSW, indexed.patient_id): QCVerificationSummary(0.20, 1.0),
+        (Cohort.UTSW, residual_id): QCVerificationSummary(0.20, 1.0),
+        (Cohort.UTSW, below_id): QCVerificationSummary(0.129, 1.0),
+    }
+    verification_path.parent.mkdir(parents=True, exist_ok=True)
+    verification_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "cases": [
+                    {
+                        "cohort": cohort.value,
+                        "patient_id": patient_id,
+                        "status": "verified-passthrough",
+                        "brain_voxel_fraction": summary.brain_voxel_fraction,
+                        "cross_sequence_dice": {"T1": summary.min_cross_sequence_dice},
+                    }
+                    for (cohort, patient_id), summary in verification.items()
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    write_qc_overlay_index((indexed,), index_path)
+    write_qc_review_sheet((indexed,), verification, review_path)
+    output_directory.mkdir(parents=True, exist_ok=True)
+    existing_png = output_directory / "qc_0007.png"
+    existing_png.write_bytes(b"existing-png")
+    review_before = review_path.read_bytes()
+
+    retained = {
+        Cohort.UTSW: (indexed.patient_id, residual_id, below_id),
+        Cohort.UCSF_PDGM: ("UCSF-PDGM-0001",),
+    }
+    cases = {
+        (Cohort.UTSW, patient_id): replace(
+            _case(tmp_path / patient_id), patient_id=patient_id
+        )
+        for patient_id in (indexed.patient_id, residual_id, below_id)
+    }
+    monkeypatch.setattr(
+        overlay_script.paths, "private_data_dir", lambda: private_directory
+    )
+    monkeypatch.setattr(overlay_script.paths, "figures_dir", lambda: figure_directory)
+    monkeypatch.setattr(overlay_script, "build_real_retained_rosters", lambda: retained)
+    monkeypatch.setattr(
+        overlay_script,
+        "discover_cases",
+        lambda cohort, retained_patient_ids: tuple(
+            cases[(cohort, patient_id)] for patient_id in retained_patient_ids
+        ),
+    )
+
+    assert overlay_script.main(["--residual-sample", "1"]) == 0
+    first_report = json.loads(capsys.readouterr().out)
+    assert first_report["selected_cases"] == 1
+    assert first_report["cases_by_reason"] == {"residual_sample": 1}
+    assert first_report["residual_sample"] == 1
+    assert (output_directory / "qc_0008.png").is_file()
+    assert existing_png.read_bytes() == b"existing-png"
+    assert review_path.read_bytes().startswith(review_before)
+    assert load_qc_overlay_index(index_path)["qc_0008"] == (
+        Cohort.UTSW,
+        residual_id,
+    )
+    with review_path.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows[-1]["selection_reason"] == "residual_sample"
+    assert rows[-1]["reviewer_verdict"] == ""
+
+    files_before_second_run = {
+        path: path.read_bytes()
+        for path in (
+            index_path,
+            review_path,
+            existing_png,
+            output_directory / "qc_0008.png",
+        )
+    }
+    assert overlay_script.main(["--residual-sample", "1"]) == 0
+    second_report = json.loads(capsys.readouterr().out)
+    assert second_report["selected_cases"] == 0
+    assert second_report["cases_by_reason"] == {}
+    assert second_report["files_written"] == 0
+    assert {
+        path: path.read_bytes() for path in files_before_second_run
+    } == files_before_second_run
+
+
 def test_new_borderline_requires_both_overlay_artifacts(tmp_path: Path) -> None:
     index_path = tmp_path / "qc_overlay_index.json"
     review_path = tmp_path / "qc_review_sheet.csv"
@@ -675,3 +872,10 @@ def test_new_borderline_is_mutually_exclusive_with_other_modes() -> None:
     with pytest.raises(SystemExit) as error:
         overlay_script.main(["--new-borderline", "--shape-tail", "1"])
     assert error.value.code == 2
+
+
+def test_residual_sample_is_mutually_exclusive_with_other_modes() -> None:
+    for other in (("--tail", "1"), ("--shape-tail", "1"), ("--new-borderline",)):
+        with pytest.raises(SystemExit) as error:
+            overlay_script.main(["--residual-sample", "1", *other])
+        assert error.value.code == 2

@@ -48,8 +48,12 @@ from glioma_selective.preprocessing.qc_overlays import (  # noqa: E402
     select_qc_sample,
     select_qc_shape_tail,
     select_qc_tail,
+    select_residual_sample,
     write_qc_overlay_index,
     write_qc_review_sheet,
+)
+from glioma_selective.preprocessing.verification import (  # noqa: E402
+    VerificationThresholds,
 )
 from glioma_selective.utils import paths  # noqa: E402
 
@@ -123,6 +127,7 @@ def _report(
     shape_tail: int | None = None,
     shape_tail_cohort: Cohort | None = None,
     new_borderline: bool = False,
+    residual_sample: int | None = None,
 ) -> None:
     report: dict[str, object] = {
         "selected_cases": len(selections),
@@ -154,6 +159,8 @@ def _report(
         )
     if new_borderline:
         report["new_borderline"] = True
+    if residual_sample is not None:
+        report["residual_sample"] = residual_sample
     print(json.dumps(report, sort_keys=True))
 
 
@@ -184,6 +191,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--new-borderline",
         action="store_true",
         help="append currently borderline cases not already in the QC index",
+    )
+    tail_group.add_argument(
+        "--residual-sample",
+        type=_nonnegative_integer,
+        default=None,
+        help="append N seeded UTSW residual-risk cases above the borderline bound",
     )
     parser.add_argument(
         "--shape-tail-cohort",
@@ -262,6 +275,64 @@ def main(argv: Sequence[str] | None = None) -> int:
                 elapsed=time.perf_counter() - started,
                 tail=None,
                 new_borderline=True,
+            )
+            return 0
+
+        if arguments.residual_sample is not None:
+            _require_complete_overlay_artifacts(index_path, review_path)
+            if review_sheet_has_selection_reason(review_path, "residual_sample"):
+                _report(
+                    selections=(),
+                    total_bytes=0,
+                    elapsed=time.perf_counter() - started,
+                    tail=None,
+                    residual_sample=arguments.residual_sample,
+                )
+                return 0
+            existing_index = load_qc_overlay_index(index_path)
+            statuses = load_verification_statuses(verification_path)
+            selections = select_residual_sample(
+                retained_patient_ids=retained,
+                verification_statuses=statuses,
+                verification=verification,
+                indexed_cases=existing_index.values(),
+                sample_size=arguments.residual_sample,
+                borderline_min_brain_fraction=(
+                    VerificationThresholds().borderline_min_brain_fraction
+                ),
+                seed=QC_SAMPLE_SEED,
+            )
+            selections = assign_continuing_qc_keys(selections, existing_index)
+            if not selections:
+                _report(
+                    selections=(),
+                    total_bytes=0,
+                    elapsed=time.perf_counter() - started,
+                    tail=None,
+                    residual_sample=arguments.residual_sample,
+                )
+                return 0
+            output_directory.mkdir(parents=True, exist_ok=True)
+            cases = {
+                (Cohort.UTSW, case.patient_id): case
+                for case in discover_cases(
+                    Cohort.UTSW,
+                    retained_patient_ids=[
+                        selection.patient_id for selection in selections
+                    ],
+                )
+            }
+            total_bytes = _render_selections(
+                selections, verification, output_directory, cases
+            )
+            append_qc_overlay_index(selections, index_path)
+            append_qc_review_sheet(selections, verification, review_path)
+            _report(
+                selections=selections,
+                total_bytes=total_bytes,
+                elapsed=time.perf_counter() - started,
+                tail=None,
+                residual_sample=arguments.residual_sample,
             )
             return 0
 
