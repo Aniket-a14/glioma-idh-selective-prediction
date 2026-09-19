@@ -747,4 +747,28 @@ isolated negative voxels left as-is.
 
 **Owner.** Research Lead.
 
+## D-030 — How Phase 04 QC exclusions relate to the frozen Phase 03 manifests (T04.12)
+**Status:** RESOLVED (2026-09-19, Research Lead) · **Blocking:** no · **Resolve by:** Phase 04
+
+**Conflict.** T04.12 says QC failures are "appended to the exclusion manifest", and Phase 05 needs a post-QC
+roster. But `build_real_exclusion_manifest()` regenerates the Phase 03 manifest from raw data on every call
+(an append to the SSD file would be lost), and the committed `docs/research/manifests/cohort_manifest.json`
+(UTSW 622 retained, roster digest pinned by `tests/regression/test_leakage.py`) is the frozen T03.11 artifact.
+
+**Decision: layered.** The Phase 03 exclusion manifest, `cohort_manifest.json`, its digests, and the 622/202
+counts in the Phase 03 protocol docs stay as the **pre-QC** record. T04.12 adds (1) a post-QC exclusion manifest
+on the SSD, built as the Phase 03 manifest plus one `qc:<category>` row per QC-excluded patient taken from
+`preprocessing_status.json` (`append_qc_exclusions`, pure and idempotent-safe), and (2) a committed, roster-free
+`docs/research/manifests/cohort_manifest_post_qc.json` with its own roster digests. Phase 05 reads the post-QC
+files. Currently 2 UTSW patients (`qc:skullstrip-over`), so UTSW 622 to 620 and UCSF-PDGM 202 unchanged.
+Alternative rejected: regenerating `cohort_manifest.json` in place (rewrites a frozen artifact, loses the pre-QC
+digest, and changes the regression test and several Phase 03 documents).
+
+**Consequences.** The pre-QC to post-QC drop stays auditable for the paper's cohort-flow figure. A patient with
+several QC reasons gets one row whose reason joins the sorted reasons with `+`. The Phase 03 accounting checks in
+the manifest describe the pre-QC state and are left unchanged. The 10% per-cohort stop rule (D-024) is enforced
+by the builder script, which refuses to write when it is exceeded.
+
+**Owner.** Research Lead.
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
