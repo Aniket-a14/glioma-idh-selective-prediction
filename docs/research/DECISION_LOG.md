@@ -511,4 +511,66 @@ exactly which patients were included, without the repository itself ever naming 
 
 **Owner.** Research Lead — this closes the "committed vs. hashed" ambiguity for T03.11 before it runs.
 
+---
+
+## D-023 — T04.6 needs the UTSW training split, but Phase 05 creates it and requires Phase 04 first
+**Status:** RESOLVED (2026-09-19, Research Lead) · **Blocking:** no (resolved before T04.6) · **Resolve by:** Phase 04
+
+**Conflict.** `PHASE_04_PREPROCESSING.md` T04.6 fits per-modality z-score statistics "exclusively
+from the UTSW training split". The split is produced by Phase 05 (T05.2/T05.3), and Phase 05's entry
+criteria require Phases 03 and 04 complete with "normalization statistics ... frozen and hashed".
+Each phase waits on the other, so as written neither can start its half.
+
+**Alternatives.** (a) Reorder: run the per-patient stages and QC exclusions first, freeze the split
+on the post-QC roster, then fit and freeze the normalization statistics on that train set. (b) Compute
+a provisional split for the statistics only, then freeze the real split after QC; rejected in
+principle because QC exclusions can move patients between splits, so the statistics could include
+patients who end up in calibration or internal test — a quiet break of the "training split only" invariant.
+
+**Decision.** (a). Order of work:
+1. T04.1–T04.5, T04.7, T04.8 (per-patient, no split needed), then T04.9 visual QC, T04.10–T04.12 and
+   QC-based exclusions. The automated z-score range check in T04.8 runs after step 3 (it needs the
+   statistics); every other T04.8 check runs before.
+2. Phase 05 T05.1–T05.3: power check, patient-level IDH-stratified split on the **post-QC** roster,
+   frozen and hashed.
+3. T04.6: fit statistics on the frozen UTSW-train partition only, hash and freeze them, apply unchanged
+   to every cohort and split. The CLI still refuses any other fitting cohort.
+
+**Phase-file amendments implied (not yet edited).** `PHASE_04` T04.6 moves after Phase 05 T05.3 and
+the Phase 04 exit criterion "normalization statistics frozen" moves with it; `PHASE_05` entry
+criteria drop "normalization statistics ... frozen" and add it to the Phase 06 entry criteria (Phase 06
+already needs the frozen split and the statistics). These edits are made when Phase 04 starts; until
+then this entry governs where the files disagree.
+
+**Owner.** Research Lead. Phase 05 remains a Research Lead phase whatever `integration_mode` says.
+
+---
+
+## D-024 — Phase 04 preprocessing choices: registration target, skull-stripper, QC exclusion rule
+**Status:** RESOLVED (2026-09-19, Research Lead) · **Blocking:** no · **Resolve by:** Phase 04
+
+The Phase 04 file lists these under "Decisions requiring Research Lead approval".
+
+- **Registration target (T04.2): within-patient T1CE.** T1, T2 and FLAIR are rigidly registered to the
+  same patient's T1CE. No template, so no second interpolation and no template-shape bias across cohorts.
+  The visual QC overlays (each modality against T1CE) use the same reference.
+- **Skull-stripper (T04.3): HD-BET, one pinned release.** The exact version is chosen when it is
+  installed, recorded in `ENVIRONMENT_RECORD.md` and the lock, and not changed mid-cohort. Adding
+  HD-BET and the imaging libraries (`SimpleITK`, `nibabel`) is a `pyproject.toml` dependency change
+  that needs its own approval when Phase 04 starts.
+- **QC exclusion rule (T04.12): the phase file's rule, unchanged.** A systematic failure (one parameter
+  causes it) is corrected and the affected cases re-run. An individual failure is excluded with a
+  `qc:*` reason (`registration-failed`, `skullstrip-over`, `skullstrip-under`, `n4-artifact`,
+  `orientation-wrong`, `corrupt`, `modality-mislabelled`). A failure rate above 10% in any cohort stops
+  the phase for a systematic investigation before proceeding.
+- **Still open, decide when needed:** whether a systematic failure warrants re-running a whole cohort
+  (only arises if QC finds one); who takes role B for the T04.9 visual QC, with A as the DEGRADED
+  fallback (+8 days, disclosed).
+
+**Compute note.** Phase 04 is CPU-bound and does not need the A100 (D-017 blocks Phase 06 only). The
+SSD is with the Mac and the GPU server is not reachable, so real runs happen on the Mac with limited
+workers; the first real-data smoke test (3–5 patients) decides whether the full batch fits there.
+
+**Owner.** Research Lead.
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
