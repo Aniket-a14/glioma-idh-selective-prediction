@@ -36,6 +36,9 @@ from glioma_selective.leakage.exclusions import (
 )
 from glioma_selective.leakage.id_normalization import Cohort, normalize_identifier
 from glioma_selective.leakage.overlap_audit import build_real_overlap_audit
+from glioma_selective.preprocessing.qc_exclusions import qc_exclusion_records
+from glioma_selective.preprocessing.status import PreprocessingStatusManifest
+from glioma_selective.utils import paths
 from glioma_selective.utils.paths import PathResolutionError
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +46,9 @@ COHORT_MANIFEST_PATH = (
     REPOSITORY_ROOT / "docs" / "research" / "manifests" / "cohort_manifest.json"
 )
 SPLIT_MANIFEST_PATH = REPOSITORY_ROOT / "data" / "manifests" / "splits.json"
+POST_QC_COHORT_MANIFEST_PATH = (
+    REPOSITORY_ROOT / "docs" / "research" / "manifests" / "cohort_manifest_post_qc.json"
+)
 
 
 def _json_object(value: object, context: str) -> dict[str, object]:
@@ -163,6 +169,61 @@ def test_real_excluded_ids_are_absent_from_retained_rosters(
 
     for cohort, excluded_ids in excluded_by_cohort.items():
         assert excluded_ids.isdisjoint(set(rosters[cohort]))
+
+
+def test_real_pre_and_post_qc_roster_digests_remain_consistent() -> None:
+    """Verify both frozen stages when the SSD post-QC artifact is available."""
+
+    try:
+        manifests_dir = paths.manifests_dir()
+    except PathResolutionError as error:
+        pytest.skip(f"post-QC SSD manifest is unavailable: {error}")
+    post_exclusion_path = manifests_dir / "exclusion_manifest_post_qc.json"
+    if not post_exclusion_path.exists() or not POST_QC_COHORT_MANIFEST_PATH.exists():
+        pytest.skip(
+            "post-QC exclusion and committed cohort manifests are not both available"
+        )
+    status_path = manifests_dir / "preprocessing_status.json"
+    if not status_path.exists():
+        pytest.skip("preprocessing status manifest is unavailable for QC IDs")
+
+    post_exclusion = _json_object(
+        json.loads(post_exclusion_path.read_text(encoding="utf-8")),
+        "post-QC exclusion manifest",
+    )
+    post_cohort_manifest = _json_object(
+        json.loads(POST_QC_COHORT_MANIFEST_PATH.read_text(encoding="utf-8")),
+        "post-QC cohort manifest",
+    )
+    pre_cohort_manifest = _json_object(
+        json.loads(COHORT_MANIFEST_PATH.read_text(encoding="utf-8")),
+        "pre-QC cohort manifest",
+    )
+    records = qc_exclusion_records(PreprocessingStatusManifest.load(status_path))
+    qc_ids: dict[Cohort, set[str]] = {}
+    for cohort_name, patient_id, _ in records:
+        cohort = Cohort(cohort_name)
+        qc_ids.setdefault(cohort, set()).add(normalize_identifier(patient_id, cohort))
+
+    pre_exclusion = build_real_exclusion_manifest()
+    pre_rosters = build_real_retained_rosters(pre_exclusion)
+    post_rosters = build_real_retained_rosters(post_exclusion)
+    for cohort in (Cohort.UTSW, Cohort.UCSF_PDGM):
+        assert set(post_rosters[cohort]) == set(pre_rosters[cohort]) - qc_ids.get(
+            cohort, set()
+        )
+        assert (
+            verify_roster_digest(pre_cohort_manifest, cohort, pre_rosters[cohort])[
+                "status"
+            ]
+            == "verified"
+        )
+        assert (
+            verify_roster_digest(post_cohort_manifest, cohort, post_rosters[cohort])[
+                "status"
+            ]
+            == "verified"
+        )
 
 
 def test_planted_leakage_fails_closed() -> None:
