@@ -649,4 +649,32 @@ measured misalignment exceeds a threshold.
 scientific invariants (normalization from UTSW-train only, zeroed missing modalities, no external labels)
 are unaffected.
 
+---
+
+## D-027 — The lock and the local venv are Python ≥3.12 in practice; the project and CI say 3.11
+**Status:** OPEN · **Blocking:** no · **Resolve by:** before the Phase 06 environment freeze
+
+**Conflict.** `pyproject.toml` says `requires-python = ">=3.11"` and CI runs Python 3.11, but
+`requirements.lock.txt` pins `numpy==2.5.3` and `contourpy==1.4.0`, which need Python ≥3.12
+(`uv pip install --python-version 3.11 -r requirements.lock.txt` reports the lock unsatisfiable). The
+local venv is Python 3.14. CI installs `.[dev]` rather than the lock, so it resolves `numpy==2.4.6` on
+3.11 and passes. Found while reviewing T04.1: once `src/` imports numpy (first true in `preprocessing/`),
+local `mypy` fails on numpy 2.5.3's stubs (`type` statement) because `[tool.mypy] python_version = "3.11"`.
+
+**Verified (2026-09-19).** On a fresh Python 3.11 venv with `pip install -e ".[dev]"` (what CI does),
+`mypy` reports no issues in 17 files and `pytest tests/unit tests/regression` gives 100 passed, 6 skipped.
+`mypy --python-version 3.12` on the local venv is also clean. So the failure is environmental, not a
+code defect.
+
+**Alternatives.** (a) Raise `requires-python` to `>=3.12`, CI to 3.12, and keep the lock as is. (b) Keep
+3.11 and regenerate the lock with `--python-version 3.11` so it installs everywhere. (c) Set
+`[tool.mypy] python_version = "3.12"` only, which fixes local mypy but leaves the unsatisfiable lock.
+
+**Recommendation.** (a): every machine in use (Mac 3.14, GPU server, and the expected A100 environment)
+already runs a newer Python, and the lock is what the reproducibility protocol installs from. It is a
+`pyproject.toml` and CI edit, so it needs your approval; until then, run local mypy with
+`--python-version 3.12`.
+
+**Owner.** Research Lead.
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
