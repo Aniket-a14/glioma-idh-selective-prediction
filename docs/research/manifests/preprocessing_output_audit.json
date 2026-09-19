@@ -1,0 +1,162 @@
+{
+  "cohorts": {
+    "ucsf_pdgm": {
+      "case_count": 202,
+      "checks": {
+        "background_footprint": {
+          "failed": 0,
+          "passed": 202
+        },
+        "cross_volume_affine_shape": {
+          "failed": 0,
+          "passed": 202
+        },
+        "mask.load": {
+          "failed": 0,
+          "passed": 202
+        },
+        "mask_alignment": {
+          "failed": 0,
+          "passed": 202
+        },
+        "mask_properties": {
+          "failed": 0,
+          "passed": 202
+        },
+        "negative_fraction": {
+          "failed": 0,
+          "passed": 202
+        },
+        "roster_digest": {
+          "failed": 0,
+          "passed": 1
+        },
+        "volume.FLAIR.load": {
+          "failed": 0,
+          "passed": 202
+        },
+        "volume.T1.load": {
+          "failed": 0,
+          "passed": 202
+        },
+        "volume.T1ce.load": {
+          "failed": 0,
+          "passed": 202
+        },
+        "volume.T2.load": {
+          "failed": 0,
+          "passed": 202
+        },
+        "volume_entries_load": {
+          "failed": 0,
+          "passed": 202
+        },
+        "volume_geometry": {
+          "failed": 0,
+          "passed": 202
+        }
+      },
+      "mask_summary": {
+        "minimum_mask_in_footprint_fraction": 0.995606638108409,
+        "no_segmentation_case_count": 0
+      },
+      "negative_voxel_summary": {
+        "largest_negative_fraction_nonzero": 0.0,
+        "total_negative_voxels": 0,
+        "volumes_with_any_negative": 0
+      },
+      "passed": true,
+      "retained_patient_count_match": true,
+      "roster_digest_match": true,
+      "volumes_checked": 808
+    },
+    "utsw": {
+      "case_count": 616,
+      "checks": {
+        "background_footprint": {
+          "failed": 0,
+          "passed": 616
+        },
+        "cross_volume_affine_shape": {
+          "failed": 0,
+          "passed": 616
+        },
+        "mask.load": {
+          "failed": 0,
+          "passed": 616
+        },
+        "mask_alignment": {
+          "failed": 1,
+          "passed": 615
+        },
+        "mask_properties": {
+          "failed": 0,
+          "passed": 616
+        },
+        "negative_fraction": {
+          "failed": 0,
+          "passed": 616
+        },
+        "roster_digest": {
+          "failed": 0,
+          "passed": 1
+        },
+        "volume.FLAIR.load": {
+          "failed": 0,
+          "passed": 616
+        },
+        "volume.T1.load": {
+          "failed": 0,
+          "passed": 616
+        },
+        "volume.T1ce.load": {
+          "failed": 0,
+          "passed": 616
+        },
+        "volume.T2.load": {
+          "failed": 0,
+          "passed": 616
+        },
+        "volume_entries_load": {
+          "failed": 0,
+          "passed": 616
+        },
+        "volume_geometry": {
+          "failed": 0,
+          "passed": 616
+        }
+      },
+      "mask_summary": {
+        "minimum_mask_in_footprint_fraction": 0.9889132985836313,
+        "no_segmentation_case_count": 3
+      },
+      "negative_voxel_summary": {
+        "largest_negative_fraction_nonzero": 4.3825248112130763e-05,
+        "total_negative_voxels": 152,
+        "volumes_with_any_negative": 7
+      },
+      "passed": false,
+      "retained_patient_count_match": true,
+      "roster_digest_match": true,
+      "volumes_checked": 2464
+    }
+  },
+  "passed": false,
+  "schema_version": 1,
+  "thresholds": {
+    "cross_sequence_dice_min": 0.9,
+    "expected_shape": [
+      240,
+      240,
+      155
+    ],
+    "expected_spacing_mm": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "mask_in_footprint_min": 0.99,
+    "negative_fraction_max": 0.001,
+    "spacing_tolerance_mm": 0.0001
+  }
+}

@@ -826,4 +826,26 @@ not thresholds. Unreviewed cases above 0.13 stay in the cohort. UTSW exclusions:
 
 **Owner.** Research Lead.
 
+## D-032 — One mask-alignment audit finding accepted as a boundary effect (Phase 04 output audit)
+**Status:** RESOLVED (2026-09-19, Claude, for Research Lead confirmation at sign-off) · **Blocking:** no · **Resolve by:** Phase 04
+
+**Conflict.** `scripts/audit_preprocessing_outputs.py` (thresholds set in advance: at least 0.99 of non-zero mask voxels
+inside the T1ce non-zero footprint) passes every check on all 818 cases (616 UTSW + 202 UCSF-PDGM, 3,272 volumes, masks) except this
+one for 1 UTSW case: 0.9889 of its mask lies inside the footprint. The mask and volume grids are identical for that case
+(the exact shape and affine check passed for all 616 UTSW cases).
+
+**Finding.** The mask has 146,572 voxels (a very large tumour reaching the brain surface); 1,625 lie outside the T1ce
+footprint, at a median of 1 voxel and a maximum of 2.2 voxels from its edge (only 4 voxels are more than 2 voxels
+out). That is the skull-strip boundary cutting 1 to 2 voxels into a tumour that touches the surface, not a
+misalignment.
+
+**Decision.** Keep the case, keep the audit threshold and the failing audit result unchanged (the threshold is not
+loosened after seeing the case), and record this exception here. `preprocessing_output_audit.json` therefore shows
+`passed: false` with exactly this one supplementary-check failure and nothing else. The alignment criterion
+(acceptance criterion 6) rests on the exact grid equality (616/616 UTSW, 202/202 UCSF-PDGM) and on the visual overlays.
+Alternative rejected: switching the check to a distance-tolerant form now, which would be a threshold change chosen
+after observing the data. If a later phase wants that form it should be pre-specified.
+
+**Owner.** Research Lead.
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.

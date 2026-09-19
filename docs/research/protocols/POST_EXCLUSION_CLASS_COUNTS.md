@@ -48,22 +48,22 @@ institution's referral mix, not a random subsample of UCSF-PDGM.
 
 ---
 
-## Post-QC counts (Phase 04 T04.12, D-030)
+## Post-QC counts (Phase 04 T04.12, D-030, D-031)
 
 The tables above are the **pre-QC** record and stay unchanged (they match the frozen
-`docs/research/manifests/cohort_manifest.json`). Phase 04's visual QC excluded 2 UTSW patients
-(`qc:skullstrip-over`, part of the brain missing; D-024, D-028) and 0 UCSF-PDGM patients. The post-QC roster is
+`docs/research/manifests/cohort_manifest.json`). Phase 04's visual QC excluded 6 UTSW patients
+(all `qc:skullstrip-over`, part of the brain missing; D-024, D-028, D-031) and 0 UCSF-PDGM patients. The post-QC roster is
 `docs/research/manifests/cohort_manifest_post_qc.json`, built by `scripts/build_post_qc_manifests.py` from the
 Phase 03 exclusion manifest plus the QC decisions in `preprocessing_status.json`.
 
 | Cohort | Retained pre-QC | QC-excluded | Retained post-QC | IDH (post-QC) | 1p/19q (post-QC, exploratory) |
 |---|---|---|---|---|---|
-| UTSW-Glioma | 622 | 2 | **620** | `IDH_MUTANT` 175 / `IDH_WILDTYPE` 445 | `1P19Q_CODELETED` 62 / `1P19Q_NONCODELETED` 272 / `1P19Q_UNLABELED` 286 |
+| UTSW-Glioma | 622 | 6 | **616** | `IDH_MUTANT` 173 / `IDH_WILDTYPE` 443 | `1P19Q_CODELETED` 62 / `1P19Q_NONCODELETED` 270 / `1P19Q_UNLABELED` 284 |
 | UCSF-PDGM | 202 | 0 | **202** | unchanged (80 / 122) | unchanged (13 / 167 / 22) |
 
-The 2 excluded UTSW patients were one IDH-mutant and one IDH-wildtype (one co-deleted, one unlabeled for 1p/19q),
-so the mutant share moves from 28.3% to 28.2%. The UTSW post-QC roster digest is
-`3f198edacb46c324e54738d69540b989717eacf2adfd08eb91d7bcc11f3fb56c`; the UCSF-PDGM digest is identical to the
+The 6 excluded UTSW patients were 3 IDH-mutant and 3 IDH-wildtype (1 co-deleted, 2 non-co-deleted, 3 unlabeled for
+1p/19q), so the mutant share moves from 28.3% to 28.1%. The UTSW post-QC roster digest is
+`ee550584d4276d701204b864dd8b7817f65b24f9ba1f63110e5343b32023561d`; the UCSF-PDGM digest is identical to the
 Phase 03 one. The counts were checked independently of the builder (own SHA-256 over the sorted canonical IDs, and
 the QC-excluded set compared with the failed visual-QC verdicts). UCSF-PDGM labels were not read for this step.
 

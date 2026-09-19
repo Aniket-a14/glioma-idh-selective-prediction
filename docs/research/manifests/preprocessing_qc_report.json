@@ -1,0 +1,265 @@
+{
+  "automated_vs_human_agreement": {
+    "by_cohort": {
+      "ucsf_pdgm": {
+        "automated_flag_vs_human_verdict": {
+          "automated_clear__human_fail": 0,
+          "automated_clear__human_pass": 16,
+          "automated_flagged__human_fail": 0,
+          "automated_flagged__human_pass": 5
+        },
+        "human_failures": [],
+        "human_failures_flagged_at_original_bound": 0
+      },
+      "utsw": {
+        "automated_flag_vs_human_verdict": {
+          "automated_clear__human_fail": 0,
+          "automated_clear__human_pass": 71,
+          "automated_flagged__human_fail": 6,
+          "automated_flagged__human_pass": 57
+        },
+        "human_failures": [
+          {
+            "automated_flagged": true,
+            "brain_voxel_fraction": 0.05259128584229391,
+            "failure_category": "skullstrip-over",
+            "flagged_at_original_bound": true,
+            "qc_key": "qc_0030"
+          },
+          {
+            "automated_flagged": true,
+            "brain_voxel_fraction": 0.10024036738351254,
+            "failure_category": "skullstrip-over",
+            "flagged_at_original_bound": false,
+            "qc_key": "qc_0055"
+          },
+          {
+            "automated_flagged": true,
+            "brain_voxel_fraction": 0.1080005600358423,
+            "failure_category": "skullstrip-over",
+            "flagged_at_original_bound": false,
+            "qc_key": "qc_0078"
+          },
+          {
+            "automated_flagged": true,
+            "brain_voxel_fraction": 0.10880096326164874,
+            "failure_category": "skullstrip-over",
+            "flagged_at_original_bound": false,
+            "qc_key": "qc_0080"
+          },
+          {
+            "automated_flagged": true,
+            "brain_voxel_fraction": 0.11506933243727599,
+            "failure_category": "skullstrip-over",
+            "flagged_at_original_bound": false,
+            "qc_key": "qc_0089"
+          },
+          {
+            "automated_flagged": true,
+            "brain_voxel_fraction": 0.12891297043010752,
+            "failure_category": "skullstrip-over",
+            "flagged_at_original_bound": false,
+            "qc_key": "qc_0105"
+          }
+        ],
+        "human_failures_flagged_at_original_bound": 1
+      }
+    },
+    "interpretation": "The automated statuses shown are from the recalibrated D-031 screen and are therefore in-sample for the human failure that motivated recalibration. The reviewed sample was selected on the tails; these are counts, not sensitivity or specificity estimates.",
+    "joinable_reviewed_case_count": 155
+  },
+  "cohorts": {
+    "ucsf_pdgm": {
+      "automated_failure_rate": 0.0,
+      "borderline_count": 5,
+      "exceeds_stop_threshold": false,
+      "exclusions_by_qc_reason": {},
+      "failure_counts_by_category": {
+        "corrupt": 0,
+        "modality-mislabelled": 0,
+        "n4-artifact": 0,
+        "orientation-wrong": 0,
+        "registration-failed": 0,
+        "skullstrip-over": 0,
+        "skullstrip-under": 0
+      },
+      "post_decision_exclusion_rate": 0.0,
+      "total": 202,
+      "verification_status_counts": {
+        "failed": 0,
+        "not-run": 0,
+        "verified-borderline": 5,
+        "verified-passthrough": 197
+      },
+      "visual_qc_counts": {
+        "failed": 0,
+        "not-required": 181,
+        "passed": 21,
+        "pending": 0
+      }
+    },
+    "utsw": {
+      "automated_failure_rate": 0.0,
+      "borderline_count": 63,
+      "exceeds_stop_threshold": false,
+      "exclusions_by_qc_reason": {
+        "qc:skullstrip-over": 6
+      },
+      "failure_counts_by_category": {
+        "corrupt": 0,
+        "modality-mislabelled": 0,
+        "n4-artifact": 0,
+        "orientation-wrong": 0,
+        "registration-failed": 0,
+        "skullstrip-over": 0,
+        "skullstrip-under": 0
+      },
+      "post_decision_exclusion_rate": 0.00964630225080386,
+      "total": 622,
+      "verification_status_counts": {
+        "failed": 0,
+        "not-run": 0,
+        "verified-borderline": 63,
+        "verified-passthrough": 559
+      },
+      "visual_qc_counts": {
+        "failed": 6,
+        "not-required": 488,
+        "passed": 128,
+        "pending": 0
+      }
+    }
+  },
+  "provenance": {
+    "input_sha256": {
+      "preprocessing_status": "2b1477f0416faeab2739ab5cd035bf3960f3e99886d7933650fa57fdf212ba13",
+      "preprocessing_verification_cases": "d5e1c9a0174e43b8735eabe439dc2325015910f7eaec903fe74d8cabf218021e",
+      "qc_review_sheet": "5a9ea6351763cb094a2099ed936e8e0d1bddeed87a2af97fd39349241fdc5005"
+    },
+    "reviewed_rows_without_verdict": 0
+  },
+  "residual_failure_rate": {
+    "all_random_above_bound": {
+      "cohort_filter": "utsw",
+      "failures": 0,
+      "n": 62,
+      "upper_95": 0.047169511375356854
+    },
+    "bound": 0.13,
+    "interpretation": "These are residual-risk estimates for Limitations, not thresholds. The all-random-above-bound group mixes designs (IDH-stratified random and residual random).",
+    "residual_sample": {
+      "failures": 0,
+      "n": 40,
+      "upper_95": 0.0721575245055146
+    }
+  },
+  "reviewed_sample": {
+    "ucsf_pdgm": {
+      "by_selection_reason_and_verdict": {
+        "borderline": {
+          "pass": 2
+        },
+        "random": {
+          "pass": 11
+        },
+        "tail": {
+          "pass": 8
+        }
+      },
+      "total": 21
+    },
+    "utsw": {
+      "by_selection_reason_and_verdict": {
+        "borderline": {
+          "fail": 5,
+          "pass": 35
+        },
+        "residual_sample": {
+          "pass": 40
+        },
+        "shape_tail": {
+          "pass": 22
+        },
+        "stratified": {
+          "pass": 24
+        },
+        "tail": {
+          "fail": 1,
+          "pass": 7
+        }
+      },
+      "total": 134
+    }
+  },
+  "schema_version": 1,
+  "screen_bounds": {
+    "current_lower_bound": 0.13,
+    "original_lower_bound": 0.08,
+    "provisional": true
+  },
+  "threshold_sensitivity": {
+    "candidate_lower_brain_fraction_bounds": {
+      "0.05": {
+        "all_cases_below_by_cohort": {
+          "ucsf_pdgm": 0,
+          "utsw": 0
+        },
+        "reviewed_cases_below": {
+          "fail": 0,
+          "pass": 0
+        }
+      },
+      "0.08": {
+        "all_cases_below_by_cohort": {
+          "ucsf_pdgm": 0,
+          "utsw": 2
+        },
+        "reviewed_cases_below": {
+          "fail": 1,
+          "pass": 1
+        }
+      },
+      "0.10": {
+        "all_cases_below_by_cohort": {
+          "ucsf_pdgm": 0,
+          "utsw": 6
+        },
+        "reviewed_cases_below": {
+          "fail": 1,
+          "pass": 5
+        }
+      },
+      "0.11": {
+        "all_cases_below_by_cohort": {
+          "ucsf_pdgm": 0,
+          "utsw": 20
+        },
+        "reviewed_cases_below": {
+          "fail": 4,
+          "pass": 16
+        }
+      },
+      "0.12": {
+        "all_cases_below_by_cohort": {
+          "ucsf_pdgm": 1,
+          "utsw": 32
+        },
+        "reviewed_cases_below": {
+          "fail": 5,
+          "pass": 28
+        }
+      },
+      "0.15": {
+        "all_cases_below_by_cohort": {
+          "ucsf_pdgm": 18,
+          "utsw": 205
+        },
+        "reviewed_cases_below": {
+          "fail": 6,
+          "pass": 91
+        }
+      }
+    },
+    "reviewed_case_count": 155
+  }
+}
