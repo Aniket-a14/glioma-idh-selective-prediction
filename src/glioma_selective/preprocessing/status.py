@@ -37,7 +37,8 @@ VisualQCState = Literal["not-required", "pending", "passed", "failed"]
 CaseKey = tuple[str, str]
 
 _SCHEMA_VERSION: Final[int] = 1
-_STAGES: Final[tuple[str, ...]] = ("verify", "reorient", "n4")
+_STAGES: Final[tuple[str, ...]] = ("verify", "reorient", "n4", "mask")
+_LEGACY_STAGES: Final[frozenset[str]] = frozenset(("verify", "reorient", "n4"))
 _STATUS_VALUES: Final[frozenset[str]] = frozenset(
     {"verified-passthrough", "verified-borderline", "failed", "not-run"}
 )
@@ -96,7 +97,7 @@ def _validate_categories(categories: Iterable[str], *, field: str) -> tuple[str,
 def _validate_stage_name(stage: str) -> str:
     if stage not in _STAGES:
         raise ValueError(
-            "unknown preprocessing stage; expected verify, reorient, or n4"
+            "unknown preprocessing stage; expected verify, reorient, n4, or mask"
         )
     return stage
 
@@ -159,7 +160,9 @@ class CaseStatus:
             )
         normalized_stages = dict(self.stages)
         if set(normalized_stages) != set(_STAGES):
-            raise ValueError("stages must contain exactly verify, reorient, and n4")
+            raise ValueError(
+                "stages must contain exactly verify, reorient, n4, and mask"
+            )
         for stage, record in normalized_stages.items():
             _validate_stage_name(stage)
             if not isinstance(record, StageRecord):
@@ -207,6 +210,7 @@ def _case_from_verification(result: CaseVerification) -> CaseStatus:
         "verify": StageRecord("done"),
         "reorient": StageRecord("pending"),
         "n4": StageRecord("pending"),
+        "mask": StageRecord("pending"),
     }
     return CaseStatus(
         cohort=_cohort_value(result.cohort),
@@ -524,13 +528,16 @@ class PreprocessingStatusManifest:
                 raw_stages = raw_case["stages"]
                 if not isinstance(raw_stages, dict):
                     raise ValueError("stages must be an object")
-                if set(raw_stages) != set(_STAGES):
+                stage_names = set(raw_stages)
+                if stage_names not in (_LEGACY_STAGES, set(_STAGES)):
                     raise ValueError(
-                        "stages must contain exactly verify, reorient, and n4"
+                        "stages must contain exactly verify, reorient, n4, and mask"
                     )
                 stages: dict[str, StageRecord] = {}
                 for stage in _STAGES:
-                    raw_stage = raw_stages[stage]
+                    raw_stage = raw_stages.get(
+                        stage, {"state": "pending", "cache_key": None}
+                    )
                     if not isinstance(raw_stage, dict):
                         raise ValueError("stage record must be an object")
                     stages[stage] = StageRecord(
