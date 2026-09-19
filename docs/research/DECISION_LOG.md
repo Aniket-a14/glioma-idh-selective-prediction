@@ -798,7 +798,7 @@ automated screen missed one failure and was recalibrated on it.
 
 **Update (2026-09-19, Research Lead): bound raised again, 0.11 to 0.12.** Reviewing the 4 cases newly flagged at 0.11
 found 2 more failures (`qc_0078`, `qc_0080`, brain fractions 0.108 and 0.109, both `qc:skullstrip-over`), so failures now
-sit at 0.100, 0.108 and 0.109, against the 0.11 bound. Among UTSW cases below 0.11, 4 of 21 reviewed failed; the 12
+sit at 0.100, 0.108 and 0.109, against the 0.11 bound. Among UTSW cases below 0.11, 4 of 20 failed; the 12
 UTSW cases in [0.11, 0.12) have 3 reviewed passes and 9 unreviewed. Decision: raise `borderline_min_brain_fraction`
 to **0.12** and review the 9 unreviewed cases; extend again only if failures appear in the new band. The bound stays
 provisional. UTSW exclusions are now 4 of 622 (0.64%), far below the 10% stop threshold; UCSF-PDGM 0 of 202.
