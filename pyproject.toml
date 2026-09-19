@@ -23,6 +23,13 @@ dependencies = [
     # TCIA-mapping crosswalk ships only as .xlsx. openpyxl alone (no pandas) is
     # the minimal reader for one small, read-only spreadsheet.
     "openpyxl>=3.1,<4",
+    # Phase 04 (docs/research/DECISION_LOG.md D-024, D-025): volume I/O, rigid
+    # registration/N4/resampling (SimpleITK), and the pinned HD-BET skull-stripper.
+    # HD-BET is pinned exactly because the skull-strip release must not change
+    # mid-cohort.
+    "SimpleITK>=2.4,<3",
+    "nibabel>=5,<6",
+    "hd-bet==2.0.1",
 ]
 
 [project.optional-dependencies]
