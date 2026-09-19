@@ -12,6 +12,7 @@ not covered; the same caveat is carried by the T03.4 overlap audit.
 
 from __future__ import annotations
 
+import copy
 import csv
 import json
 import re
@@ -38,7 +39,9 @@ __all__ = [
     "FOLLOWUP_TIMEPOINT_REASON",
     "IDH_UNAVAILABLE_REASON",
     "NO_IMAGING_AVAILABLE_REASON",
+    "QC_CATEGORIES",
     "ExclusionReportError",
+    "append_qc_exclusions",
     "build_exclusion_manifest",
     "build_followup_timepoint_selection_record",
     "build_brats_exclusion_report",
@@ -58,6 +61,20 @@ BRATS_EXCLUSION_REASON: Final[str] = "overlap:brats2021"
 IDH_UNAVAILABLE_REASON: Final[str] = "label:idh_unavailable"
 NO_IMAGING_AVAILABLE_REASON: Final[str] = "no_imaging_available"
 FOLLOWUP_TIMEPOINT_REASON: Final[str] = "duplicate:followup_timepoint"
+QC_CATEGORIES: Final[tuple[str, ...]] = (
+    "registration-failed",
+    "skullstrip-over",
+    "skullstrip-under",
+    "n4-artifact",
+    "orientation-wrong",
+    "corrupt",
+    "modality-mislabelled",
+)
+_QC_REASON_PREFIX: Final[str] = "qc:"
+_QC_COHORT_NORMALIZERS: Final[dict[str, Callable[[str], str]]] = {
+    Cohort.UTSW.value: normalize_utsw_id,
+    Cohort.UCSF_PDGM.value: normalize_ucsf_pdgm_id,
+}
 _PAIR_KEY: Final[str] = "ucsf_pdgm|brats2021"
 _REPORT_VERSION: Final[int] = 1
 _MANIFEST_VERSION: Final[int] = 1
@@ -69,6 +86,231 @@ _UCSF_BASE_DIRECTORY_RE = re.compile(r"(UCSF-PDGM-\d{3,4})_nifti", re.IGNORECASE
 
 class ExclusionReportError(RuntimeError):
     """Raised when an overlap-derived exclusion report is malformed."""
+
+
+def _qc_cohort_and_id(cohort: object, patient_id: object) -> tuple[str, str]:
+    """Validate and canonicalize a QC exclusion's cohort and patient ID."""
+
+    if not isinstance(cohort, str) or cohort not in _QC_COHORT_NORMALIZERS:
+        raise ExclusionReportError(f"unknown QC exclusion cohort: {cohort!r}")
+    if not isinstance(patient_id, str):
+        raise ExclusionReportError("QC exclusion patient_id must be a string")
+    try:
+        normalized_id = _QC_COHORT_NORMALIZERS[cohort](patient_id)
+    except (IdentifierNormalizationError, TypeError) as error:
+        raise ExclusionReportError(
+            f"invalid QC exclusion patient ID for cohort {cohort}"
+        ) from error
+    return cohort, normalized_id
+
+
+def _qc_reason_values(reasons: object) -> tuple[str, ...]:
+    """Validate, de-duplicate, and sort one QC reason collection."""
+
+    if isinstance(reasons, str) or not isinstance(reasons, Iterable):
+        raise ExclusionReportError("QC exclusion reasons must be a non-empty tuple")
+    values = tuple(reasons)
+    if not values:
+        raise ExclusionReportError("QC exclusion reasons must not be empty")
+    valid_reasons = {f"{_QC_REASON_PREFIX}{category}" for category in QC_CATEGORIES}
+    if any(
+        not isinstance(reason, str)
+        or not reason.startswith(_QC_REASON_PREFIX)
+        or reason not in valid_reasons
+        for reason in values
+    ):
+        raise ExclusionReportError("QC exclusion contains an unknown or non-qc reason")
+    return tuple(sorted(set(values)))
+
+
+def _increment_reason_counts(
+    report: Mapping[str, object], reasons: Iterable[str], context: str
+) -> dict[str, int]:
+    """Copy and increment a manifest reason-count mapping."""
+
+    raw_counts = report.get("reason_counts")
+    if not isinstance(raw_counts, Mapping):
+        raise ExclusionReportError(f"{context}.reason_counts must be an object")
+    counts: dict[str, int] = {}
+    for reason, count in raw_counts.items():
+        if (
+            not isinstance(reason, str)
+            or isinstance(count, bool)
+            or not isinstance(count, int)
+            or count < 0
+        ):
+            raise ExclusionReportError(f"{context}.reason_counts is malformed")
+        counts[reason] = count
+    for reason in reasons:
+        counts[reason] = counts.get(reason, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def append_qc_exclusions(
+    manifest: Mapping[str, object],
+    qc_exclusions: Iterable[tuple[str, str, tuple[str, ...]]],
+) -> dict[str, object]:
+    """Return a deep-copied Phase 03 manifest with QC exclusions appended.
+
+    Patient IDs are canonicalized with the Phase 03 cohort normalizers.  QC
+    reasons are represented once per patient, joined with ``+`` in sorted
+    order, while the aggregate reason counts count each category separately.
+    The pre-QC accounting checks are copied without modification.
+    """
+
+    result = copy.deepcopy(dict(manifest))
+    raw_rows = result.get("exclusions")
+    if not isinstance(raw_rows, list):
+        raise ExclusionReportError("manifest.exclusions must be an array")
+    raw_cohorts = result.get("cohorts")
+    if not isinstance(raw_cohorts, Mapping):
+        raise ExclusionReportError("manifest.cohorts must be an object")
+    cohorts = {str(key): value for key, value in raw_cohorts.items()}
+
+    existing_ids: set[tuple[str, str]] = set()
+    for index, raw_row in enumerate(raw_rows):
+        if not isinstance(raw_row, Mapping):
+            raise ExclusionReportError(
+                f"manifest.exclusions[{index}] must be an object"
+            )
+        cohort, patient_id = _qc_cohort_and_id(
+            raw_row.get("cohort"), raw_row.get("patient_id")
+        )
+        key = (cohort, patient_id)
+        if key in existing_ids:
+            raise ExclusionReportError(
+                f"manifest.exclusions contains duplicate patient in {cohort}"
+            )
+        existing_ids.add(key)
+
+    normalized_records: list[tuple[str, str, tuple[str, ...]]] = []
+    input_ids: set[tuple[str, str]] = set()
+    for record in qc_exclusions:
+        if not isinstance(record, tuple) or len(record) != 3:
+            raise ExclusionReportError(
+                "each QC exclusion must be a (cohort, patient_id, reasons) tuple"
+            )
+        cohort, patient_id = _qc_cohort_and_id(record[0], record[1])
+        reasons = _qc_reason_values(record[2])
+        key = (cohort, patient_id)
+        if key in input_ids:
+            raise ExclusionReportError(
+                "QC exclusions contain a duplicate patient within the input"
+            )
+        if key in existing_ids:
+            raise ExclusionReportError(
+                "QC exclusion patient is already present in exclusions"
+            )
+        input_ids.add(key)
+        normalized_records.append((cohort, patient_id, reasons))
+
+    if not normalized_records:
+        result["generated_by"] = "T03.10 exclusion manifest + T04.12 QC exclusions"
+        result["qc_exclusion_count"] = 0
+        result["accounting_checks_scope"] = "pre-QC"
+        result["cohorts"] = {
+            cohort: (
+                {
+                    **value,
+                    "qc_excluded_patient_count": value.get(
+                        "qc_excluded_patient_count", 0
+                    ),
+                }
+                if isinstance(value, Mapping)
+                else value
+            )
+            for cohort, value in cohorts.items()
+        }
+        return result
+
+    top_level_excluded = result.get("excluded_patient_count")
+    if (
+        isinstance(top_level_excluded, bool)
+        or not isinstance(top_level_excluded, int)
+        or top_level_excluded < 0
+    ):
+        raise ExclusionReportError("manifest.excluded_patient_count is malformed")
+    top_level_reasons = _increment_reason_counts(result, (), "manifest")
+
+    records_by_cohort: dict[str, list[tuple[str, ...]]] = {}
+    for cohort, _, reasons in normalized_records:
+        records_by_cohort.setdefault(cohort, []).append(reasons)
+
+    cohort_updates: dict[str, dict[str, object]] = {}
+    for cohort, cohort_reasons in records_by_cohort.items():
+        raw_report = cohorts.get(cohort)
+        if not isinstance(raw_report, Mapping):
+            raise ExclusionReportError(f"manifest.cohorts.{cohort} must be an object")
+        report = dict(raw_report)
+        retained = report.get("retained_patient_count")
+        excluded = report.get("excluded_patient_count")
+        prior_qc_count = report.get("qc_excluded_patient_count", 0)
+        if (
+            isinstance(retained, bool)
+            or not isinstance(retained, int)
+            or retained < 0
+            or isinstance(excluded, bool)
+            or not isinstance(excluded, int)
+            or excluded < 0
+            or isinstance(prior_qc_count, bool)
+            or not isinstance(prior_qc_count, int)
+            or prior_qc_count < 0
+        ):
+            raise ExclusionReportError(
+                f"manifest.cohorts.{cohort} counts are malformed"
+            )
+        if retained < len(cohort_reasons):
+            raise ExclusionReportError(
+                f"QC exclusions would make the {cohort} retained count negative"
+            )
+        updated = report
+        updated["retained_patient_count"] = retained - len(cohort_reasons)
+        updated["excluded_patient_count"] = excluded + len(cohort_reasons)
+        updated["reason_counts"] = _increment_reason_counts(
+            updated,
+            (reason for reasons in cohort_reasons for reason in reasons),
+            f"manifest.cohorts.{cohort}",
+        )
+        updated["qc_excluded_patient_count"] = prior_qc_count + len(cohort_reasons)
+        cohort_updates[cohort] = updated
+
+    qc_rows = [
+        {"cohort": cohort, "patient_id": patient_id, "reason": "+".join(reasons)}
+        for cohort, patient_id, reasons in sorted(normalized_records)
+    ]
+    result["exclusions"] = raw_rows + qc_rows
+    result["excluded_patient_count"] = top_level_excluded + len(normalized_records)
+    for _, _, reasons in normalized_records:
+        top_level_reasons = _increment_reason_counts(
+            {"reason_counts": top_level_reasons}, reasons, "manifest"
+        )
+    result["reason_counts"] = top_level_reasons
+    updated_cohorts: dict[str, object] = {
+        cohort: cohort_updates.get(cohort, value) for cohort, value in cohorts.items()
+    }
+    for cohort, report in cohorts.items():
+        if cohort not in cohort_updates:
+            if not isinstance(report, Mapping):
+                raise ExclusionReportError(
+                    f"manifest.cohorts.{cohort} must be an object"
+                )
+            report_copy = dict(report)
+            prior_qc_count = report_copy.get("qc_excluded_patient_count", 0)
+            if (
+                isinstance(prior_qc_count, bool)
+                or not isinstance(prior_qc_count, int)
+                or prior_qc_count < 0
+            ):
+                raise ExclusionReportError(
+                    f"manifest.cohorts.{cohort}.qc_excluded_patient_count is malformed"
+                )
+            report_copy["qc_excluded_patient_count"] = prior_qc_count
+            updated_cohorts[cohort] = report_copy
+    result["cohorts"] = updated_cohorts
+    result["generated_by"] = "T03.10 exclusion manifest + T04.12 QC exclusions"
+    result["qc_exclusion_count"] = len(normalized_records)
+    result["accounting_checks_scope"] = "pre-QC"
+    return result
 
 
 def _normalize_unique(
