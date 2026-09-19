@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import tempfile
 import time
 from collections import Counter
 from collections.abc import Mapping, Sequence
@@ -18,6 +20,7 @@ if str(SOURCE_ROOT) not in sys.path:
 
 import matplotlib.pyplot as plt  # noqa: E402
 
+from glioma_selective.data.adapters._common import CanonicalSequence  # noqa: E402
 from glioma_selective.leakage.cohort_manifest import (  # noqa: E402
     build_real_retained_rosters,
 )
@@ -34,12 +37,14 @@ from glioma_selective.preprocessing.qc_overlays import (  # noqa: E402
     append_qc_overlay_index,
     append_qc_review_sheet,
     assign_continuing_qc_keys,
+    compute_t1ce_shape_metrics,
     load_qc_overlay_index,
     load_verification_cases,
     read_utsw_idh_labels,
     render_qc_overlay,
-    review_sheet_has_tail,
+    review_sheet_has_selection_reason,
     select_qc_sample,
+    select_qc_shape_tail,
     select_qc_tail,
     write_qc_overlay_index,
     write_qc_review_sheet,
@@ -78,15 +83,28 @@ def _render_selections(
                 QCVerificationSummary(None, None),
             ),
         )
+        temporary_path: Path | None = None
         try:
+            descriptor, temporary_name = tempfile.mkstemp(
+                prefix=f".{output_path.name}.", suffix=".tmp", dir=output_directory
+            )
+            os.close(descriptor)
+            temporary_path = Path(temporary_name)
             figure.savefig(
-                output_path,
+                temporary_path,
                 dpi=100,
                 format="png",
                 metadata={"Software": "Phase 04 QC"},
             )
+            os.replace(temporary_path, output_path)
+            temporary_path = None
         finally:
             plt.close(figure)
+            if temporary_path is not None:
+                try:
+                    temporary_path.unlink()
+                except FileNotFoundError:
+                    pass
         size = output_path.stat().st_size
         if size >= 1_000_000:
             raise QCOverlayError("QC overlay exceeded the one-megabyte artifact limit")
@@ -100,33 +118,38 @@ def _report(
     total_bytes: int,
     elapsed: float,
     tail: int | None,
+    shape_tail: int | None = None,
+    shape_tail_cohort: Cohort | None = None,
 ) -> None:
-    print(
-        json.dumps(
+    report: dict[str, object] = {
+        "selected_cases": len(selections),
+        "cases_by_cohort": dict(
+            sorted(Counter(selection.cohort.value for selection in selections).items())
+        ),
+        "cases_by_reason": dict(
+            sorted(
+                Counter(selection.selection_reason for selection in selections).items()
+            )
+        ),
+        "files_written": len(selections),
+        "tail": tail,
+        "total_size_mb": round(total_bytes / (1024 * 1024), 3),
+        "wall_clock_seconds": round(elapsed, 3),
+    }
+    if shape_tail is not None:
+        metric_count = shape_tail if selections else 0
+        report.update(
             {
-                "selected_cases": len(selections),
-                "cases_by_cohort": dict(
-                    sorted(
-                        Counter(
-                            selection.cohort.value for selection in selections
-                        ).items()
-                    )
+                "shape_tail": shape_tail,
+                "shape_tail_cohort": (
+                    None if shape_tail_cohort is None else shape_tail_cohort.value
                 ),
-                "cases_by_reason": dict(
-                    sorted(
-                        Counter(
-                            selection.selection_reason for selection in selections
-                        ).items()
-                    )
-                ),
-                "files_written": len(selections),
-                "tail": tail,
-                "total_size_mb": round(total_bytes / (1024 * 1024), 3),
-                "wall_clock_seconds": round(elapsed, 3),
-            },
-            sort_keys=True,
+                "solidity_cases": metric_count,
+                "closing_gain_cases": metric_count,
+                "union_size": len(selections),
+            }
         )
-    )
+    print(json.dumps(report, sort_keys=True))
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -134,14 +157,37 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     started = time.perf_counter()
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    tail_group = parser.add_mutually_exclusive_group()
+    tail_group.add_argument(
         "--tail",
         type=_nonnegative_integer,
         default=None,
         help="append N lowest brain-fraction cases per cohort (default: 0)",
     )
+    tail_group.add_argument(
+        "--shape-tail",
+        type=_nonnegative_integer,
+        default=None,
+        help="append N lowest-solidity and highest-closing-gain cases (0 disables)",
+    )
+    parser.add_argument(
+        "--shape-tail-cohort",
+        choices=("utsw", "ucsf_pdgm"),
+        default="utsw",
+        help="cohort for --shape-tail (default: utsw)",
+    )
     try:
         arguments = parser.parse_args(argv)
+        if arguments.shape_tail == 0:
+            _report(
+                selections=(),
+                total_bytes=0,
+                elapsed=0.0,
+                tail=None,
+                shape_tail=0,
+                shape_tail_cohort=Cohort(arguments.shape_tail_cohort),
+            )
+            return 0
         if arguments.tail == 0:
             _report(selections=(), total_bytes=0, elapsed=0.0, tail=0)
             return 0
@@ -155,15 +201,71 @@ def main(argv: Sequence[str] | None = None) -> int:
         index_path = paths.private_data_dir() / "qc_overlay_index.json"
         review_path = output_directory / "qc_review_sheet.csv"
 
-        if arguments.tail is not None:
-            if review_sheet_has_tail(review_path):
+        if arguments.shape_tail is not None:
+            selected_cohort = Cohort(arguments.shape_tail_cohort)
+            if index_path.exists() != review_path.exists():
+                raise QCOverlayError("QC overlay artifacts are incomplete")
+            if review_sheet_has_selection_reason(review_path, "shape_tail"):
                 _report(
                     selections=(),
                     total_bytes=0,
                     elapsed=time.perf_counter() - started,
-                    tail=arguments.tail,
+                    tail=None,
+                    shape_tail=arguments.shape_tail,
+                    shape_tail_cohort=selected_cohort,
                 )
                 return 0
+            existing_index = load_qc_overlay_index(index_path)
+            all_cases = discover_cases(
+                selected_cohort,
+                retained_patient_ids=retained[selected_cohort],
+            )
+            shape_metrics = {
+                (selected_cohort, case.patient_id): compute_t1ce_shape_metrics(
+                    case.sequence_files[CanonicalSequence.T1CE]
+                )
+                for case in all_cases
+                if (selected_cohort, case.patient_id) not in existing_index.values()
+            }
+            selections = select_qc_shape_tail(
+                retained_patient_ids=retained,
+                shape_metrics=shape_metrics,
+                indexed_cases=existing_index.values(),
+                cohort=selected_cohort,
+                per_metric=arguments.shape_tail,
+            )
+            selections = assign_continuing_qc_keys(selections, existing_index)
+            if not selections:
+                _report(
+                    selections=(),
+                    total_bytes=0,
+                    elapsed=time.perf_counter() - started,
+                    tail=None,
+                    shape_tail=arguments.shape_tail,
+                    shape_tail_cohort=selected_cohort,
+                )
+                return 0
+            cases = {
+                (selected_cohort, case.patient_id): case
+                for case in all_cases
+                if (selected_cohort, case.patient_id)
+                in {(item.cohort, item.patient_id) for item in selections}
+            }
+            total_bytes = _render_selections(
+                selections, verification, output_directory, cases
+            )
+            append_qc_overlay_index(selections, index_path)
+            append_qc_review_sheet(selections, verification, review_path)
+            _report(
+                selections=selections,
+                total_bytes=total_bytes,
+                elapsed=time.perf_counter() - started,
+                tail=None,
+                shape_tail=arguments.shape_tail,
+                shape_tail_cohort=selected_cohort,
+            )
+            return 0
+        if arguments.tail is not None:
             existing_index = load_qc_overlay_index(index_path)
             selections = select_qc_tail(
                 retained_patient_ids=retained,

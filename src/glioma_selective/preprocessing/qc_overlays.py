@@ -31,6 +31,12 @@ import nibabel as nib
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from scipy.ndimage import (  # type: ignore[import-untyped]
+    binary_closing,
+    generate_binary_structure,
+    label,
+)
+from scipy.spatial import ConvexHull, QhullError  # type: ignore[import-untyped]
 
 from glioma_selective.data.adapters._common import CORE_SEQUENCES, CanonicalSequence
 from glioma_selective.leakage.id_normalization import Cohort, normalize_identifier
@@ -41,11 +47,16 @@ __all__ = [
     "QC_SAMPLE_SEED",
     "QCOverlayError",
     "QCSelection",
+    "QCShapeMetrics",
     "QCVerificationSummary",
+    "compute_t1ce_shape_metrics",
     "load_verification_cases",
     "load_qc_overlay_index",
+    "mask_closing_gain",
+    "mask_solidity",
     "read_utsw_idh_labels",
     "render_qc_overlay",
+    "review_sheet_has_selection_reason",
     "select_qc_tail",
     "select_qc_sample",
     "assign_continuing_qc_keys",
@@ -74,14 +85,29 @@ _SELECTION_REASONS: tuple[str, ...] = (
     "stratified",
     "random",
     "tail",
+    "shape_tail",
 )
-SelectionReason = Literal["borderline", "stratified", "random", "tail"]
+SelectionReason = Literal["borderline", "stratified", "random", "tail", "shape_tail"]
 IDHLabelReader = Callable[[Cohort, Path], Mapping[str, str]]
 OverlayIndex = dict[str, tuple[Cohort, str]]
 
 
 class QCOverlayError(ValueError):
     """Raised when a QC sample or selected case cannot be rendered safely."""
+
+
+@dataclass(frozen=True)
+class QCShapeMetrics:
+    """Image-only T1ce shape metrics used for shape-tail sampling."""
+
+    solidity: float
+    closing_gain: float
+
+    def __post_init__(self) -> None:
+        if not all(
+            math.isfinite(value) for value in (self.solidity, self.closing_gain)
+        ):
+            raise ValueError("QC shape metrics must be finite")
 
 
 @dataclass(frozen=True)
@@ -93,6 +119,7 @@ class QCSelection:
     selection_reason: SelectionReason
     selection_reasons: tuple[SelectionReason, ...] = ()
     qc_key: str = ""
+    shape_metrics: QCShapeMetrics | None = None
 
     def __post_init__(self) -> None:
         if not self.patient_id.strip():
@@ -111,6 +138,99 @@ class QCVerificationSummary:
 
     brain_voxel_fraction: float | None
     min_cross_sequence_dice: float | None
+
+
+def _downsampled_largest_component(mask: np.ndarray) -> np.ndarray:
+    """Keep the largest 26-connected component and downsample it by two."""
+
+    array = np.asarray(mask)
+    if array.ndim != 3:
+        raise QCOverlayError("shape metric masks must be three-dimensional")
+    binary = np.asarray(array != 0, dtype=bool)
+    raw_labels, raw_component_count = label(binary, structure=np.ones((3, 3, 3)))
+    labels = np.asarray(raw_labels, dtype=np.int32)
+    component_count = int(raw_component_count)
+    if component_count == 0:
+        raise QCOverlayError("shape metrics require a non-empty mask")
+    component_sizes = np.bincount(labels.ravel())
+    largest_label = int(np.argmax(component_sizes[1:])) + 1
+    downsampled: np.ndarray = np.asarray(labels == largest_label, dtype=bool)
+    downsampled = np.asarray(downsampled[::2, ::2, ::2], dtype=bool)
+    if not np.any(downsampled):
+        raise QCOverlayError("shape metrics have no voxels after downsampling")
+    return downsampled
+
+
+def _shape_metrics_from_reduced(reduced: np.ndarray) -> QCShapeMetrics:
+    points = np.argwhere(reduced)
+    try:
+        hull_volume = float(ConvexHull(points).volume)
+    except QhullError as error:
+        raise QCOverlayError(
+            "shape metric mask is too degenerate for a hull"
+        ) from error
+    if not math.isfinite(hull_volume) or hull_volume <= 0:
+        raise QCOverlayError("shape metric hull volume is not positive")
+    original_count = int(reduced.sum())
+    closed = binary_closing(
+        reduced,
+        structure=generate_binary_structure(3, 2),
+        iterations=3,
+    )
+    return QCShapeMetrics(
+        solidity=float(points.shape[0]) / hull_volume,
+        closing_gain=float(int(closed.sum()) - original_count) / original_count,
+    )
+
+
+def mask_solidity(mask: np.ndarray) -> float:
+    """Return mask solidity after the specified Phase 04 shape reduction.
+
+    The mask is reduced to its largest 26-connected component using
+    ``scipy.ndimage.label`` with ``np.ones((3, 3, 3))``, downsampled by two on
+    every axis, and converted to ``pts = np.argwhere(mm)``.  Solidity is
+    ``pts.shape[0] / scipy.spatial.ConvexHull(pts).volume``.
+    """
+
+    return _shape_metrics_from_reduced(_downsampled_largest_component(mask)).solidity
+
+
+def mask_closing_gain(mask: np.ndarray) -> float:
+    """Return the morphological-closing gain for a reduced binary mask.
+
+    The mask is reduced to its largest 26-connected component using
+    ``scipy.ndimage.label`` with ``np.ones((3, 3, 3))``, downsampled by two on
+    every axis, and closed with ``binary_closing(mm,
+    structure=generate_binary_structure(3, 2), iterations=3)``.  The result
+    is ``(closed.sum() - mm.sum()) / mm.sum()``.  A high gain is the suspicious
+    direction because closing fills more missing shape.
+    """
+
+    return _shape_metrics_from_reduced(
+        _downsampled_largest_component(mask)
+    ).closing_gain
+
+
+def compute_t1ce_shape_metrics(t1ce_path: Path) -> QCShapeMetrics:
+    """Compute solidity and closing gain from a T1ce NIfTI path.
+
+    The T1ce mask is ``T1ce != 0``.  Each metric then uses the largest
+    26-connected component, twofold downsampling on every axis, and the exact
+    definitions in :func:`mask_solidity` and :func:`mask_closing_gain`.
+    """
+
+    try:
+        image = nib.load(t1ce_path)
+        if not isinstance(image, nib.Nifti1Image | nib.Nifti2Image):
+            raise ValueError
+        if len(image.shape) != 3:
+            raise ValueError
+        array = np.asarray(image.get_fdata(dtype=np.float32))
+    except (OSError, ValueError, TypeError):
+        raise QCOverlayError("cannot read T1ce volume for shape metrics") from None
+    if not np.all(np.isfinite(array)):
+        raise QCOverlayError("T1ce volume for shape metrics is not finite")
+    return _shape_metrics_from_reduced(_downsampled_largest_component(array != 0))
 
 
 def _cohort(value: Cohort | str) -> Cohort:
@@ -366,8 +486,8 @@ def select_qc_sample(
         # below samples identifiers without consulting any external labels.
         utsw_idh_labels = reader(Cohort.UTSW, utsw_metadata_path)
     normalized_labels: dict[str, str] = {}
-    for patient_id, label in utsw_idh_labels.items():
-        normalized_labels[patient_id] = _idh_class(label)
+    for patient_id, raw_label in utsw_idh_labels.items():
+        normalized_labels[patient_id] = _idh_class(raw_label)
     strata: dict[str, list[str]] = {"mutant": [], "wildtype": []}
     for patient_id in retained[Cohort.UTSW]:
         try:
@@ -468,6 +588,73 @@ def select_qc_tail(
         )
     random.Random(seed).shuffle(selected)
     return tuple(selected)
+
+
+def select_qc_shape_tail(
+    *,
+    retained_patient_ids: Mapping[Cohort, Iterable[str]] | Mapping[str, Iterable[str]],
+    shape_metrics: Mapping[tuple[Cohort, str], QCShapeMetrics],
+    indexed_cases: Iterable[tuple[Cohort, str]] = (),
+    cohort: Cohort = Cohort.UTSW,
+    per_metric: int = 0,
+) -> tuple[QCSelection, ...]:
+    """Select the union of the lowest-solidity and highest-gain shape tails.
+
+    For the chosen cohort, candidates are restricted to retained cases that
+    are not already in the private QC overlay index.  The selected set is the
+    union of the ``per_metric`` lowest-solidity cases and the ``per_metric``
+    highest-closing-gain cases.  Both rankings use patient ID as a stable
+    tie-breaker.  Closing gain is suspicious in the high direction because a
+    larger morphological fill-in indicates more missing shape.  No labels are
+    read for either cohort.
+    """
+
+    if per_metric < 0:
+        raise QCOverlayError("QC shape-tail size must not be negative")
+    if cohort not in {Cohort.UTSW, Cohort.UCSF_PDGM}:
+        raise QCOverlayError("QC shape-tail supports UTSW and UCSF-PDGM only")
+    if per_metric == 0:
+        return ()
+    retained = _retained_ids(retained_patient_ids)
+    indexed = set(indexed_cases)
+    candidates = [
+        patient_id
+        for patient_id in retained[cohort]
+        if (cohort, patient_id) not in indexed
+    ]
+    ranked: list[tuple[str, QCShapeMetrics]] = []
+    for patient_id in candidates:
+        metrics = shape_metrics.get((cohort, patient_id))
+        if metrics is None:
+            raise QCOverlayError("QC shape-tail is missing a ranked case")
+        ranked.append((patient_id, metrics))
+    if not ranked:
+        return ()
+    if len(ranked) < per_metric:
+        raise QCOverlayError("QC shape-tail has fewer ranked cases than requested")
+
+    lowest_solidity = sorted(ranked, key=lambda item: (item[1].solidity, item[0]))[
+        :per_metric
+    ]
+    highest_closing_gain = sorted(
+        ranked, key=lambda item: (-item[1].closing_gain, item[0])
+    )[:per_metric]
+    union_ids = {
+        patient_id for patient_id, _metrics in (*lowest_solidity, *highest_closing_gain)
+    }
+    return tuple(
+        QCSelection(
+            cohort=cohort,
+            patient_id=patient_id,
+            selection_reason="shape_tail",
+            shape_metrics=next(
+                metrics
+                for candidate_id, metrics in ranked
+                if candidate_id == patient_id
+            ),
+        )
+        for patient_id in sorted(union_ids)
+    )
 
 
 _QC_KEY_RE = re.compile(r"qc_(\d+)")
@@ -754,12 +941,19 @@ def render_qc_overlay(
         if summary.min_cross_sequence_dice is None
         else f"{summary.min_cross_sequence_dice:.4f}"
     )
-    figure.suptitle(
+    title = (
         "Phase 04 visual QC | "
         f"{selection.selection_reason} | brain fraction {brain_text} | "
-        f"min cross-sequence Dice {dice_text}",
-        fontsize=11,
+        f"min cross-sequence Dice {dice_text}"
     )
+    if selection.selection_reason == "shape_tail":
+        if selection.shape_metrics is None:
+            raise QCOverlayError("shape-tail overlay is missing its shape metrics")
+        title += (
+            f" | solidity {selection.shape_metrics.solidity:.3f}"
+            f" | closing gain {selection.shape_metrics.closing_gain:.3f}"
+        )
+    figure.suptitle(title, fontsize=11)
     return figure
 
 
@@ -931,8 +1125,10 @@ def _review_keys(raw_content: bytes) -> set[str]:
     return keys
 
 
-def review_sheet_has_tail(review_path: Path) -> bool:
-    """Return whether a review sheet already contains an appended tail row."""
+def review_sheet_has_selection_reason(
+    review_path: Path, selection_reason: SelectionReason
+) -> bool:
+    """Return whether a review sheet already contains a selection reason."""
 
     if not review_path.exists():
         return False
@@ -940,9 +1136,15 @@ def review_sheet_has_tail(review_path: Path) -> bool:
         text = review_path.read_text(encoding="utf-8")
         _review_keys(text.encode("utf-8"))
         rows = csv.DictReader(io.StringIO(text, newline=""))
-        return any(row.get("selection_reason") == "tail" for row in rows)
+        return any(row.get("selection_reason") == selection_reason for row in rows)
     except (OSError, UnicodeError, csv.Error) as error:
         raise QCOverlayError("cannot read QC review sheet") from error
+
+
+def review_sheet_has_tail(review_path: Path) -> bool:
+    """Return whether a review sheet already contains an appended tail row."""
+
+    return review_sheet_has_selection_reason(review_path, "tail")
 
 
 def write_qc_review_sheet(

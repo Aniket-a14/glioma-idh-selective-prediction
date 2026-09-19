@@ -18,15 +18,21 @@ from glioma_selective.preprocessing.discovery import CaseRecord
 from glioma_selective.preprocessing.qc_overlays import (
     QCOverlayError,
     QCSelection,
+    QCShapeMetrics,
     QCVerificationSummary,
     append_qc_overlay_index,
     append_qc_review_sheet,
     assign_continuing_qc_keys,
+    compute_t1ce_shape_metrics,
     load_qc_overlay_index,
     load_verification_cases,
+    mask_closing_gain,
+    mask_solidity,
     render_qc_overlay,
+    review_sheet_has_selection_reason,
     review_sheet_has_tail,
     select_qc_sample,
+    select_qc_shape_tail,
     select_qc_tail,
     write_qc_overlay_index,
     write_qc_review_sheet,
@@ -179,6 +185,42 @@ def test_overlay_renders_png_and_empty_segmentation_uses_brain_centroid(
     plt.close(empty_figure)
 
 
+def test_shape_metrics_distinguish_solid_ball_from_carved_ball() -> None:
+    coordinates = np.indices((32, 32, 32), dtype=np.int16)
+    center = np.asarray((16, 16, 16))[:, None, None, None]
+    ball = np.sum((coordinates - center) ** 2, axis=0) <= 9**2
+    carved = ball.copy()
+    carved[16:, 16:, 16:] = False
+
+    solid_solidity = mask_solidity(ball)
+    solid_gain = mask_closing_gain(ball)
+    carved_solidity = mask_solidity(carved)
+    carved_gain = mask_closing_gain(carved)
+
+    assert solid_solidity > 0.95
+    assert solid_gain < 0.05
+    assert carved_solidity < solid_solidity
+    assert carved_gain > solid_gain
+
+
+def test_shape_metrics_reject_empty_and_unreadable_inputs(tmp_path: Path) -> None:
+    with pytest.raises(QCOverlayError, match="non-empty"):
+        mask_solidity(np.zeros((16, 16, 16), dtype=bool))
+    with pytest.raises(QCOverlayError, match="cannot read T1ce"):
+        compute_t1ce_shape_metrics(tmp_path / "missing.nii.gz")
+
+
+def test_t1ce_shape_metric_helper_matches_mask_functions(tmp_path: Path) -> None:
+    values = np.zeros((16, 16, 16), dtype=np.float32)
+    values[3:13, 3:13, 3:13] = 1
+    path = tmp_path / "t1ce.nii.gz"
+    _write_volume(path, values)
+
+    metrics = compute_t1ce_shape_metrics(path)
+    assert metrics.solidity == pytest.approx(mask_solidity(values))
+    assert metrics.closing_gain == pytest.approx(mask_closing_gain(values))
+
+
 def test_missing_core_volume_error_contains_no_path(tmp_path: Path) -> None:
     case = _case(tmp_path)
     missing_path = case.sequence_files[CanonicalSequence.T2]
@@ -303,16 +345,122 @@ def test_tail_append_preserves_review_bytes_index_values_and_existing_png(
     )
     assigned = assign_continuing_qc_keys(selected, existing_index)
     assert {item.qc_key for item in assigned} == {"qc_0003", "qc_0004"}
+    # A reviewer can edit a verdict after selection but before the append.
+    review_path.write_bytes(
+        existing_review_bytes.replace(
+            b",,,\r\n", b",pass,brain-retained,edited-after-selection\r\n", 1
+        )
+    )
     append_qc_overlay_index(assigned, index_path)
     append_qc_review_sheet(assigned, verification, review_path)
 
-    assert review_path.read_bytes().startswith(existing_review_bytes)
+    assert review_path.read_bytes().startswith(
+        existing_review_bytes.replace(
+            b",,,\r\n", b",pass,brain-retained,edited-after-selection\r\n", 1
+        )
+    )
     merged_index = load_qc_overlay_index(index_path)
     assert all(merged_index[key] == value for key, value in existing_index.items())
     assert png_path.stat().st_mtime_ns == png_before[0]
     assert png_path.read_bytes() == png_before[1]
 
     assert review_sheet_has_tail(review_path)
+
+
+def test_review_sheet_reason_guard_detects_shape_tail(tmp_path: Path) -> None:
+    selection = QCSelection(
+        Cohort.UTSW,
+        "UTSW-BT0001",
+        "shape_tail",
+        qc_key="qc_0001",
+        shape_metrics=QCShapeMetrics(0.6, 0.1),
+    )
+    review_path = tmp_path / "qc_review_sheet.csv"
+    write_qc_review_sheet((selection,), {}, review_path)
+    assert review_sheet_has_selection_reason(review_path, "shape_tail")
+    assert not review_sheet_has_tail(review_path)
+
+
+def test_shape_tail_selects_union_excludes_index_and_is_deterministic() -> None:
+    rosters, _verification = _tail_fixture()
+    metrics = {
+        (Cohort.UTSW, patient_id): QCShapeMetrics(
+            solidity=float(index), closing_gain=float(10 - index)
+        )
+        for index, patient_id in enumerate(rosters[Cohort.UTSW], start=1)
+    }
+    first = select_qc_shape_tail(
+        retained_patient_ids=rosters,
+        shape_metrics=metrics,
+        indexed_cases=((Cohort.UTSW, "UTSW-BT0001"),),
+        cohort=Cohort.UTSW,
+        per_metric=2,
+    )
+    second = select_qc_shape_tail(
+        retained_patient_ids=rosters,
+        shape_metrics=metrics,
+        indexed_cases=((Cohort.UTSW, "UTSW-BT0001"),),
+        cohort=Cohort.UTSW,
+        per_metric=2,
+    )
+    assert first == second
+    assert [item.patient_id for item in first] == ["UTSW-BT0002", "UTSW-BT0003"]
+    assert all(item.selection_reason == "shape_tail" for item in first)
+    assert all(item.shape_metrics is not None for item in first)
+
+
+def test_shape_tail_is_idempotent_when_all_candidates_are_indexed() -> None:
+    rosters, _verification = _tail_fixture()
+    metrics = {
+        (Cohort.UCSF_PDGM, patient_id): QCShapeMetrics(0.9, 0.1)
+        for patient_id in rosters[Cohort.UCSF_PDGM]
+    }
+    indexed = tuple(
+        (Cohort.UCSF_PDGM, patient_id) for patient_id in rosters[Cohort.UCSF_PDGM]
+    )
+    assert (
+        select_qc_shape_tail(
+            retained_patient_ids=rosters,
+            shape_metrics=metrics,
+            indexed_cases=indexed,
+            cohort=Cohort.UCSF_PDGM,
+            per_metric=2,
+        )
+        == ()
+    )
+
+
+def test_shape_tail_overlay_title_contains_both_metrics(tmp_path: Path) -> None:
+    case = _case(tmp_path / "shape")
+    selection = QCSelection(
+        Cohort.UTSW,
+        "UTSW-BT0001",
+        "shape_tail",
+        qc_key="qc_0001",
+        shape_metrics=QCShapeMetrics(0.6014, 0.1186),
+    )
+    figure = render_qc_overlay(case, selection)
+    try:
+        title = figure.get_suptitle()
+    finally:
+        import matplotlib.pyplot as plt
+
+        plt.close(figure)
+    assert "solidity 0.601" in title
+    assert "closing gain 0.119" in title
+
+
+def test_shape_tail_zero_cli_is_a_noop(tmp_path: Path) -> None:
+    marker = tmp_path / "marker"
+    marker.write_bytes(b"unchanged")
+    result = subprocess.run(
+        [sys.executable, "scripts/make_qc_overlays.py", "--shape-tail", "0"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert marker.read_bytes() == b"unchanged"
 
 
 def test_tail_zero_cli_is_a_noop(tmp_path: Path) -> None:
