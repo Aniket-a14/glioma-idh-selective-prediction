@@ -723,4 +723,28 @@ declared because `src/` imports it directly. Flagged here because dependency edi
 
 **Owner.** Research Lead.
 
+## D-029 — N4 on volumes with a few negative voxels
+**Status:** RESOLVED (2026-09-19, Research Lead) · **Blocking:** no · **Resolve by:** Phase 04
+
+**Conflict.** The full Phase 04 batch failed N4 for 4 UTSW patients (7 volumes: 3 T2, 3 FLAIR, 1 T1ce) with
+`image intensities inside the mask must be positive`. `correct_bias` uses the non-zero voxels as its mask and N4
+takes a log, so any voxel below zero inside that mask is rejected. Aggregate measurement on the 7 source volumes:
+1 to 68 negative voxels out of about 1.5 million non-zero voxels (at most 4.4e-5), smallest value -0.9 to -511
+on volumes whose median is 320 to 7000. That is interpolation ringing already present in the source files
+(D-026), not a QC failure category.
+
+**Decision: estimate the field on positive voxels only.** The N4 estimation mask is the non-zero mask restricted
+to voxels above zero; the estimated field is still applied to the whole non-zero mask, and negative voxels keep
+their sign (they are divided by the field, not clamped). Volumes without negative voxels are unaffected, so the
+3,281 volumes already published stay bit-identical and only the 7 failed volumes are recomputed. Alternatives
+rejected: clamping negatives to 0 (edits source data, can open holes at the brain edge and change the brain
+fraction that QC measures) and excluding the 4 patients (drops 4 of 620 UTSW patients for a reason unrelated to
+image quality and needs a reason code outside the 7 approved categories).
+
+**Consequences.** `preprocessing/n4.py` changes and gets a test; `_STAGE_VERSION` is not bumped, because the change
+does not alter any output that already exists. The manuscript Limitations note that a few volumes carry
+isolated negative voxels left as-is.
+
+**Owner.** Research Lead.
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
