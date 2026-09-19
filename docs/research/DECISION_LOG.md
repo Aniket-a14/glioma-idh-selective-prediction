@@ -771,4 +771,31 @@ by the builder script, which refuses to write when it is exceeded.
 
 **Owner.** Research Lead.
 
+## D-031 — Recalibrating the automated brain-fraction screen after a human-caught miss (T04.9)
+**Status:** RESOLVED (2026-09-19, Research Lead) · **Blocking:** no · **Resolve by:** Phase 04
+
+**Conflict.** The Phase 04 file requires: if automated QC misses failures the human catches, thresholds are
+recalibrated before the full run is trusted. Visual QC of 77 overlays found 2 UTSW failures. The screen flagged one
+(`qc_0030`, brain fraction 0.0526, below the 0.08 borderline bound) and missed the other (`qc_0055`, 0.1002).
+Aggregate sensitivity over all cases (per-case verification file): UTSW cases below a lower bound of 0.08 / 0.10 /
+0.11 / 0.12 / 0.15 = 2 / 6 / 20 / 32 / 205; UCSF-PDGM = 0 / 0 / 0 / 1 / 18. Of the UTSW cases below 0.11, 16 of 20 were
+already reviewed (14 pass, 2 fail). Fragmentation, convex-hull solidity and closing gain did not separate the miss
+from passing cases.
+
+**Decision: raise `borderline_min_brain_fraction` from 0.08 to 0.11** (the automated `failed` bound stays 0.05) and
+have the Research Lead review the newly flagged unreviewed cases (4 UTSW, 0 UCSF). Every case below 0.11 is then
+human-reviewed. The bound comes from one observed failure, so it is **provisional** and is reported as such: it is not
+a validated operating point, and the QC report gives the sensitivity table instead of a sensitivity estimate (the
+reviewed sample was selected on the tails). Alternatives rejected: 0.12 (14 more overlays for a wider margin around
+one miss) and keeping 0.08 (leaves 4 unreviewed UTSW cases at 0.103 to 0.11 beside the miss and leaves the phase rule
+unmet).
+
+**Consequences.** Re-run verification and the status merge; the merge resets a verdict when a case's verification
+outcome changes, so the 14 existing passes and the `qc_0055` fail are re-applied from the archived review sheet (same
+images, same human verdict, recorded transparently). `make_qc_overlays.py` gains an incremental mode that appends
+overlays for newly borderline cases without regenerating existing files. Manuscript Limitations state that the
+automated screen missed one failure and was recalibrated on it.
+
+**Owner.** Research Lead.
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
