@@ -536,11 +536,9 @@ patients who end up in calibration or internal test — a quiet break of the "tr
 3. T04.6: fit statistics on the frozen UTSW-train partition only, hash and freeze them, apply unchanged
    to every cohort and split. The CLI still refuses any other fitting cohort.
 
-**Phase-file amendments implied (not yet edited).** `PHASE_04` T04.6 moves after Phase 05 T05.3 and
-the Phase 04 exit criterion "normalization statistics frozen" moves with it; `PHASE_05` entry
-criteria drop "normalization statistics ... frozen" and add it to the Phase 06 entry criteria (Phase 06
-already needs the frozen split and the statistics). These edits are made when Phase 04 starts; until
-then this entry governs where the files disagree.
+**Phase-file amendments (applied 2026-09-19).** `PHASE_04` T04.6 now follows Phase 05 T05.3 and the
+Phase 04 exit criterion moves with it; `PHASE_05` entry criteria drop "normalization statistics ...
+frozen"; `PHASE_06` entry criteria add "Phase 04 T04.6 complete".
 
 **Owner.** Research Lead. Phase 05 remains a Research Lead phase whatever `integration_mode` says.
 
@@ -556,20 +554,47 @@ The Phase 04 file lists these under "Decisions requiring Research Lead approval"
   The visual QC overlays (each modality against T1CE) use the same reference.
 - **Skull-stripper (T04.3): HD-BET, one pinned release.** The exact version is chosen when it is
   installed, recorded in `ENVIRONMENT_RECORD.md` and the lock, and not changed mid-cohort. Adding
-  HD-BET and the imaging libraries (`SimpleITK`, `nibabel`) is a `pyproject.toml` dependency change
-  that needs its own approval when Phase 04 starts.
+  HD-BET and the imaging libraries (`SimpleITK`, `nibabel`) is a `pyproject.toml` dependency change,
+  approved and logged as D-025.
 - **QC exclusion rule (T04.12): the phase file's rule, unchanged.** A systematic failure (one parameter
   causes it) is corrected and the affected cases re-run. An individual failure is excluded with a
   `qc:*` reason (`registration-failed`, `skullstrip-over`, `skullstrip-under`, `n4-artifact`,
   `orientation-wrong`, `corrupt`, `modality-mislabelled`). A failure rate above 10% in any cohort stops
   the phase for a systematic investigation before proceeding.
-- **Still open, decide when needed:** whether a systematic failure warrants re-running a whole cohort
-  (only arises if QC finds one); who takes role B for the T04.9 visual QC, with A as the DEGRADED
-  fallback (+8 days, disclosed).
+- **Visual QC (T04.9, role B): the Research Lead does it (2026-09-19).** This is the phase file's
+  solo fallback for a Person B task: +8 days, and the phase is marked DEGRADED and disclosed (R-M02).
+  Collaborators may still be assigned second-reader QC on a subset once overlays exist.
+- **Whole-cohort re-run after a systematic failure:** not decided now. It only arises if QC finds a
+  systematic failure; the cache (T04.10) makes a re-run cheap, so the default is to re-run affected
+  cases only, and a whole-cohort re-run needs a fresh entry.
 
 **Compute note.** Phase 04 is CPU-bound and does not need the A100 (D-017 blocks Phase 06 only). The
 SSD is with the Mac and the GPU server is not reachable, so real runs happen on the Mac with limited
 workers; the first real-data smoke test (3–5 patients) decides whether the full batch fits there.
+
+**Owner.** Research Lead.
+
+---
+
+## D-025 — Phase 04 imaging dependencies: SimpleITK, nibabel, HD-BET
+**Status:** RESOLVED (2026-09-19, Research Lead approval) · **Blocking:** no · **Resolve by:** Phase 04
+
+**Context.** Phase 04 needs volume I/O, rigid registration, N4 bias correction and resampling, and the
+HD-BET skull-stripper chosen in D-024. None of these are installed, and `pyproject.toml` dependency
+edits are Research-Lead territory (`AGENT_WORKTREE_PROTOCOL.md` §6). Same pattern as D-020's `openpyxl`.
+
+**Decision.** Add `SimpleITK>=2.4,<3` (registration, N4, resampling — one library covers all three, no
+separate ANTs/FSL binaries to install on each machine), `nibabel>=5,<6` (NIfTI I/O, orientation) and
+`hd-bet==2.0.1` (exact pin: the skull-strip release must not change mid-cohort). The lock was
+regenerated with `uv pip compile --universal`.
+
+**Verified.** The lock resolves on the universal target with `torch==2.14.0` and `monai==1.6.0`
+unchanged; the environment installs from it; `SimpleITK 2.5.6`, `nibabel 5.4.2` and `hd-bet 2.0.1` import,
+and the `hd-bet` CLI starts.
+
+**Consequence.** HD-BET depends on `nnunetv2`, so the lock grows by about 250 lines (batchgenerators,
+scikit-image, pandas and others). HD-BET downloads its model weights on first use, which needs network
+once per machine and is recorded in `ENVIRONMENT_RECORD.md` when the first real run happens.
 
 **Owner.** Research Lead.
 
