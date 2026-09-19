@@ -314,7 +314,17 @@ class PreprocessingStatusManifest:
     def merge_verification(
         self, results: Sequence[CaseVerification]
     ) -> PreprocessingStatusManifest:
-        """Refresh verification fields while retaining stages and QC decisions."""
+        """Refresh verification fields while retaining valid stage records.
+
+        Human QC decisions are tied to the verification outcome they judged.
+        If verification status, failure categories, and borderline checks are
+        all unchanged, the previous visual-QC verdict and reasons survive an
+        idempotent refresh.  If any of those fields changes, the previous
+        verdict no longer describes the refreshed result, so visual QC is
+        reset to the state computed for that result and its reasons are
+        cleared.  Stage records always survive because their cache keys cover
+        the stages' own invalidation.
+        """
 
         updated = dict(self.cases)
         seen: set[CaseKey] = set()
@@ -327,6 +337,11 @@ class PreprocessingStatusManifest:
             if previous is None:
                 updated[refreshed.key] = refreshed
                 continue
+            verification_unchanged = (
+                previous.verification_status == refreshed.verification_status
+                and previous.failure_categories == refreshed.failure_categories
+                and previous.borderline_checks == refreshed.borderline_checks
+            )
             updated[refreshed.key] = CaseStatus(
                 cohort=refreshed.cohort,
                 patient_id=refreshed.patient_id,
@@ -334,8 +349,12 @@ class PreprocessingStatusManifest:
                 failure_categories=refreshed.failure_categories,
                 borderline_checks=refreshed.borderline_checks,
                 stages=previous.stages,
-                visual_qc=previous.visual_qc,
-                qc_reasons=previous.qc_reasons,
+                visual_qc=(
+                    previous.visual_qc
+                    if verification_unchanged
+                    else refreshed.visual_qc
+                ),
+                qc_reasons=(previous.qc_reasons if verification_unchanged else ()),
             )
         return type(self)(updated)
 

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+import scripts.build_preprocessing_status as status_script
 
 import glioma_selective.preprocessing.status as status_module
 from glioma_selective.leakage.id_normalization import Cohort
@@ -117,7 +118,37 @@ def test_pending_cases_shrink_and_survive_save_load(tmp_path: Path) -> None:
     assert list(tmp_path.glob(".preprocessing_status.json.*.tmp")) == []
 
 
-def test_merge_preserves_stage_records_and_qc_verdicts() -> None:
+def test_merge_passthrough_to_borderline_resets_visual_qc() -> None:
+    original = _manifest(_verification("a", "verified-passthrough"))
+
+    merged = original.merge_verification(
+        (
+            _verification(
+                "a",
+                "verified-borderline",
+                borderline_checks=("T1ce.brain_fraction",),
+            ),
+        )
+    )
+    case = merged.cases[("utsw", "a")]
+    assert case.verification_status == "verified-borderline"
+    assert case.visual_qc == "pending"
+    assert case.qc_reasons == ()
+
+
+def test_merge_passthrough_to_failed_resets_visual_qc() -> None:
+    original = _manifest(_verification("a", "verified-passthrough"))
+
+    merged = original.merge_verification(
+        (_verification("a", "failed", failure_categories=("corrupt",)),)
+    )
+    case = merged.cases[("utsw", "a")]
+    assert case.verification_status == "failed"
+    assert case.visual_qc == "pending"
+    assert case.qc_reasons == ()
+
+
+def test_merge_identical_borderline_keeps_verdict_and_stage_records() -> None:
     original = _manifest(
         _verification(
             "a",
@@ -127,15 +158,99 @@ def test_merge_preserves_stage_records_and_qc_verdicts() -> None:
     )
     original = original.update_stage("utsw", "a", "n4", "done", "n4-key")
     original = original.record_visual_qc_verdict("utsw", "a", "passed")
-    refreshed = _verification("a", "verified-passthrough")
+    refreshed = _verification(
+        "a",
+        "verified-borderline",
+        borderline_checks=("check",),
+    )
 
     merged = original.merge_verification((refreshed,))
     case = merged.cases[("utsw", "a")]
-    assert case.verification_status == "verified-passthrough"
-    assert case.borderline_checks == ()
+    assert case.verification_status == "verified-borderline"
+    assert case.borderline_checks == ("check",)
     assert case.stages["n4"].cache_key == "n4-key"
     assert case.visual_qc == "passed"
     assert case.qc_reasons == ()
+
+
+def test_merge_changed_borderline_resets_failed_verdict_and_reasons() -> None:
+    original = _manifest(
+        _verification(
+            "a",
+            "verified-borderline",
+            borderline_checks=("T1ce.brain_fraction",),
+        )
+    )
+    original = original.update_stage("utsw", "a", "reorient", "done", "key")
+    original = original.record_visual_qc_verdict("utsw", "a", "failed", "n4-artifact")
+
+    merged = original.merge_verification(
+        (
+            _verification(
+                "a",
+                "verified-borderline",
+                borderline_checks=("cross_sequence.mask_dice",),
+            ),
+        )
+    )
+    case = merged.cases[("utsw", "a")]
+    assert case.visual_qc == "pending"
+    assert case.qc_reasons == ()
+    assert case.stages["reorient"].cache_key == "key"
+
+
+def test_merge_borderline_to_clean_resets_pending_visual_qc() -> None:
+    original = _manifest(
+        _verification(
+            "a",
+            "verified-borderline",
+            borderline_checks=("T1ce.brain_fraction",),
+        )
+    )
+    assert original.cases[("utsw", "a")].visual_qc == "pending"
+
+    merged = original.merge_verification((_verification("a", "verified-passthrough"),))
+    case = merged.cases[("utsw", "a")]
+    assert case.visual_qc == "not-required"
+    assert case.qc_reasons == ()
+
+
+def test_build_and_merge_script_is_byte_idempotent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    private_dir = tmp_path / "private"
+    manifests_dir = tmp_path / "manifests"
+    private_dir.mkdir()
+    payload = {
+        "schema_version": 2,
+        "cases": [
+            {
+                "cohort": "utsw",
+                "patient_id": "case-a",
+                "status": "verified-passthrough",
+                "failure_categories": [],
+                "borderline_checks": [],
+            },
+            {
+                "cohort": "ucsf_pdgm",
+                "patient_id": "case-b",
+                "status": "verified-borderline",
+                "failure_categories": [],
+                "borderline_checks": ["T1ce.brain_fraction"],
+            },
+        ],
+    }
+    (private_dir / "preprocessing_verification_cases.json").write_text(
+        json.dumps(payload), encoding="utf-8"
+    )
+    monkeypatch.setattr(status_script.paths, "private_data_dir", lambda: private_dir)
+    monkeypatch.setattr(status_script.paths, "manifests_dir", lambda: manifests_dir)
+
+    assert status_script.main() == 0
+    destination = manifests_dir / "preprocessing_status.json"
+    first_bytes = destination.read_bytes()
+    assert status_script.main() == 0
+    assert destination.read_bytes() == first_bytes
 
 
 def test_atomic_save_keeps_previous_file_when_write_is_interrupted(
