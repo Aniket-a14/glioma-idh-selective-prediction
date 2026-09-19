@@ -272,6 +272,39 @@ def test_borderline_dice_is_sent_to_visual_qc_without_failure(
     )
 
 
+@pytest.mark.parametrize(
+    ("brain_fraction", "status", "borderline", "failure_categories"),
+    (
+        (0.105, "verified-borderline", True, ()),
+        (0.115, "verified-passthrough", False, ()),
+        (0.049, "failed", False, ("skullstrip-over",)),
+    ),
+)
+def test_d031_brain_fraction_boundaries(
+    tmp_path: Path,
+    brain_fraction: float,
+    status: str,
+    borderline: bool,
+    failure_categories: tuple[str, ...],
+) -> None:
+    shape = (20, 20, 20)
+    values = np.zeros(shape, dtype=np.float32)
+    values.flat[: int(round(brain_fraction * values.size))] = 1
+
+    result = verify_case(
+        _case(tmp_path / str(brain_fraction), t1ce=values),
+        _expected(shape),
+        _thresholds(),
+    )
+
+    assert result.brain_voxel_fraction == pytest.approx(brain_fraction)
+    assert result.status == status
+    assert result.failure_categories == failure_categories
+    assert ("T1ce.brain_fraction" in result.borderline_checks) is borderline
+    assert result.checks["T1ce.brain_fraction"].borderline is borderline
+    assert result.checks["T1ce.brain_fraction"].passed is (status != "failed")
+
+
 def test_dice_below_fail_threshold_is_registration_failure(tmp_path: Path) -> None:
     t1ce = np.zeros((8, 8, 8), dtype=np.float32)
     t1ce[:4, :4, :4] = 1
@@ -314,6 +347,6 @@ def test_threshold_ordering_is_validated() -> None:
         )
     with pytest.raises(ValueError, match="brain-fraction borderline"):
         VerificationThresholds(
-            min_brain_fraction=0.09,
-            borderline_min_brain_fraction=0.08,
+            min_brain_fraction=0.12,
+            borderline_min_brain_fraction=0.11,
         )

@@ -6,11 +6,13 @@ import csv
 import json
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import nibabel as nib
 import numpy as np
 import pytest
+import scripts.make_qc_overlays as overlay_script
 
 from glioma_selective.data.adapters._common import CORE_SEQUENCES, CanonicalSequence
 from glioma_selective.leakage.id_normalization import Cohort
@@ -26,11 +28,13 @@ from glioma_selective.preprocessing.qc_overlays import (
     compute_t1ce_shape_metrics,
     load_qc_overlay_index,
     load_verification_cases,
+    load_verification_statuses,
     mask_closing_gain,
     mask_solidity,
     render_qc_overlay,
     review_sheet_has_selection_reason,
     review_sheet_has_tail,
+    select_new_borderline,
     select_qc_sample,
     select_qc_shape_tail,
     select_qc_tail,
@@ -160,6 +164,63 @@ def test_borderline_private_records_are_loaded_and_schema_is_checked(
         "borderline",
         "stratified",
     ) or selected.selection_reasons == ("borderline",)
+
+
+def test_new_borderline_selects_only_retained_unindexed_cases_in_order() -> None:
+    rosters, _labels = _rosters()
+    statuses = {
+        (Cohort.UTSW, "UTSW-BT0003"): "verified-borderline",
+        (Cohort.UTSW, "UTSW-BT0004"): "verified-borderline",
+        (Cohort.UTSW, "UTSW-BT0001"): "failed",
+        (Cohort.UCSF_PDGM, "UCSF-PDGM-0002"): "verified-borderline",
+        (Cohort.UCSF_PDGM, "UCSF-PDGM-0003"): "verified-passthrough",
+        (Cohort.UTSW, "UTSW-BT9999"): "verified-borderline",
+    }
+
+    selected = select_new_borderline(
+        retained_patient_ids=rosters,
+        verification_statuses=statuses,
+        indexed_cases=((Cohort.UTSW, "UTSW-BT0003"),),
+    )
+
+    assert selected == (
+        QCSelection(Cohort.UCSF_PDGM, "UCSF-PDGM-0002", "borderline"),
+        QCSelection(Cohort.UTSW, "UTSW-BT0004", "borderline"),
+    )
+
+
+def test_new_borderline_is_idempotent_when_all_borderline_cases_are_indexed() -> None:
+    rosters, _labels = _rosters()
+    statuses = {
+        (Cohort.UTSW, "UTSW-BT0001"): "verified-borderline",
+        (Cohort.UCSF_PDGM, "UCSF-PDGM-0001"): "verified-borderline",
+    }
+    indexed = tuple(statuses)
+
+    assert (
+        select_new_borderline(
+            retained_patient_ids=rosters,
+            verification_statuses=statuses,
+            indexed_cases=indexed,
+        )
+        == ()
+    )
+
+
+def test_load_verification_statuses_rejects_malformed_status(tmp_path: Path) -> None:
+    path = tmp_path / "verification.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "cases": [{"cohort": "utsw", "patient_id": "SYNTH", "status": 1}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(QCOverlayError, match="status is malformed"):
+        load_verification_statuses(path)
 
 
 def test_overlay_renders_png_and_empty_segmentation_uses_brain_centroid(
@@ -474,3 +535,143 @@ def test_tail_zero_cli_is_a_noop(tmp_path: Path) -> None:
     )
     assert result.returncode == 0
     assert marker.read_bytes() == b"unchanged"
+
+
+def test_new_borderline_script_appends_only_new_overlays_and_is_idempotent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    private_directory = tmp_path / "private"
+    figure_directory = tmp_path / "figures"
+    output_directory = figure_directory / "qc"
+    verification_path = private_directory / "preprocessing_verification_cases.json"
+    index_path = private_directory / "qc_overlay_index.json"
+    review_path = output_directory / "qc_review_sheet.csv"
+    indexed = QCSelection(
+        Cohort.UTSW,
+        "UTSW-BT0001",
+        "stratified",
+        qc_key="qc_0007",
+    )
+    new_case_id = "UTSW-BT0002"
+    verification = {
+        (Cohort.UTSW, indexed.patient_id): QCVerificationSummary(0.2, 1.0),
+        (Cohort.UTSW, new_case_id): QCVerificationSummary(0.105, 1.0),
+        (Cohort.UTSW, "UTSW-BT0003"): QCVerificationSummary(0.2, 1.0),
+        (Cohort.UCSF_PDGM, "UCSF-PDGM-0001"): QCVerificationSummary(0.2, 1.0),
+    }
+    verification_path.parent.mkdir(parents=True, exist_ok=True)
+    verification_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "cases": [
+                    {
+                        "cohort": cohort.value,
+                        "patient_id": patient_id,
+                        "status": (
+                            "verified-borderline"
+                            if patient_id == new_case_id
+                            else (
+                                "failed"
+                                if patient_id == "UTSW-BT0003"
+                                else "verified-passthrough"
+                            )
+                        ),
+                        "brain_voxel_fraction": summary.brain_voxel_fraction,
+                        "cross_sequence_dice": {"T1": summary.min_cross_sequence_dice},
+                    }
+                    for (cohort, patient_id), summary in verification.items()
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    write_qc_overlay_index((indexed,), index_path)
+    write_qc_review_sheet((indexed,), verification, review_path)
+    output_directory.mkdir(parents=True, exist_ok=True)
+    existing_png = output_directory / "qc_0007.png"
+    existing_png.write_bytes(b"existing-png")
+    review_before = review_path.read_bytes()
+
+    retained = {
+        Cohort.UTSW: (indexed.patient_id, new_case_id, "UTSW-BT0003"),
+        Cohort.UCSF_PDGM: ("UCSF-PDGM-0001",),
+    }
+    cases = {
+        (Cohort.UTSW, patient_id): replace(
+            _case(tmp_path / patient_id), patient_id=patient_id
+        )
+        for patient_id in (indexed.patient_id, new_case_id, "UTSW-BT0003")
+    }
+    monkeypatch.setattr(
+        overlay_script.paths, "private_data_dir", lambda: private_directory
+    )
+    monkeypatch.setattr(overlay_script.paths, "figures_dir", lambda: figure_directory)
+    monkeypatch.setattr(overlay_script, "build_real_retained_rosters", lambda: retained)
+    monkeypatch.setattr(
+        overlay_script,
+        "discover_cases",
+        lambda cohort, retained_patient_ids: tuple(
+            cases[(cohort, patient_id)] for patient_id in retained_patient_ids
+        ),
+    )
+
+    assert overlay_script.main(["--new-borderline"]) == 0
+    first_report = json.loads(capsys.readouterr().out)
+    assert first_report["selected_cases"] == 1
+    assert first_report["cases_by_reason"] == {"borderline": 1}
+    assert first_report["files_written"] == 1
+    assert first_report["new_borderline"] is True
+    assert (output_directory / "qc_0008.png").is_file()
+    assert existing_png.read_bytes() == b"existing-png"
+    assert review_path.read_bytes().startswith(review_before)
+    assert load_qc_overlay_index(index_path)["qc_0008"] == (
+        Cohort.UTSW,
+        new_case_id,
+    )
+    with review_path.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows[-1]["qc_key"] == "qc_0008"
+    assert rows[-1]["selection_reason"] == "borderline"
+    assert rows[-1]["reviewer_verdict"] == ""
+
+    files_before_second_run = {
+        path: path.read_bytes()
+        for path in (
+            index_path,
+            review_path,
+            existing_png,
+            output_directory / "qc_0008.png",
+        )
+    }
+    assert overlay_script.main(["--new-borderline"]) == 0
+    second_report = json.loads(capsys.readouterr().out)
+    assert second_report["selected_cases"] == 0
+    assert second_report["cases_by_reason"] == {}
+    assert second_report["files_written"] == 0
+    assert {
+        path: path.read_bytes() for path in files_before_second_run
+    } == files_before_second_run
+
+
+def test_new_borderline_requires_both_overlay_artifacts(tmp_path: Path) -> None:
+    index_path = tmp_path / "qc_overlay_index.json"
+    review_path = tmp_path / "qc_review_sheet.csv"
+
+    with pytest.raises(QCOverlayError, match="artifacts are incomplete"):
+        overlay_script._require_complete_overlay_artifacts(index_path, review_path)
+
+    index_path.write_bytes(b"present")
+    with pytest.raises(QCOverlayError, match="artifacts are incomplete"):
+        overlay_script._require_complete_overlay_artifacts(index_path, review_path)
+
+
+def test_new_borderline_is_mutually_exclusive_with_other_modes() -> None:
+    with pytest.raises(SystemExit) as error:
+        overlay_script.main(["--new-borderline", "--tail", "1"])
+    assert error.value.code == 2
+    with pytest.raises(SystemExit) as error:
+        overlay_script.main(["--new-borderline", "--shape-tail", "1"])
+    assert error.value.code == 2
