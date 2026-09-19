@@ -848,4 +848,43 @@ after observing the data. If a later phase wants that form it should be pre-spec
 
 **Owner.** Research Lead.
 
+## D-033 — Metric conventions the SPEC leaves open: ECE variant and binning, RC-curve ties, AURC integration
+**Status:** OPEN · **Resolve by:** Phase 05 (the pre-registration lists the metrics) · **Blocking:** YES for merging metric code in Phase 07 T07.7 and Phase 09 T09.2/T09.3; no for anything before that
+
+**Conflict.** SPEC §1.2 and §4.7 say AURC is the integral of the risk–coverage curve and Phase 07 says the ECE "binning
+convention is documented and tested", but no text fixes these choices, and each changes the number computed from the same
+predictions:
+
+1. **ECE variant.** Top-label (bin by confidence `max(p, 1-p)`, compare with accuracy) or positive-class (bin by
+   `p(y=1)`, compare with the observed IDH-mutant fraction).
+2. **ECE binning.** Equal-width or equal-mass bins; number of bins; whether a value on a bin edge falls in the lower or the
+   upper bin (and where 1.0 goes).
+3. **Ties in the risk–coverage curve.** Rows with equal scores have no natural order. Ordering them by input row makes the
+   curve and AURC depend on the row order of the file.
+4. **AURC integration rule.** Mean of the selective risk over all n cutoffs, or a trapezoid over the distinct
+   (coverage, risk) points, and where the coverage axis starts.
+5. **Selective risk at a target coverage** when the target falls between two attainable coverages (tied blocks make some
+   coverages unattainable).
+
+**Alternatives.** (a) Leave it to whoever writes the code (rejected: the choice would be made silently, and Codex and
+Claude implementing independently could both be "correct" and disagree). (b) Fix one convention now. (c) Implement every
+variant as an explicit named function, show on hand-worked fixtures how far they differ, then pre-register one.
+
+**Recommendation.** (c) now, (b) in Phase 05. Proposed choices for the Research Lead to confirm or replace:
+positive-class ECE as primary (a binary clinical model is read from a calibration curve of `p(y=1)`), equal-width, 10 bins,
+left-closed with 1.0 in the last bin, with 5 bins, 15 bins and equal-mass 10 bins as a sensitivity table and top-label
+ECE as a secondary; ties handled as blocks (only block-end coverages are points on the curve, so the curve does not
+depend on row order); AURC as the mean over cutoffs with block ties; selective risk at a target coverage taken at the
+smallest attainable coverage that is at least the target (reported together with the attained coverage).
+
+**Consequence if unresolved.** Two correct-looking implementations disagree in the third decimal, the disagreement is
+read as a bug in one of them, and someone "fixes" it toward the other. Worse, the paper's ECE and AURC would depend on
+an undocumented choice.
+
+**What is being done meanwhile.** Contributor rows C-017 (calibration) and C-018 (selective prediction) build
+standard-library reference implementations with every variant as a named function. They choose nothing and preempt
+nothing; they make the differences visible before the choice.
+
+**Owner.** Research Lead.
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.

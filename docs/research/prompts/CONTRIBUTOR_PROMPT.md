@@ -91,12 +91,22 @@ Do exactly what the task row describes, touching only the paths listed in its "A
 column. Small, atomic commits. No unrelated cleanup, no touching files "while you're in there,"
 and no editing `CONTRIBUTOR_TASKS.md`.
 
+If your row says it is a **Long row** or names a file under `docs/research/contributor_specs/`,
+read that whole file before writing anything. It is the contract: its file list, milestones and
+"Not allowed" section bind you exactly like the row's "Allowed paths". Open a **draft** pull
+request at its first milestone (`gh pr create --draft`), push at each milestone, and mark it ready
+(`gh pr ready`) only at the last one. If the contract is ambiguous, do not choose: write the
+question under "Open questions" in the pull request and implement exactly what is written.
+
 Before committing anything, run whatever of these exist in the repo:
 
 ```bash
 pre-commit run --all-files
 pytest tests/unit -q
 ```
+
+If your row adds tests outside `tests/unit/` (for example `tests/reference/`), run
+`pytest <that folder> -q` as well; the first command above does not cover it.
 
 Fix anything these flag inside your allowed paths. If a failure is outside your allowed paths,
 stop and report it rather than fixing it yourself.
