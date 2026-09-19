@@ -15,7 +15,7 @@ SPEC §4.1 (3D SegResNet-style MONAI encoder; **not** a bespoke transformer), §
 Supplies the always-predict baseline against which C1, C2, and C3 are all measured. M1 and M6 originate here.
 
 ## Entry criteria
-Phase 05 freeze complete; Phase 01 environment and benchmark complete; **all seven pre-training authorization steps must pass before any expensive run.**
+Phase 05 freeze complete; Phase 04 T04.6 complete (normalization statistics fitted on the frozen split and hashed, D-023); Phase 01 environment and benchmark complete; **all seven pre-training authorization steps must pass before any expensive run.**
 
 ## Inputs
 Frozen split; frozen normalization statistics; preprocessed volumes; GPU benchmark table.

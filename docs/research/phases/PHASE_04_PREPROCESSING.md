@@ -15,7 +15,7 @@ SPEC §3.3 (CPU-bound, overnight), §4.2 (four co-registered skull-stripped norm
 Precondition for all. Preprocessing leakage would invalidate RQ2 and RQ3 specifically, since both compare distributions across cohorts.
 
 ## Entry criteria
-Phase 03 complete; cohort manifest frozen and hashed.
+Phase 03 complete; cohort manifest frozen and hashed. Tool choices fixed by D-024 (within-patient T1CE registration, HD-BET pinned release); split/normalization ordering fixed by D-023.
 
 ## Inputs
 Raw cohorts; cohort manifest; exclusion manifest.
@@ -28,8 +28,8 @@ Raw cohorts; cohort manifest; exclusion manifest.
 | T04.2 | Rigid inter-sequence co-registration | A | — | Codex | CPU | no | T04.3 |
 | T04.3 | Skull stripping (HD-BET) | A | — | Codex | CPU/GPU | no | T04.4 |
 | T04.4 | N4 bias-field correction | A | — | Codex | CPU | no | T04.5 |
-| T04.5 | Resample to ~1 mm isotropic; common orientation | A | — | Codex | CPU | no | T04.6 |
-| T04.6 | **Normalization statistics from UTSW-train ONLY**; apply everywhere unchanged | A | — | Claude | CPU | no | Phase 06 |
+| T04.5 | Resample to ~1 mm isotropic; common orientation | A | — | Codex | CPU | no | T04.7, T04.8 |
+| T04.6 | **Normalization statistics from UTSW-train ONLY**; apply everywhere unchanged. **Runs after Phase 05 T05.3 (split freeze), per D-023.** | A | — | Claude | CPU | no | Phase 06 |
 | T04.7 | Segmentation-mask handling and alignment | A | — | Codex | CPU | yes | Phase 06 |
 | T04.8 | Automated QC: shape, range, orientation, alignment, mask overlap | A | — | Codex | CPU | no | T04.9 |
 | T04.9 | **Visual QC on a representative sample** | B | A (+8d) **DEGRADED** | Human | none | no | Gate D |
@@ -37,7 +37,7 @@ Raw cohorts; cohort manifest; exclusion manifest.
 | T04.11 | Per-case status manifest; failure categorization | A | — | Codex | CPU | no | T04.12 |
 | T04.12 | QC-failure exclusions appended to the exclusion manifest | A | — | Codex | CPU | no | Phase 05 |
 
-**T04.6 is a leakage control, not a preprocessing convenience.** Per-modality z-score statistics are computed **exclusively** from the UTSW training split and applied unchanged to calibration, internal test, UCSF-PDGM, and EGD. Computing them on pooled data — or per-cohort — would leak external distribution information into the model's effective input space and silently invalidate the domain-shift evaluation that is the paper's point. The CLI refuses any other fitting cohort; a unit test asserts provenance; the statistics file is hashed and frozen at Phase 05.
+**T04.6 is a leakage control, not a preprocessing convenience.** Ordering per D-023: it runs after the Phase 05 split is frozen on the post-QC roster. Per-modality z-score statistics are computed **exclusively** from the UTSW training split and applied unchanged to calibration, internal test, UCSF-PDGM, and EGD. Computing them on pooled data — or per-cohort — would leak external distribution information into the model's effective input space and silently invalidate the domain-shift evaluation that is the paper's point. The CLI refuses any other fitting cohort; a unit test asserts provenance; the statistics file is hashed and frozen at Phase 05.
 
 **T04.9 cannot be replaced by "the command exited 0."** SPEC-adjacent reality: registration can converge to a wrong transform, skull-stripping can remove tumour, N4 can amplify artifact, and a mis-mapped channel trains perfectly well. Define in advance:
 
@@ -62,8 +62,9 @@ T04.1–T04.5, T04.7, T04.8, T04.10, T04.11, T04.12 — each a bounded, individu
 
 ## Parallelization map
 ```
-T04.1 ─> T04.2 ─> T04.3 ─> T04.4 ─> T04.5 ─> T04.6 ─> T04.8 ─> T04.9 ─> T04.11 ─> T04.12
+T04.1 ─> T04.2 ─> T04.3 ─> T04.4 ─> T04.5 ─> T04.8 ─> T04.9 ─> T04.11 ─> T04.12 ─> [Phase 05 T05.1–T05.3] ─> T04.6
 T04.7  ──────────────────────────────────┘
+(D-023: T04.6 fits on the frozen UTSW-train split, so it follows the Phase 05 split freeze. The T04.8 z-score range check runs after T04.6; every other T04.8 check runs before.)
 T04.10 in parallel throughout
 ```
 Pipeline stages are sequential per case but **embarrassingly parallel across patients** — run as a batch overnight.
@@ -117,10 +118,10 @@ Content-addressed caching makes re-running a stage with corrected parameters che
 **R-C04 (normalization leakage — the critical risk of this phase)** · R-C05 (modality mapping, final chance to catch it) · R-H06 (pipeline failure) · R-M02 (if B is unavailable, visual QC is DEGRADED and must be disclosed).
 
 ## Decisions requiring Research Lead approval
-Registration target (template vs. within-patient T1CE) · skull-stripping tool and version · QC exclusion threshold · whether a systematic failure warrants re-running the entire cohort.
+Registration target, skull-stripping tool and version, and QC exclusion threshold are resolved (D-024). Whether a systematic failure warrants re-running the entire cohort is decided only if QC finds one.
 
 ## Exit criteria
-All acceptance criteria met; Gate D passed; visual QC signed off; normalization statistics frozen and hashed.
+All acceptance criteria met; Gate D passed; visual QC signed off. Normalization statistics are frozen and hashed by T04.6 after the Phase 05 split freeze (D-023), so the phase closes when that has happened.
 
 ## Dependencies for next phase
-Phase 05 needs post-QC cohort counts and the frozen normalization statistics.
+Phase 05 needs post-QC cohort counts (D-023: not the normalization statistics; those follow the split freeze). Phase 06 needs the frozen split and the frozen normalization statistics.

@@ -17,7 +17,7 @@ SPEC §4.5 (splits and thresholds calibrated entirely on UTSW), §5.1 (patient-l
 All. This phase makes C1–C6 testable by fixing their decision criteria.
 
 ## Entry criteria
-Phases 03 and 04 complete; cohort manifest, exclusion manifest, and normalization statistics all frozen and hashed; post-QC class counts available.
+Phase 03 complete; Phase 04 complete except T04.6 (D-023: normalization statistics are fitted after this phase freezes the split); cohort manifest and exclusion manifest (including QC exclusions) frozen and hashed; post-QC class counts available.
 
 ## Inputs
 Final cohort manifest; exclusion manifest; post-QC counts; `DECISION_LOG.md` D-003, D-004, D-007.
@@ -116,4 +116,4 @@ Split proportions (recommendation: 60/20/20 train/calibration/internal-test, sub
 All acceptance criteria met; Gate D passed; **split and pre-registration hashed and committed**; the three blocking decisions resolved.
 
 ## Dependencies for next phase
-Phase 06 needs the frozen split and normalization statistics. Phase 11's Gate E cannot pass without the hashed pre-registration.
+Phase 06 needs the frozen split and the normalization statistics (Phase 04 T04.6, run after this phase's T05.3 per D-023). Phase 11's Gate E cannot pass without the hashed pre-registration.
