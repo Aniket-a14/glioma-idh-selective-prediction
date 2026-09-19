@@ -275,8 +275,8 @@ def test_borderline_dice_is_sent_to_visual_qc_without_failure(
 @pytest.mark.parametrize(
     ("brain_fraction", "status", "borderline", "failure_categories"),
     (
-        (0.105, "verified-borderline", True, ()),
-        (0.115, "verified-passthrough", False, ()),
+        (0.115, "verified-borderline", True, ()),
+        (0.125, "verified-passthrough", False, ()),
         (0.049, "failed", False, ("skullstrip-over",)),
     ),
 )
@@ -303,6 +303,8 @@ def test_d031_brain_fraction_boundaries(
     assert ("T1ce.brain_fraction" in result.borderline_checks) is borderline
     assert result.checks["T1ce.brain_fraction"].borderline is borderline
     assert result.checks["T1ce.brain_fraction"].passed is (status != "failed")
+    if status == "verified-passthrough":
+        assert all(check.passed for check in result.checks.values())
 
 
 def test_dice_below_fail_threshold_is_registration_failure(tmp_path: Path) -> None:
