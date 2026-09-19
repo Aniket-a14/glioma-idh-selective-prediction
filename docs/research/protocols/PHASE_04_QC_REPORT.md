@@ -73,11 +73,14 @@ Of the 559 retained UTSW cases above 0.13, 71 were reviewed and 488 were not.
 ## 6. Sign-off
 
 T04.9 requires the Research Lead's explicit sign-off; the reviewer was the Research Lead alone, so visual QC is the
-solo fallback and R-M02 applies (no second reader). This section stays blank until the Research Lead fills it in.
+solo fallback and R-M02 applies (no second reader). The Research Lead signed off in chat on 2026-09-19 when asked
+whether they sign off on this report; Claude transcribed it here.
 
 | Item | Research Lead |
 |---|---|
-| Visual QC completed as described in section 3, row 3 | |
-| Recalibration and residual-risk handling (section 4) accepted | |
-| D-029 to D-032 confirmed | |
-| Date | |
+| Visual QC completed as described in section 3, row 3 | Signed off |
+| Recalibration and residual-risk handling (section 4) accepted | Signed off |
+| D-029 to D-032 confirmed | Signed off |
+| Date | 2026-09-19 |
+
+Sign-off covers T04.9 and the work in this report only. Gate D and the phase exit remain open until T04.6 (see section 1).

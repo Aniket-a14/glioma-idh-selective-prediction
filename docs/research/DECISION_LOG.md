@@ -827,7 +827,7 @@ not thresholds. Unreviewed cases above 0.13 stay in the cohort. UTSW exclusions:
 **Owner.** Research Lead.
 
 ## D-032 — One mask-alignment audit finding accepted as a boundary effect (Phase 04 output audit)
-**Status:** RESOLVED (2026-09-19, Claude, for Research Lead confirmation at sign-off) · **Blocking:** no · **Resolve by:** Phase 04
+**Status:** RESOLVED (2026-09-19, Claude; confirmed by the Research Lead at the T04.9 sign-off) · **Blocking:** no · **Resolve by:** Phase 04
 
 **Conflict.** `scripts/audit_preprocessing_outputs.py` (thresholds set in advance: at least 0.99 of non-zero mask voxels
 inside the T1ce non-zero footprint) passes every check on all 818 cases (616 UTSW + 202 UCSF-PDGM, 3,272 volumes, masks) except this
