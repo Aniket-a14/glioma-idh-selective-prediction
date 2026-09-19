@@ -803,6 +803,16 @@ UTSW cases in [0.11, 0.12) have 3 reviewed passes and 9 unreviewed. Decision: ra
 to **0.12** and review the 9 unreviewed cases; extend again only if failures appear in the new band. The bound stays
 provisional. UTSW exclusions are now 4 of 622 (0.64%), far below the 10% stop threshold; UCSF-PDGM 0 of 202.
 
+**Update 2 (2026-09-19, Research Lead): bound raised to 0.13, with a stopping rule.** The 9 cases newly flagged at 0.12
+gave 1 more failure (`qc_0089`, brain fraction 0.115, `qc:skullstrip-over`; 8 passes), so failures reach into the
+0.11 to 0.12 band (1 of 12 reviewed). Failure density by band is falling: 4 of 20 below 0.11, 1 of 12 in 0.11 to 0.12.
+A left-right mask-asymmetry screen was tried as an alternative detector and rejected: the 5 failures rank 1, 11, 23,
+44 and 75 of 90 reviewed cases, so it does not separate them. Decision: raise `borderline_min_brain_fraction` to
+**0.13** and review the unreviewed UTSW cases in [0.12, 0.13). **Stopping rule (fixed now):** stop extending as soon
+as one full 0.01 band has zero failures; if a band has a failure, extend by one more 0.01 band. Cases above the final
+bound were reached only through the random and stratified samples (0 failures in 24 UTSW random draws). UTSW
+exclusions: 5 of 622 (0.80%), UCSF-PDGM 0 of 202, far below the 10% stop threshold.
+
 **Owner.** Research Lead.
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
