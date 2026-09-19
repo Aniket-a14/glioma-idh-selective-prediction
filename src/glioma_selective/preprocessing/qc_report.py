@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 
+from scipy.stats import beta  # type: ignore[import-untyped]
+
 from glioma_selective.leakage.id_normalization import Cohort
 from glioma_selective.preprocessing.qc_overlays import load_qc_overlay_index
 from glioma_selective.preprocessing.status import PreprocessingStatusManifest
@@ -43,6 +45,16 @@ _REVIEW_COLUMNS: Final[frozenset[str]] = frozenset(
         "reviewer_verdict",
         "failure_category",
         "notes",
+    }
+)
+_VALID_SELECTION_REASONS: Final[frozenset[str]] = frozenset(
+    {
+        "borderline",
+        "stratified",
+        "random",
+        "tail",
+        "shape_tail",
+        "residual_sample",
     }
 )
 
@@ -204,11 +216,16 @@ def _load_review(path: Path) -> tuple[list[_ReviewRow], int]:
                     without_verdict += 1
                 elif verdict not in {"pass", "fail"}:
                     raise QCReportError("QC review sheet has an invalid verdict")
+                selection_reason = raw_row.get("selection_reason", "")
+                if selection_reason not in _VALID_SELECTION_REASONS:
+                    raise QCReportError(
+                        "QC review sheet has an invalid selection reason"
+                    )
                 rows.append(
                     _ReviewRow(
                         qc_key=key,
                         cohort=_cohort(raw_row.get("cohort")),
-                        selection_reason=raw_row.get("selection_reason", ""),
+                        selection_reason=selection_reason,
                         brain_voxel_fraction=_float(
                             raw_row.get("brain_voxel_fraction"), allow_blank=True
                         ),
@@ -372,6 +389,61 @@ def _reviewed_below(rows: list[_ReviewRow], bound: float, verdict: str) -> int:
     )
 
 
+def _clopper_pearson_upper(failures: int, n: int) -> float | None:
+    """Return the exact one-sided 95% binomial upper confidence bound."""
+
+    if n < 0 or failures < 0 or failures > n:
+        raise QCReportError("invalid binomial failure count")
+    if n == 0:
+        return None
+    if failures == n:
+        return 1.0
+    if failures == 0:
+        return 1.0 - math.pow(0.05, 1.0 / n)
+    raw_upper = beta.ppf(0.95, failures + 1, n - failures)
+    if isinstance(raw_upper, bool) or not isinstance(raw_upper, int | float):
+        raise QCReportError("could not compute the binomial upper bound")
+    upper = float(raw_upper)
+    if not math.isfinite(upper):
+        raise QCReportError("could not compute the binomial upper bound")
+    return upper
+
+
+def _residual_failure_rate(rows: list[_ReviewRow]) -> dict[str, object]:
+    bound = _CURRENT_LOWER_BOUND
+    residual_rows = [row for row in rows if row.selection_reason == "residual_sample"]
+    all_random_rows = [
+        row
+        for row in rows
+        if row.cohort is Cohort.UTSW
+        and row.selection_reason in {"stratified", "random", "residual_sample"}
+        and row.brain_voxel_fraction is not None
+        and row.brain_voxel_fraction >= bound
+    ]
+
+    def counts(selected: list[_ReviewRow]) -> dict[str, object]:
+        failures = sum(row.verdict == "fail" for row in selected)
+        return {
+            "n": len(selected),
+            "failures": failures,
+            "upper_95": _clopper_pearson_upper(failures, len(selected)),
+        }
+
+    return {
+        "bound": bound,
+        "residual_sample": counts(residual_rows),
+        "all_random_above_bound": {
+            "cohort_filter": "utsw",
+            **counts(all_random_rows),
+        },
+        "interpretation": (
+            "These are residual-risk estimates for Limitations, not thresholds. "
+            "The all-random-above-bound group mixes designs (IDH-stratified "
+            "random and residual random)."
+        ),
+    }
+
+
 def _crosscheck_review(
     rows: list[_ReviewRow],
     index: dict[str, tuple[Cohort, str]],
@@ -444,6 +516,7 @@ def build_qc_report(
             "provisional": True,
         },
         "threshold_sensitivity": _sensitivity(verification, rows),
+        "residual_failure_rate": _residual_failure_rate(rows),
         "provenance": {
             "input_sha256": {
                 "preprocessing_status": _sha256(status_path),

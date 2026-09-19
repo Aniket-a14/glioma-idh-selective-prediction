@@ -41,6 +41,7 @@ from scipy.spatial import ConvexHull, QhullError  # type: ignore[import-untyped]
 from glioma_selective.data.adapters._common import CORE_SEQUENCES, CanonicalSequence
 from glioma_selective.leakage.id_normalization import Cohort, normalize_identifier
 from glioma_selective.preprocessing.discovery import CaseRecord
+from glioma_selective.preprocessing.verification import VerificationThresholds
 from glioma_selective.utils import paths
 
 __all__ = [
@@ -60,6 +61,7 @@ __all__ = [
     "review_sheet_has_selection_reason",
     "select_qc_tail",
     "select_qc_sample",
+    "select_residual_sample",
     "select_new_borderline",
     "assign_continuing_qc_keys",
     "append_qc_overlay_index",
@@ -88,8 +90,16 @@ _SELECTION_REASONS: tuple[str, ...] = (
     "random",
     "tail",
     "shape_tail",
+    "residual_sample",
 )
-SelectionReason = Literal["borderline", "stratified", "random", "tail", "shape_tail"]
+SelectionReason = Literal[
+    "borderline",
+    "stratified",
+    "random",
+    "tail",
+    "shape_tail",
+    "residual_sample",
+]
 IDHLabelReader = Callable[[Cohort, Path], Mapping[str, str]]
 OverlayIndex = dict[str, tuple[Cohort, str]]
 
@@ -411,6 +421,8 @@ def read_utsw_idh_labels(cohort: Cohort, metadata_path: Path) -> Mapping[str, st
 
 def _retained_ids(
     retained_patient_ids: Mapping[Cohort, Iterable[str]] | Mapping[str, Iterable[str]],
+    *,
+    require_both: bool = True,
 ) -> dict[Cohort, tuple[str, ...]]:
     result: dict[Cohort, tuple[str, ...]] = {}
     for raw_cohort, raw_ids in retained_patient_ids.items():
@@ -423,7 +435,9 @@ def _retained_ids(
         if selected in result:
             raise QCOverlayError("retained QC roster repeats a cohort")
         result[selected] = values
-    missing = {Cohort.UTSW, Cohort.UCSF_PDGM} - set(result)
+    missing = {Cohort.UTSW} - set(result)
+    if require_both:
+        missing = {Cohort.UTSW, Cohort.UCSF_PDGM} - set(result)
     if missing:
         raise QCOverlayError("retained QC roster is missing a required cohort")
     return result
@@ -632,6 +646,57 @@ def select_qc_tail(
         )
     random.Random(seed).shuffle(selected)
     return tuple(selected)
+
+
+def select_residual_sample(
+    *,
+    retained_patient_ids: Mapping[Cohort, Iterable[str]] | Mapping[str, Iterable[str]],
+    verification_statuses: Mapping[tuple[Cohort, str], str],
+    verification: Mapping[tuple[Cohort, str], QCVerificationSummary],
+    indexed_cases: Iterable[tuple[Cohort, str]] = (),
+    sample_size: int = 0,
+    borderline_min_brain_fraction: float = (
+        VerificationThresholds().borderline_min_brain_fraction
+    ),
+    seed: int = QC_SAMPLE_SEED,
+) -> tuple[QCSelection, ...]:
+    """Select a deterministic UTSW residual-risk sample above the QC bound.
+
+    Candidates are retained UTSW cases with current status
+    ``verified-passthrough``, a verification ``brain_voxel_fraction`` at or
+    above ``borderline_min_brain_fraction``, and no existing QC index entry.
+    Patient IDs are sorted before ``random.Random(seed).sample`` so identical
+    inputs produce the same draw without replacement.  Keys are assigned by
+    :func:`assign_continuing_qc_keys` after this pure selection step.
+    """
+
+    if sample_size < 0:
+        raise QCOverlayError("residual sample size must not be negative")
+    if not math.isfinite(borderline_min_brain_fraction):
+        raise QCOverlayError("residual sample bound must be finite")
+    if sample_size == 0:
+        return ()
+    retained = _retained_ids(retained_patient_ids, require_both=False)
+    indexed = set(indexed_cases)
+    candidates: list[str] = []
+    for patient_id in retained[Cohort.UTSW]:
+        case = (Cohort.UTSW, patient_id)
+        summary = verification.get(case)
+        if (
+            case not in indexed
+            and verification_statuses.get(case) == "verified-passthrough"
+            and summary is not None
+            and summary.brain_voxel_fraction is not None
+            and summary.brain_voxel_fraction >= borderline_min_brain_fraction
+        ):
+            candidates.append(patient_id)
+    candidates.sort()
+    if len(candidates) < sample_size:
+        raise QCOverlayError("residual sample has fewer candidates than requested")
+    return tuple(
+        QCSelection(Cohort.UTSW, patient_id, "residual_sample")
+        for patient_id in random.Random(seed).sample(candidates, sample_size)
+    )
 
 
 def select_qc_shape_tail(
@@ -1163,6 +1228,8 @@ def _review_keys(raw_content: bytes) -> set[str]:
         key = row.get("qc_key")
         if not isinstance(key, str) or _QC_KEY_RE.fullmatch(key) is None:
             raise QCOverlayError("QC review sheet contains an invalid QC key")
+        if row.get("selection_reason") not in _SELECTION_REASONS:
+            raise QCOverlayError("QC review sheet contains an invalid selection reason")
         if key in keys:
             raise QCOverlayError("QC review sheet contains a duplicate QC key")
         keys.add(key)

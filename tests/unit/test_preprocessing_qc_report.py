@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,8 @@ from glioma_selective.leakage.id_normalization import Cohort
 from glioma_selective.preprocessing.qc_report import (
     QCReportError,
     _agreement,
+    _clopper_pearson_upper,
+    _residual_failure_rate,
     _ReviewRow,
     _VerificationCase,
     build_qc_report,
@@ -194,6 +197,111 @@ def test_report_has_hand_computed_agreement_and_sensitivity_counts(
         "reviewed_cases_below": {"fail": 1, "pass": 2},
     }
     assert report["provenance"]["reviewed_rows_without_verdict"] == 0
+    residual = report["residual_failure_rate"]
+    assert residual["bound"] == 0.13
+    assert residual["residual_sample"] == {
+        "n": 0,
+        "failures": 0,
+        "upper_95": None,
+    }
+    assert residual["all_random_above_bound"] == {
+        "cohort_filter": "utsw",
+        "n": 0,
+        "failures": 0,
+        "upper_95": None,
+    }
+    assert (
+        "residual-risk estimates for Limitations, not thresholds"
+        in residual["interpretation"]
+    )
+    assert "mixes designs" in residual["interpretation"]
+
+
+def test_clopper_pearson_upper_matches_hand_values_and_independent_binomial_sum() -> (
+    None
+):
+    assert _clopper_pearson_upper(0, 40) == pytest.approx(0.0720, abs=0.0005)
+    assert _clopper_pearson_upper(0, 62) == pytest.approx(0.0470, abs=0.0005)
+    result = _clopper_pearson_upper(1, 10)
+    assert result == pytest.approx(0.3942, abs=0.00005)
+
+    # Independent check: solve P(X <= 1 | p) = 0.05 by bisection using
+    # the binomial PMF, without scipy's beta quantile implementation.
+    def cdf_at_one(probability: float) -> float:
+        return sum(
+            math.comb(10, failures)
+            * probability**failures
+            * (1 - probability) ** (10 - failures)
+            for failures in (0, 1)
+        )
+
+    low, high = 0.0, 1.0
+    for _ in range(80):
+        middle = (low + high) / 2
+        if cdf_at_one(middle) > 0.05:
+            low = middle
+        else:
+            high = middle
+    assert result == pytest.approx((low + high) / 2, abs=1e-12)
+
+
+def test_residual_failure_rate_counts_both_review_designs() -> None:
+    rows = [
+        _ReviewRow(
+            f"qc_{index:04d}",
+            Cohort.UTSW,
+            "stratified",
+            0.20,
+            "pass",
+            "",
+        )
+        for index in range(1, 23)
+    ]
+    rows.extend(
+        _ReviewRow(
+            f"qc_{index:04d}",
+            Cohort.UTSW,
+            "residual_sample",
+            0.20,
+            "pass",
+            "",
+        )
+        for index in range(23, 63)
+    )
+    rows.append(
+        _ReviewRow("qc_0063", Cohort.UCSF_PDGM, "random", 0.20, "fail", "corrupt")
+    )
+
+    residual = _residual_failure_rate(rows)
+    assert residual["residual_sample"] == {
+        "n": 40,
+        "failures": 0,
+        "upper_95": pytest.approx(0.0720, abs=0.0005),
+    }
+    assert residual["all_random_above_bound"] == {
+        "cohort_filter": "utsw",
+        "n": 62,
+        "failures": 0,
+        "upper_95": pytest.approx(0.0470, abs=0.0005),
+    }
+
+
+def test_review_loader_rejects_unknown_selection_reason(tmp_path: Path) -> None:
+    status, verification, review, index, output = _inputs(tmp_path)
+    review.write_text(
+        review.read_text(encoding="utf-8").replace(
+            ",stratified,", ",unsupported_reason,"
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(QCReportError, match="invalid selection reason"):
+        build_qc_report(
+            status_path=status,
+            verification_path=verification,
+            review_path=review,
+            overlay_index_path=index,
+            output_path=output,
+        )
 
 
 def test_agreement_distinguishes_original_and_current_screen_bounds() -> None:
