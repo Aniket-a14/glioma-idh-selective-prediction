@@ -1,0 +1,29 @@
+{
+  "cohorts": {
+    "ucsf_pdgm": {
+      "excluded_patient_count": 299,
+      "exclusion_reason_counts": {
+        "no_imaging_available": 6,
+        "overlap:brats2021": 293
+      },
+      "retained_patient_count": 202,
+      "roster_construction": "Normalize every retained raw patient ID with the cohort-specific normalizer; sort canonical IDs in Unicode lexicographic order; join with one LF (U+000A) separator and no trailing LF; encode the joined string as UTF-8; hash those bytes with SHA-256.",
+      "roster_sha256": "19d5a89e15d2bd62b75c69cdbac08c975d0405d28cc090e7aafe763f9d46bfe5"
+    },
+    "utsw": {
+      "excluded_patient_count": 5,
+      "exclusion_reason_counts": {
+        "label:idh_unavailable": 3,
+        "qc:skullstrip-over": 2
+      },
+      "retained_patient_count": 620,
+      "roster_construction": "Normalize every retained raw patient ID with the cohort-specific normalizer; sort canonical IDs in Unicode lexicographic order; join with one LF (U+000A) separator and no trailing LF; encode the joined string as UTF-8; hash those bytes with SHA-256.",
+      "roster_sha256": "3f198edacb46c324e54738d69540b989717eacf2adfd08eb91d7bcc11f3fb56c"
+    }
+  },
+  "generated_at": "2026-09-19T12:08:18+00:00",
+  "manifest_version": 1,
+  "note": "EGD is not included yet because its DUA is pending (D-018). This manifest will require version 2 once EGD arrives. Derived from the Phase 03 manifest by removing the T04.12 QC exclusions.",
+  "pre_qc_manifest": "cohort_manifest.json",
+  "stage": "post_qc"
+}

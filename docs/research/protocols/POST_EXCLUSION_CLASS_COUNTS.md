@@ -48,12 +48,33 @@ institution's referral mix, not a random subsample of UCSF-PDGM.
 
 ---
 
+## Post-QC counts (Phase 04 T04.12, D-030)
+
+The tables above are the **pre-QC** record and stay unchanged (they match the frozen
+`docs/research/manifests/cohort_manifest.json`). Phase 04's visual QC excluded 2 UTSW patients
+(`qc:skullstrip-over`, part of the brain missing; D-024, D-028) and 0 UCSF-PDGM patients. The post-QC roster is
+`docs/research/manifests/cohort_manifest_post_qc.json`, built by `scripts/build_post_qc_manifests.py` from the
+Phase 03 exclusion manifest plus the QC decisions in `preprocessing_status.json`.
+
+| Cohort | Retained pre-QC | QC-excluded | Retained post-QC | IDH (post-QC) | 1p/19q (post-QC, exploratory) |
+|---|---|---|---|---|---|
+| UTSW-Glioma | 622 | 2 | **620** | `IDH_MUTANT` 175 / `IDH_WILDTYPE` 445 | `1P19Q_CODELETED` 62 / `1P19Q_NONCODELETED` 272 / `1P19Q_UNLABELED` 286 |
+| UCSF-PDGM | 202 | 0 | **202** | unchanged (80 / 122) | unchanged (13 / 167 / 22) |
+
+The 2 excluded UTSW patients were one IDH-mutant and one IDH-wildtype (one co-deleted, one unlabeled for 1p/19q),
+so the mutant share moves from 28.3% to 28.2%. The UTSW post-QC roster digest is
+`3f198edacb46c324e54738d69540b989717eacf2adfd08eb91d7bcc11f3fb56c`; the UCSF-PDGM digest is identical to the
+Phase 03 one. The counts were checked independently of the builder (own SHA-256 over the sorted canonical IDs, and
+the QC-excluded set compared with the failed visual-QC verdicts). UCSF-PDGM labels were not read for this step.
+
+---
+
 ## Note for Phase 05
 
 These are the two external-facing counts (UCSF-PDGM) and the internal development-cohort counts
 (UTSW) that exist *after* every Phase 03 exclusion. EGD is not included — its DUA is pending
 (D-018) — so this document covers UTSW and UCSF-PDGM only; it will need a UTSW-unaffected, EGD-added
 update once EGD's own leakage audit completes. No count here may be hard-coded into Phase 05's
-config or code — Phase 05 should recompute from `build_real_exclusion_manifest()` and the real
+config or code — Phase 05 should recompute from the post-QC exclusion manifest (`build_post_qc_manifests.py`) and the real
 metadata files directly, the same way this document was produced, not copy these numbers as
 constants.

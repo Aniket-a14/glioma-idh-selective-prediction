@@ -20,7 +20,7 @@ All. This phase makes C1–C6 testable by fixing their decision criteria.
 Phase 03 complete; Phase 04 complete except T04.6 (D-023: normalization statistics are fitted after this phase freezes the split); cohort manifest and exclusion manifest (including QC exclusions) frozen and hashed; post-QC class counts available.
 
 ## Inputs
-Final cohort manifest; exclusion manifest; post-QC counts; `DECISION_LOG.md` D-003, D-004, D-007.
+Post-QC cohort manifest (`docs/research/manifests/cohort_manifest_post_qc.json`, D-030) and post-QC exclusion manifest (SSD `exclusion_manifest_post_qc.json`); post-QC counts (`protocols/POST_EXCLUSION_CLASS_COUNTS.md`); `DECISION_LOG.md` D-003, D-004, D-007.
 
 ## Tasks
 
