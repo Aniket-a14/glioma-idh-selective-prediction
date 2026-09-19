@@ -11,9 +11,13 @@ sheet contains them.
 from __future__ import annotations
 
 import csv
+import io
 import json
 import math
+import os
 import random
+import re
+import tempfile
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -39,9 +43,15 @@ __all__ = [
     "QCSelection",
     "QCVerificationSummary",
     "load_verification_cases",
+    "load_qc_overlay_index",
     "read_utsw_idh_labels",
     "render_qc_overlay",
+    "select_qc_tail",
     "select_qc_sample",
+    "assign_continuing_qc_keys",
+    "append_qc_overlay_index",
+    "append_qc_review_sheet",
+    "review_sheet_has_tail",
     "write_qc_overlay_index",
     "write_qc_review_sheet",
 ]
@@ -59,9 +69,15 @@ _REVIEW_COLUMNS: Final[tuple[str, ...]] = (
     "failure_category",
     "notes",
 )
-_SELECTION_REASONS: tuple[str, ...] = ("borderline", "stratified", "random")
-SelectionReason = Literal["borderline", "stratified", "random"]
+_SELECTION_REASONS: tuple[str, ...] = (
+    "borderline",
+    "stratified",
+    "random",
+    "tail",
+)
+SelectionReason = Literal["borderline", "stratified", "random", "tail"]
 IDHLabelReader = Callable[[Cohort, Path], Mapping[str, str]]
+OverlayIndex = dict[str, tuple[Cohort, str]]
 
 
 class QCOverlayError(ValueError):
@@ -408,6 +424,82 @@ def select_qc_sample(
     )
 
 
+def select_qc_tail(
+    *,
+    retained_patient_ids: Mapping[Cohort, Iterable[str]] | Mapping[str, Iterable[str]],
+    verification: Mapping[tuple[Cohort, str], QCVerificationSummary],
+    indexed_cases: Iterable[tuple[Cohort, str]] = (),
+    per_cohort: int = 0,
+    seed: int = QC_SAMPLE_SEED,
+) -> tuple[QCSelection, ...]:
+    """Select the lowest-brain-fraction cases not already in the QC index.
+
+    Ranking uses the image-derived ``brain_voxel_fraction`` only.  A seeded
+    shuffle is applied before sorting so equal fractions have deterministic,
+    reproducible tie-breaking.  This function does not accept or invoke a
+    label reader; in particular, UCSF-PDGM tail selection is label-free.
+    """
+
+    if per_cohort < 0:
+        raise QCOverlayError("QC tail size must not be negative")
+    if per_cohort == 0:
+        return ()
+    retained = _retained_ids(retained_patient_ids)
+    indexed = set(indexed_cases)
+    selected: list[QCSelection] = []
+    for cohort in (Cohort.UTSW, Cohort.UCSF_PDGM):
+        candidates = [
+            (patient_id, verification.get((cohort, patient_id)))
+            for patient_id in retained[cohort]
+            if (cohort, patient_id) not in indexed
+        ]
+        ranked = [
+            (patient_id, summary.brain_voxel_fraction)
+            for patient_id, summary in candidates
+            if summary is not None and summary.brain_voxel_fraction is not None
+        ]
+        if len(ranked) < per_cohort:
+            raise QCOverlayError("QC tail has fewer ranked cases than requested")
+        random.Random(seed + (0 if cohort is Cohort.UTSW else 1)).shuffle(ranked)
+        ranked.sort(key=lambda item: item[1])
+        selected.extend(
+            QCSelection(cohort, patient_id, "tail")
+            for patient_id, _fraction in ranked[:per_cohort]
+        )
+    random.Random(seed).shuffle(selected)
+    return tuple(selected)
+
+
+_QC_KEY_RE = re.compile(r"qc_(\d+)")
+
+
+def assign_continuing_qc_keys(
+    selections: Sequence[QCSelection], existing_index: Mapping[str, tuple[Cohort, str]]
+) -> tuple[QCSelection, ...]:
+    """Assign the next unused numeric QC keys without changing old keys."""
+
+    used_keys = set(existing_index)
+    used_cases = set(existing_index.values())
+    next_number = 1
+    for key in used_keys:
+        match = _QC_KEY_RE.fullmatch(key)
+        if match is not None:
+            next_number = max(next_number, int(match.group(1)) + 1)
+    assigned: list[QCSelection] = []
+    for selection in selections:
+        case_key = (selection.cohort, selection.patient_id)
+        if case_key in used_cases:
+            raise QCOverlayError("QC tail selection is already indexed")
+        while f"qc_{next_number:04d}" in used_keys:
+            next_number += 1
+        qc_key = f"qc_{next_number:04d}"
+        assigned.append(replace(selection, qc_key=qc_key))
+        used_keys.add(qc_key)
+        used_cases.add(case_key)
+        next_number += 1
+    return tuple(assigned)
+
+
 def _load_case_volume(case: CaseRecord, sequence: CanonicalSequence) -> np.ndarray:
     volume_path = case.sequence_files.get(sequence)
     if volume_path is None:
@@ -671,27 +763,186 @@ def render_qc_overlay(
     return figure
 
 
+def _atomic_write(destination: Path, content: str | bytes) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path: Path | None = None
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=f".{destination.name}.", suffix=".tmp", dir=destination.parent
+        )
+        temporary_path = Path(temporary_name)
+        if isinstance(content, bytes):
+            with os.fdopen(descriptor, "wb") as handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+        else:
+            with os.fdopen(descriptor, "w", encoding="utf-8", newline="") as handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+        os.replace(temporary_path, destination)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink()
+            except FileNotFoundError:
+                pass
+
+
+def _index_payload(entries: Mapping[str, tuple[Cohort, str]]) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "qc_keys": {
+            key: {"cohort": cohort.value, "patient_id": patient_id}
+            for key, (cohort, patient_id) in entries.items()
+        },
+    }
+
+
+def _validate_index_payload(payload: object) -> OverlayIndex:
+    if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+        raise QCOverlayError("QC overlay index has an unsupported schema")
+    raw_entries = payload.get("qc_keys")
+    if not isinstance(raw_entries, dict):
+        raise QCOverlayError("QC overlay index is missing its key map")
+    entries: OverlayIndex = {}
+    cases: set[tuple[Cohort, str]] = set()
+    for raw_key, raw_entry in raw_entries.items():
+        if not isinstance(raw_key, str) or _QC_KEY_RE.fullmatch(raw_key) is None:
+            raise QCOverlayError("QC overlay index contains an invalid QC key")
+        if not isinstance(raw_entry, dict):
+            raise QCOverlayError("QC overlay index contains an invalid entry")
+        raw_cohort = raw_entry.get("cohort")
+        patient_id = raw_entry.get("patient_id")
+        if not isinstance(raw_cohort, str) or not isinstance(patient_id, str):
+            raise QCOverlayError("QC overlay index contains an invalid case identity")
+        case = (_cohort(raw_cohort), patient_id)
+        if case in cases:
+            raise QCOverlayError("QC overlay index contains a duplicate case")
+        entries[raw_key] = case
+        cases.add(case)
+    return entries
+
+
+def load_qc_overlay_index(index_path: Path) -> OverlayIndex:
+    """Load the private QC index without exposing its identifiers in errors."""
+
+    if not index_path.exists():
+        return {}
+    try:
+        payload = json.loads(index_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise QCOverlayError("cannot read QC overlay index") from error
+    return _validate_index_payload(payload)
+
+
 def write_qc_overlay_index(
     selections: Sequence[QCSelection], output_path: Path | None = None
 ) -> Path:
-    """Write the private QC-key to canonical-ID map."""
+    """Atomically write a new private QC-key to canonical-ID map."""
 
     destination = output_path or paths.private_data_dir() / "qc_overlay_index.json"
-    payload = {
-        "schema_version": 1,
-        "qc_keys": {
-            selection.qc_key: {
-                "cohort": selection.cohort.value,
-                "patient_id": selection.patient_id,
-            }
-            for selection in selections
-        },
-    }
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    entries: OverlayIndex = {}
+    for selection in selections:
+        if selection.qc_key in entries:
+            raise QCOverlayError("QC selections contain a duplicate QC key")
+        entries[selection.qc_key] = (selection.cohort, selection.patient_id)
+    content = json.dumps(_index_payload(entries), indent=2, sort_keys=True) + "\n"
+    _atomic_write(destination, content)
     return destination
+
+
+def append_qc_overlay_index(
+    selections: Sequence[QCSelection], output_path: Path | None = None
+) -> Path:
+    """Atomically merge new entries while preserving all existing values."""
+
+    destination = output_path or paths.private_data_dir() / "qc_overlay_index.json"
+    existing = load_qc_overlay_index(destination)
+    merged = dict(existing)
+    existing_cases = set(existing.values())
+    for selection in selections:
+        case = (selection.cohort, selection.patient_id)
+        if selection.qc_key in merged or case in existing_cases:
+            raise QCOverlayError("QC overlay append would replace an existing entry")
+        merged[selection.qc_key] = case
+        existing_cases.add(case)
+    if selections:
+        content = json.dumps(_index_payload(merged), indent=2, sort_keys=True) + "\n"
+        _atomic_write(destination, content)
+    return destination
+
+
+def _review_csv_text(
+    selections: Sequence[QCSelection],
+    verification: Mapping[tuple[Cohort, str], QCVerificationSummary],
+    *,
+    include_header: bool,
+) -> str:
+    buffer = io.StringIO(newline="")
+    writer = csv.DictWriter(buffer, fieldnames=_REVIEW_COLUMNS, lineterminator="\r\n")
+    if include_header:
+        writer.writeheader()
+    for selection in selections:
+        summary = verification.get(
+            (selection.cohort, selection.patient_id),
+            QCVerificationSummary(None, None),
+        )
+        writer.writerow(
+            {
+                "qc_key": selection.qc_key,
+                "cohort": selection.cohort.value,
+                "selection_reason": selection.selection_reason,
+                "brain_voxel_fraction": ""
+                if summary.brain_voxel_fraction is None
+                else f"{summary.brain_voxel_fraction:.8f}",
+                "min_cross_sequence_dice": ""
+                if summary.min_cross_sequence_dice is None
+                else f"{summary.min_cross_sequence_dice:.8f}",
+                "reviewer_verdict": "",
+                "failure_category": "",
+                "notes": "",
+            }
+        )
+    return buffer.getvalue()
+
+
+def _review_keys(raw_content: bytes) -> set[str]:
+    try:
+        text = raw_content.decode("utf-8")
+        rows = list(csv.DictReader(io.StringIO(text, newline="")))
+    except (UnicodeDecodeError, csv.Error) as error:
+        raise QCOverlayError("QC review sheet is not valid UTF-8 CSV") from error
+    if not rows and text.splitlines()[:1] != [",".join(_REVIEW_COLUMNS)]:
+        raise QCOverlayError("QC review sheet has an invalid header")
+    reader = csv.DictReader(io.StringIO(text, newline=""))
+    if tuple(reader.fieldnames or ()) != _REVIEW_COLUMNS:
+        raise QCOverlayError("QC review sheet has an invalid header")
+    keys: set[str] = set()
+    for row in rows:
+        key = row.get("qc_key")
+        if not isinstance(key, str) or _QC_KEY_RE.fullmatch(key) is None:
+            raise QCOverlayError("QC review sheet contains an invalid QC key")
+        if key in keys:
+            raise QCOverlayError("QC review sheet contains a duplicate QC key")
+        keys.add(key)
+    return keys
+
+
+def review_sheet_has_tail(review_path: Path) -> bool:
+    """Return whether a review sheet already contains an appended tail row."""
+
+    if not review_path.exists():
+        return False
+    try:
+        text = review_path.read_text(encoding="utf-8")
+        _review_keys(text.encode("utf-8"))
+        rows = csv.DictReader(io.StringIO(text, newline=""))
+        return any(row.get("selection_reason") == "tail" for row in rows)
+    except (OSError, UnicodeError, csv.Error) as error:
+        raise QCOverlayError("cannot read QC review sheet") from error
 
 
 def write_qc_review_sheet(
@@ -699,32 +950,39 @@ def write_qc_review_sheet(
     verification: Mapping[tuple[Cohort, str], QCVerificationSummary],
     output_path: Path | None = None,
 ) -> Path:
-    """Write the identifier-free human review sheet."""
+    """Atomically write the identifier-free human review sheet."""
 
     destination = output_path or paths.figures_dir() / "qc" / "qc_review_sheet.csv"
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    with destination.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=_REVIEW_COLUMNS)
-        writer.writeheader()
-        for selection in selections:
-            summary = verification.get(
-                (selection.cohort, selection.patient_id),
-                QCVerificationSummary(None, None),
-            )
-            writer.writerow(
-                {
-                    "qc_key": selection.qc_key,
-                    "cohort": selection.cohort.value,
-                    "selection_reason": selection.selection_reason,
-                    "brain_voxel_fraction": ""
-                    if summary.brain_voxel_fraction is None
-                    else f"{summary.brain_voxel_fraction:.8f}",
-                    "min_cross_sequence_dice": ""
-                    if summary.min_cross_sequence_dice is None
-                    else f"{summary.min_cross_sequence_dice:.8f}",
-                    "reviewer_verdict": "",
-                    "failure_category": "",
-                    "notes": "",
-                }
-            )
+    _atomic_write(
+        destination,
+        _review_csv_text(selections, verification, include_header=True),
+    )
+    return destination
+
+
+def append_qc_review_sheet(
+    selections: Sequence[QCSelection],
+    verification: Mapping[tuple[Cohort, str], QCVerificationSummary],
+    output_path: Path | None = None,
+) -> Path:
+    """Atomically append blank-verdict rows without rewriting old CSV bytes."""
+
+    destination = output_path or paths.figures_dir() / "qc" / "qc_review_sheet.csv"
+    if not selections:
+        return destination
+    if destination.exists():
+        existing = destination.read_bytes()
+        existing_keys = _review_keys(existing)
+    else:
+        existing = _review_csv_text((), {}, include_header=True).encode("utf-8")
+        existing_keys = set()
+    new_keys = [selection.qc_key for selection in selections]
+    if len(set(new_keys)) != len(new_keys) or set(new_keys) & existing_keys:
+        raise QCOverlayError("QC review append would replace an existing row")
+    addition = _review_csv_text(selections, verification, include_header=False).encode(
+        "utf-8"
+    )
+    if existing and not existing.endswith((b"\n", b"\r")):
+        existing += b"\r\n"
+    _atomic_write(destination, existing + addition)
     return destination

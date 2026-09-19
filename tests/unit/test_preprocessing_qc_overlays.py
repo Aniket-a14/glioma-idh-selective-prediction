@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import csv
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import nibabel as nib
@@ -17,9 +19,15 @@ from glioma_selective.preprocessing.qc_overlays import (
     QCOverlayError,
     QCSelection,
     QCVerificationSummary,
+    append_qc_overlay_index,
+    append_qc_review_sheet,
+    assign_continuing_qc_keys,
+    load_qc_overlay_index,
     load_verification_cases,
     render_qc_overlay,
+    review_sheet_has_tail,
     select_qc_sample,
+    select_qc_tail,
     write_qc_overlay_index,
     write_qc_review_sheet,
 )
@@ -202,3 +210,119 @@ def test_output_names_and_review_sheet_do_not_contain_patient_id(
     assert rows[0]["reviewer_verdict"] == ""
     assert rows[0]["failure_category"] == ""
     assert rows[0]["notes"] == ""
+
+
+def _tail_fixture() -> tuple[
+    dict[Cohort, tuple[str, ...]], dict[tuple[Cohort, str], QCVerificationSummary]
+]:
+    rosters = {
+        Cohort.UTSW: tuple(f"UTSW-BT{index:04d}" for index in range(1, 5)),
+        Cohort.UCSF_PDGM: tuple(f"UCSF-PDGM-{index:04d}" for index in range(1, 5)),
+    }
+    fractions = {
+        Cohort.UTSW: (0.40, 0.10, 0.20, 0.30),
+        Cohort.UCSF_PDGM: (0.35, 0.05, 0.25, 0.15),
+    }
+    verification = {
+        (cohort, patient_id): QCVerificationSummary(fractions[cohort][index], 1.0)
+        for cohort, patient_ids in rosters.items()
+        for index, patient_id in enumerate(patient_ids)
+    }
+    return rosters, verification
+
+
+def test_tail_selects_lowest_per_cohort_and_excludes_indexed_cases(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rosters, verification = _tail_fixture()
+    label_reader_calls: list[Cohort] = []
+
+    def forbidden_label_reader(cohort: Cohort, _metadata_path: Path) -> dict[str, str]:
+        label_reader_calls.append(cohort)
+        raise AssertionError("tail sampling must not read labels")
+
+    monkeypatch.setattr(
+        "glioma_selective.preprocessing.qc_overlays.read_utsw_idh_labels",
+        forbidden_label_reader,
+    )
+    selected = select_qc_tail(
+        retained_patient_ids=rosters,
+        verification=verification,
+        indexed_cases=(
+            (Cohort.UTSW, "UTSW-BT0002"),
+            (Cohort.UCSF_PDGM, "UCSF-PDGM-0004"),
+        ),
+        per_cohort=2,
+        seed=17,
+    )
+    assert {(item.cohort, item.patient_id) for item in selected} == {
+        (Cohort.UTSW, "UTSW-BT0003"),
+        (Cohort.UTSW, "UTSW-BT0004"),
+        (Cohort.UCSF_PDGM, "UCSF-PDGM-0002"),
+        (Cohort.UCSF_PDGM, "UCSF-PDGM-0003"),
+    }
+    assert all(item.selection_reason == "tail" for item in selected)
+    assert label_reader_calls == []
+
+
+def test_tail_append_preserves_review_bytes_index_values_and_existing_png(
+    tmp_path: Path,
+) -> None:
+    rosters, verification = _tail_fixture()
+    index_path = tmp_path / "private" / "qc_overlay_index.json"
+    review_path = tmp_path / "figures" / "qc_review_sheet.csv"
+    existing = (
+        QCSelection(Cohort.UTSW, "UTSW-BT0001", "stratified", qc_key="qc_0001"),
+        QCSelection(
+            Cohort.UCSF_PDGM,
+            "UCSF-PDGM-0001",
+            "random",
+            qc_key="qc_0002",
+        ),
+    )
+    write_qc_overlay_index(existing, index_path)
+    write_qc_review_sheet(existing, verification, review_path)
+    review_path.write_bytes(
+        review_path.read_bytes().replace(
+            b",,,\r\n", b",pass,brain-retained,reviewed\r\n", 1
+        )
+    )
+    existing_review_bytes = review_path.read_bytes()
+    existing_index = load_qc_overlay_index(index_path)
+
+    png_path = tmp_path / "figures" / "qc_0001.png"
+    png_path.write_bytes(b"existing-png")
+    png_before = (png_path.stat().st_mtime_ns, png_path.read_bytes())
+
+    selected = select_qc_tail(
+        retained_patient_ids=rosters,
+        verification=verification,
+        indexed_cases=existing_index.values(),
+        per_cohort=1,
+        seed=17,
+    )
+    assigned = assign_continuing_qc_keys(selected, existing_index)
+    assert {item.qc_key for item in assigned} == {"qc_0003", "qc_0004"}
+    append_qc_overlay_index(assigned, index_path)
+    append_qc_review_sheet(assigned, verification, review_path)
+
+    assert review_path.read_bytes().startswith(existing_review_bytes)
+    merged_index = load_qc_overlay_index(index_path)
+    assert all(merged_index[key] == value for key, value in existing_index.items())
+    assert png_path.stat().st_mtime_ns == png_before[0]
+    assert png_path.read_bytes() == png_before[1]
+
+    assert review_sheet_has_tail(review_path)
+
+
+def test_tail_zero_cli_is_a_noop(tmp_path: Path) -> None:
+    marker = tmp_path / "marker"
+    marker.write_bytes(b"unchanged")
+    result = subprocess.run(
+        [sys.executable, "scripts/make_qc_overlays.py", "--tail", "0"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert marker.read_bytes() == b"unchanged"
