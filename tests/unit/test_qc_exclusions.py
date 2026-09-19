@@ -105,15 +105,46 @@ def test_append_updates_rows_counts_and_keeps_accounting_untouched() -> None:
     assert updated["reason_counts"] == {
         "label:idh_unavailable": 1,
         "overlap:brats2021": 1,
-        "qc:corrupt": 1,
+        "qc:corrupt+qc:skullstrip-over": 1,
         "qc:orientation-wrong": 1,
-        "qc:skullstrip-over": 1,
     }
+    rows = cast(list[dict[str, object]], updated["exclusions"])
+    row_reasons = {cast(str, row["reason"]) for row in rows}
+    reason_counts = cast(dict[str, int], updated["reason_counts"])
+    assert set(reason_counts) == row_reasons
+    assert sum(reason_counts.values()) == updated["excluded_patient_count"]
     cohorts = cast(dict[str, dict[str, object]], updated["cohorts"])
     assert cohorts["utsw"]["retained_patient_count"] == 2
     assert cohorts["utsw"]["qc_excluded_patient_count"] == 1
+    assert cohorts["utsw"]["reason_counts"] == {
+        "label:idh_unavailable": 1,
+        "qc:corrupt+qc:skullstrip-over": 1,
+    }
     assert cohorts["ucsf_pdgm"]["retained_patient_count"] == 1
     assert cohorts["ucsf_pdgm"]["qc_excluded_patient_count"] == 1
+    assert cohorts["ucsf_pdgm"]["reason_counts"] == {
+        "overlap:brats2021": 1,
+        "qc:orientation-wrong": 1,
+    }
+    post_manifest = build_cohort_manifest(
+        updated,
+        {
+            Cohort.UTSW: ("UTSW-BT0002", "UTSW-BT0004"),
+            Cohort.UCSF_PDGM: ("UCSF-PDGM-0002",),
+        },
+        generated_at="2026-09-19T00:00:00+00:00",
+    )
+    manifest_cohorts = cast(dict[str, dict[str, object]], post_manifest["cohorts"])
+    for cohort in ("utsw", "ucsf_pdgm"):
+        cohort_rows = {row["reason"] for row in rows if row["cohort"] == cohort}
+        assert (
+            set(
+                cast(
+                    dict[str, int], manifest_cohorts[cohort]["exclusion_reason_counts"]
+                )
+            )
+            == cohort_rows
+        )
     assert updated["accounting_checks"] == {"pre_qc_check": True}
     assert updated["accounting_checks_scope"] == "pre-QC"
     assert updated["generated_by"] == "T03.10 exclusion manifest + T04.12 QC exclusions"

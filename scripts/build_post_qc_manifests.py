@@ -181,8 +181,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "post-QC roster does not equal pre-QC roster minus QC exclusions"
                 )
 
-        _atomic_json_write(post, exclusion_output)
-
         cohort_manifest = build_cohort_manifest(post, retained_post)
         for cohort in (Cohort.UTSW, Cohort.UCSF_PDGM):
             verify_roster_digest(cohort_manifest, cohort, retained_post[cohort])
@@ -216,6 +214,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "retained_post_qc": len(retained_post[cohort]),
                 "roster_sha256_post_qc": entry.get("roster_sha256"),
             }
+
+        _atomic_json_write(post, exclusion_output)
+        _atomic_json_write(cohort_manifest, manifest_output)
     except (OSError, RuntimeError, TypeError, ValueError, KeyError) as error:
         print(f"build_post_qc_manifests.py: error: {error}", file=sys.stderr)
         return 1

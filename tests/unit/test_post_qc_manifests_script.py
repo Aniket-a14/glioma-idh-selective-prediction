@@ -208,6 +208,54 @@ def test_main_refuses_stop_threshold_before_building_or_writing(
     assert not output.exists()
 
 
+def test_main_writes_neither_output_when_roster_verification_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    status_path = tmp_path / "status.json"
+    _status_with_one_qc_exclusion(status_path)
+    storage_manifests = tmp_path / "ssd" / "manifests"
+    monkeypatch.setattr(script.paths, "manifests_dir", lambda: storage_manifests)
+    monkeypatch.setattr(script, "build_real_exclusion_manifest", _base_manifest)
+    pre_rosters = {
+        Cohort.UTSW: ("UTSW-BT0002", "UTSW-BT0003", "UTSW-BT0004"),
+        Cohort.UCSF_PDGM: ("UCSF-PDGM-0002", "UCSF-PDGM-0003"),
+    }
+    post_rosters = {
+        Cohort.UTSW: ("UTSW-BT0003", "UTSW-BT0004"),
+        Cohort.UCSF_PDGM: ("UCSF-PDGM-0002", "UCSF-PDGM-0003"),
+    }
+
+    def fake_rosters(manifest: object) -> dict[Cohort, tuple[str, ...]]:
+        if isinstance(manifest, dict) and manifest.get("qc_exclusion_count"):
+            return post_rosters
+        return pre_rosters
+
+    monkeypatch.setattr(script, "build_real_retained_rosters", fake_rosters)
+
+    def fail_verification(*_: object) -> None:
+        raise ValueError("synthetic digest failure")
+
+    monkeypatch.setattr(script, "verify_roster_digest", fail_verification)
+    exclusion_output = storage_manifests / "exclusion_manifest_post_qc.json"
+    manifest_output = tmp_path / "docs" / "cohort_manifest_post_qc.json"
+
+    assert (
+        script.main(
+            [
+                "--status-path",
+                str(status_path),
+                "--exclusion-output",
+                str(exclusion_output),
+                "--manifest-output",
+                str(manifest_output),
+            ]
+        )
+        == 1
+    )
+    assert not exclusion_output.exists()
+    assert not manifest_output.exists()
+
+
 def test_main_rejects_a_qc_id_absent_from_pre_qc_roster(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

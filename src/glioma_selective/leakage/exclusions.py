@@ -154,8 +154,9 @@ def append_qc_exclusions(
 
     Patient IDs are canonicalized with the Phase 03 cohort normalizers.  QC
     reasons are represented once per patient, joined with ``+`` in sorted
-    order, while the aggregate reason counts count each category separately.
-    The pre-QC accounting checks are copied without modification.
+    order. Aggregate reason counts use those same row-level strings, so each
+    excluded patient contributes exactly one count. The pre-QC accounting
+    checks are copied without modification.
     """
 
     result = copy.deepcopy(dict(manifest))
@@ -268,7 +269,7 @@ def append_qc_exclusions(
         updated["excluded_patient_count"] = excluded + len(cohort_reasons)
         updated["reason_counts"] = _increment_reason_counts(
             updated,
-            (reason for reasons in cohort_reasons for reason in reasons),
+            ("+".join(reasons) for reasons in cohort_reasons),
             f"manifest.cohorts.{cohort}",
         )
         updated["qc_excluded_patient_count"] = prior_qc_count + len(cohort_reasons)
@@ -282,7 +283,9 @@ def append_qc_exclusions(
     result["excluded_patient_count"] = top_level_excluded + len(normalized_records)
     for _, _, reasons in normalized_records:
         top_level_reasons = _increment_reason_counts(
-            {"reason_counts": top_level_reasons}, reasons, "manifest"
+            {"reason_counts": top_level_reasons},
+            ("+".join(reasons),),
+            "manifest",
         )
     result["reason_counts"] = top_level_reasons
     updated_cohorts: dict[str, object] = {
