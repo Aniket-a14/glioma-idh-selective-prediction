@@ -88,7 +88,7 @@ class VerificationThresholds:
     """Thresholds for automated checks.
 
     These thresholds are still provisional under D-031; the borderline
-    brain-fraction bound has been raised twice after visual-QC misses.  The
+    brain-fraction bound has been raised three times after visual-QC misses.  The
     fail bounds decide whether a core-volume check fails.  A value that passes
     its fail bound but falls outside the tighter borderline band is sent to
     visual QC by T04.9.
@@ -99,7 +99,7 @@ class VerificationThresholds:
     min_brain_fraction: float = 0.05
     borderline_cross_sequence_mask_dice: float = 0.995
     borderline_max_brain_fraction: float = 0.30
-    borderline_min_brain_fraction: float = 0.12
+    borderline_min_brain_fraction: float = 0.13
 
     def __post_init__(self) -> None:
         values = (

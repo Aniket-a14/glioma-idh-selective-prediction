@@ -94,13 +94,13 @@ def test_clean_case_is_verified_passthrough_and_report_is_aggregate_only(
     tmp_path: Path,
 ) -> None:
     values = np.zeros((8, 8, 8), dtype=np.float32)
-    values[:4, :4, :4] = 1
+    values[:5, :4, :4] = 1
     result = verify_case(
         _case(tmp_path, t1ce=values), _expected(values.shape), _thresholds()
     )
 
     assert result.status == "verified-passthrough"
-    assert result.brain_voxel_fraction == 0.125
+    assert result.brain_voxel_fraction == 0.15625
     assert result.cross_sequence_dice == {
         sequence.value: 1.0 for sequence in CORE_SEQUENCES
     }
@@ -200,7 +200,7 @@ def test_segmentation_shape_mismatch_is_informational_only(
     tmp_path: Path,
 ) -> None:
     values = np.zeros((8, 8, 8), dtype=np.float32)
-    values[:4, :4, :4] = 1
+    values[:5, :4, :4] = 1
     result = verify_case(
         _case(tmp_path, t1ce=values, segmentation_shape=(7, 8, 8)),
         _expected(values.shape),
@@ -220,7 +220,7 @@ def test_empty_segmentation_is_not_corrupt_and_has_no_inside_fraction(
     tmp_path: Path,
 ) -> None:
     values = np.zeros((8, 8, 8), dtype=np.float32)
-    values[:4, :4, :4] = 1
+    values[:5, :4, :4] = 1
     result = verify_case(
         _case(
             tmp_path,
@@ -275,8 +275,8 @@ def test_borderline_dice_is_sent_to_visual_qc_without_failure(
 @pytest.mark.parametrize(
     ("brain_fraction", "status", "borderline", "failure_categories"),
     (
-        (0.115, "verified-borderline", True, ()),
-        (0.125, "verified-passthrough", False, ()),
+        (0.125, "verified-borderline", True, ()),
+        (0.135, "verified-passthrough", False, ()),
         (0.049, "failed", False, ("skullstrip-over",)),
     ),
 )
@@ -303,6 +303,8 @@ def test_d031_brain_fraction_boundaries(
     assert ("T1ce.brain_fraction" in result.borderline_checks) is borderline
     assert result.checks["T1ce.brain_fraction"].borderline is borderline
     assert result.checks["T1ce.brain_fraction"].passed is (status != "failed")
+    if borderline:
+        assert result.borderline_checks == ("T1ce.brain_fraction",)
     if status == "verified-passthrough":
         assert all(check.passed for check in result.checks.values())
 
@@ -324,7 +326,7 @@ def test_dice_below_fail_threshold_is_registration_failure(tmp_path: Path) -> No
 
 def test_unreadable_segmentation_does_not_change_case_status(tmp_path: Path) -> None:
     values = np.zeros((8, 8, 8), dtype=np.float32)
-    values[:4, :4, :4] = 1
+    values[:5, :4, :4] = 1
     case = _case(tmp_path, t1ce=values)
     segmentation_path = case.segmentation_files["tumorseg_FeTS"]
     segmentation_path.write_bytes(b"not a NIfTI file")
