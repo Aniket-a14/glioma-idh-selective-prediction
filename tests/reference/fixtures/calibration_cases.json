@@ -1,0 +1,109 @@
+[
+  {
+    "name": "brier_four_points",
+    "kind": "brier",
+    "probs": [0.1, 0.8, 0.7, 0.2],
+    "labels": [0, 1, 1, 0],
+    "expected": 0.045,
+    "working": "((0.1-0)^2 + (0.8-1)^2 + (0.7-1)^2 + (0.2-0)^2) / 4 = (0.01 + 0.04 + 0.09 + 0.04) / 4 = 0.045"
+  },
+  {
+    "name": "ece_positive_class_eight_points",
+    "kind": "ece",
+    "probs": [0.1, 0.2, 0.35, 0.4, 0.6, 0.65, 0.8, 0.9],
+    "labels": [0, 0, 1, 0, 1, 1, 1, 0],
+    "n_bins": 4,
+    "variant": "positive_class",
+    "expected": 0.25,
+    "working": "Each of four bins has two points. Errors are |0-0.15|=0.15, |0.5-0.375|=0.125, |1-0.625|=0.375, and |0.5-0.85|=0.35; ECE = (0.15 + 0.125 + 0.375 + 0.35) / 4 = 0.25"
+  },
+  {
+    "name": "ece_top_label_eight_points",
+    "kind": "ece",
+    "probs": [0.1, 0.2, 0.35, 0.4, 0.6, 0.65, 0.8, 0.9],
+    "labels": [0, 0, 1, 0, 1, 1, 1, 0],
+    "n_bins": 4,
+    "variant": "top_label",
+    "expected": 0.1125,
+    "working": "The 0.5-0.75 bin has four scores with mean 0.625 and accuracy 0.75, error 0.125; the 0.75-1 bin has four scores with mean 0.85 and accuracy 0.75, error 0.1. ECE = (4/8)*0.125 + (4/8)*0.1 = 0.1125"
+  },
+  {
+    "name": "ece_uneven_bin_counts",
+    "kind": "ece",
+    "probs": [0.1, 0.2, 0.3, 0.9],
+    "labels": [0, 1, 1, 0],
+    "n_bins": 4,
+    "variant": "positive_class",
+    "expected": 0.575,
+    "working": "The non-empty-bin errors are 0.35 for two points, 0.7 for one point, and 0.9 for one point. Count weighting gives (2/4)*0.35 + (1/4)*0.7 + (1/4)*0.9 = 0.575"
+  },
+  {
+    "name": "edge_assignment",
+    "kind": "edge_bins",
+    "probs": [0.3],
+    "labels": [1],
+    "n_bins": 10,
+    "expected_false_bin": 3,
+    "expected_true_bin": 2,
+    "working": "With ten equal-width bins, 0.3 is the lower edge of bin 3 for left-closed/right-open bins, and the upper edge of bin 2 for right-closed bins"
+  },
+  {
+    "name": "edge_ece_right_closed",
+    "kind": "ece_edge",
+    "probs": [0.5, 0.75],
+    "labels": [1, 0],
+    "n_bins": 2,
+    "expected_false": 0.125,
+    "expected_true": 0.625,
+    "working": "Left-closed bins place both points in the upper bin: |0.5-0.625|=0.125. Right-closed bins place 0.5 in the lower bin and 0.75 in the upper bin: (1/2)*0.5 + (1/2)*0.75 = 0.625"
+  },
+  {
+    "name": "equal_mass_remainder",
+    "kind": "bins",
+    "probs": [0.1, 0.9, 0.3, 0.8, 0.5],
+    "labels": [0, 1, 0, 1, 1],
+    "n_bins": 3,
+    "scheme": "equal_mass",
+    "expected_counts": [2, 2, 1],
+    "expected_lower": [0.1, 0.5, 0.9],
+    "expected_upper": [0.3, 0.8, 0.9],
+    "working": "Five sorted scores split into groups of sizes 2, 2, and 1 because 5 divmod 3 = (1, 2); the groups are [0.1,0.3], [0.5,0.8], and [0.9]"
+  },
+  {
+    "name": "equal_mass_stable_ties",
+    "kind": "bins",
+    "probs": [0.5, 0.5, 0.2, 0.2, 0.8],
+    "labels": [1, 0, 0, 1, 1],
+    "n_bins": 2,
+    "scheme": "equal_mass",
+    "expected_counts": [3, 2],
+    "expected_observed": [0.6666666666666666, 0.5],
+    "working": "Stable sorting keeps the two 0.2 rows in input order; group sizes are 3 and 2, giving first group [0.2(label0), 0.2(label1), 0.5(label1)] and second group [0.5(label0), 0.8(label1)]"
+  },
+  {
+    "name": "conformal_ten_alpha_01",
+    "kind": "conformal",
+    "scores": [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+    "alpha": "0.1",
+    "expected_rank": 10,
+    "expected_quantile": 0.9,
+    "working": "k = ceil((10+1)*(1-0.1)) = ceil(9.9) = 10; the 10th sorted score is 0.9"
+  },
+  {
+    "name": "conformal_ten_alpha_02",
+    "kind": "conformal",
+    "scores": [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+    "alpha": "0.2",
+    "expected_rank": 9,
+    "expected_quantile": 0.8,
+    "working": "k = ceil((10+1)*(1-0.2)) = ceil(8.8) = 9; the 9th sorted score is 0.8"
+  },
+  {
+    "name": "conformal_exact_float_failure",
+    "kind": "rank",
+    "n": 9,
+    "alpha": "0.7",
+    "expected_rank": 3,
+    "working": "k = ceil((9+1)*(1-0.7)) = ceil(3) = 3 using exact decimal arithmetic"
+  }
+]
