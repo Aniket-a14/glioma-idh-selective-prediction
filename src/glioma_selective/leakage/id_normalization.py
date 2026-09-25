@@ -150,6 +150,8 @@ def _normalize_unseen_cohort_id(raw_id: str, prefix: str) -> str:
         )
     if value == prefix or value.startswith(f"{prefix}-"):
         return value
+    if prefix.startswith("TCGA-") and value.startswith("TCGA-"):
+        return value
     return f"{prefix}-{value}"
 
 
