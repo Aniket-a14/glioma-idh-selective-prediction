@@ -24,6 +24,7 @@ from glioma_selective.models.segresnet import IDHNet, ModelConfig, build_model
 from glioma_selective.training.checkpoint import (
     load_checkpoint,
 )
+from glioma_selective.training.determinism import deterministic_mode
 from glioma_selective.training.loop import TrainConfig, fit, make_optimizer
 from glioma_selective.training.losses import joint_loss
 from glioma_selective.utils import paths
@@ -620,7 +621,15 @@ def _parameter_difference(left: IDHNet, right: IDHNet) -> float:
 def step_checkpoint_equivalence(
     device: str | torch.device, *, synthetic: bool = False
 ) -> StepResult:
+    """Resume must reproduce an uninterrupted run exactly, on CPU and on CUDA."""
     started = time.monotonic()
+    with deterministic_mode():
+        return _checkpoint_equivalence(device, synthetic=synthetic, started=started)
+
+
+def _checkpoint_equivalence(
+    device: str | torch.device, *, synthetic: bool, started: float
+) -> StepResult:
     try:
         selected = _device(device)
         batch = (
@@ -685,16 +694,13 @@ def step_checkpoint_equivalence(
         if not second.interrupted:
             raise AssertionError("resumed run did not reach the requested step")
         difference = _parameter_difference(straight, resumed)
-        if selected.type == "cpu" and not all(
+        if not all(
             torch.equal(a, b)
             for a, b in zip(straight.parameters(), resumed.parameters(), strict=True)
         ):
             raise AssertionError(
-                f"CPU resumed parameters differ; max_abs={difference:.8g}"
-            )
-        if selected.type == "cuda" and difference > 1e-5:
-            raise AssertionError(
-                f"CUDA resumed parameters exceed tolerance; max_abs={difference:.8g}"
+                f"resumed parameters differ on {selected.type}; "
+                f"max_abs={difference:.8g}"
             )
 
         checkpoint_path = straight_dir / "last.pt"
