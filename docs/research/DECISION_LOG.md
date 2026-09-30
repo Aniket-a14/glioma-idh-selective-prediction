@@ -40,7 +40,7 @@ RQ2 and C4 are both written in **coverage** language ("empirical coverage remain
 ## D-003 — Abstention is operationalized two incompatible ways
 **Status:** RESOLVED 2026-09-30 (Research Lead: recommendation adopted) · **Resolve by:** Phase 05 (pre-registration, before any calibration fitting) · **Blocking:** YES until frozen in `PREREGISTRATION.md` (T05.7)
 
-**Resolution 2026-09-30.** Both operationalizations, as recommended below: the nonconformity-score threshold produces the risk-coverage curve and AURC (RQ1, C1-C3, C5, C6); the set-valued conformal predictor at nominal 1-alpha produces the empirical-vs-nominal coverage comparison (RQ2, C4). An empty set counts as abstention and its rate is reported separately. The alpha grid ({0.05, 0.10, 0.20}) is still to be confirmed with the other grids in T05.7.
+**Resolution 2026-09-30.** Both operationalizations, as recommended below: the nonconformity-score threshold produces the risk-coverage curve and AURC (RQ1, C1-C3, C5, C6); the set-valued conformal predictor at nominal 1-alpha produces the empirical-vs-nominal coverage comparison (RQ2, C4). An empty set counts as abstention and its rate is reported separately. The alpha grid is {0.05, 0.10, 0.20}, confirmed by the Research Lead on 2026-09-30 (recorded under D-033).
 
 **Conflict.** SPEC §1.2 defines rejection as a **threshold on a score**: *"g(x) → {0,1} ... a rejection threshold τ on the conformal nonconformity score."* But split conformal on a **binary** label set naturally produces prediction sets `∅`, `{0}`, `{1}`, `{0,1}`, where the idiomatic abstention rule is "abstain iff the set is not a singleton." These give different objects:
 
@@ -861,7 +861,9 @@ after observing the data. If a later phase wants that form it should be pre-spec
 **Owner.** Research Lead.
 
 ## D-033 — Metric conventions the SPEC leaves open: ECE variant and binning, RC-curve ties, AURC integration
-**Status:** OPEN · **Resolve by:** Phase 05 (the pre-registration lists the metrics) · **Blocking:** YES for merging metric code in Phase 07 T07.7 and Phase 09 T09.2/T09.3; no for anything before that
+**Status:** RESOLVED 2026-09-30 (Research Lead: proposed choices adopted) · **Resolve by:** Phase 05 (the pre-registration lists the metrics) · **Blocking:** was YES for merging metric code in Phase 07 T07.7 and Phase 09 T09.2/T09.3; cleared once `PREREGISTRATION.md` (T05.7) states these conventions
+
+**Resolution 2026-09-30.** The proposed choices below are adopted: positive-class ECE, equal-width, 10 bins, left-closed with 1.0 in the last bin, as the primary; 5 bins, 15 bins and equal-mass 10 bins as a sensitivity table; top-label ECE as a secondary. Risk-coverage curve with tied scores handled as blocks. AURC as the mean selective risk over all cutoffs, with block ties. Selective risk at a target coverage taken at the smallest attainable coverage at or above the target, reported with the attained coverage. Coverage grid {0.9, 0.8, 0.7, 0.6, 0.5} and conformal alpha grid {0.05, 0.10, 0.20} confirmed at the same time (also settles the alpha grid left open in D-003). Contributor rows C-017 and C-018 stay useful: their reference functions cover the adopted variants and the ones not adopted, so the sensitivity table can be checked.
 
 **Conflict.** SPEC §1.2 and §4.7 say AURC is the integral of the risk–coverage curve and Phase 07 says the ECE "binning
 convention is documented and tested", but no text fixes these choices, and each changes the number computed from the same
