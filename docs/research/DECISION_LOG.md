@@ -96,7 +96,9 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 ---
 
 ## D-006 — Baseline 5 ("reproduced published comparator") is unbounded in scope
-**Status:** OPEN · **Resolve by:** Phase 06 · **Blocking:** yes
+**Status:** RESOLVED 2026-09-30 (Research Lead: option (b)) · **Resolve by:** Phase 06 · **Blocking:** yes
+
+**Resolution 2026-09-30.** Option (b). M6 is our own SegResNet backbone with the auxiliary segmentation head and tumour-aware pooling, trained and evaluated always-predict. It is described in the manuscript as a tumour-aware joint-learning comparator in the style of COM-Net/MTS-UNET/GMMAS, implemented on our backbone for cohort-matched comparability, and not as a reproduction of those systems. Published numbers are cited as context only.
 
 **Conflict.** SPEC §4.8 baseline 5 asks for *"an always-predict, tumor-aware, joint-learning model in the style of COM-Net/MTS-UNET/GMMAS ... reproduced only to the extent needed to serve as a fair always-predict comparison point, not as an attempt to match published SOTA numbers exactly."* The hedge is present, but "reproduce a published multi-task architecture" is an open-ended engineering commitment inside a project whose SPEC closes with *"the risk in this project is scope creep, not insufficient novelty."*
 
@@ -167,7 +169,9 @@ counts, once available, disagree materially with the SPEC's claim.
 ---
 
 ## D-011 — BraTS pretraining is permitted but not required
-**Status:** OPEN · **Resolve by:** Phase 06 · **Blocking:** yes
+**Status:** RESOLVED 2026-09-30 (Research Lead: option (a)) · **Resolve by:** Phase 06 · **Blocking:** yes
+
+**Resolution 2026-09-30.** Option (a). No BraTS pretraining: every network is trained from random initialization on UTSW train only. This removes the BraTS-to-UCSF/TCGA/EGD ID-overlap leakage class. Reopening it requires its own Gate-D-level exclusion audit and Research Lead sign-off recorded here.
 
 **Conflict.** SPEC §2.5 permits BraTS *"only as a source of segmentation pretraining weights (if at all)"* and, if used, requires excluding every subject ID also appearing in UCSF-PDGM, TCGA-GBM/LGG, or EGD — *"or the 'external' claim for those cohorts is void."* SPEC §4.1 does not require pretraining at all.
 
@@ -985,6 +989,86 @@ statistics.
 
 **Consequence for Phase 08 (a note, not a new decision).** A modality zeroed for a missing-modality condition is zeroed after
 normalization, in z-score space, and the frozen statistics are unaffected by any simulated drop.
+
+**Owner.** Research Lead.
+
+---
+
+## D-037 — Network input geometry and the fixed Phase 06 model configuration
+**Status:** RESOLVED 2026-09-30 (Research Lead: whole brain at 2 mm, 96³) · **Resolve by:** Phase 06 · **Blocking:** yes
+
+**Conflict.** SPEC §4.2 says each volume is "patch-cropped to 96³ or 128³" but the preprocessed grid is 240×240×155 at 1 mm, and the brain
+bounding box is about 135×170×150 mm. A 128³ crop at 1 mm cannot cover the brain, and a tumour-centred crop needs a tumour location at
+inference, which differs between cohorts and would make the tumour-aware pooling circular.
+
+**Alternatives.** (a) Whole brain resampled to 2 mm, centred on the brain and padded or cropped to 96³ (192 mm). (b) Tumour-centred 128³
+at 1 mm. (c) Random 128³ crops at 1 mm with sliding-window evaluation.
+
+**Adopted: (a).** Same input construction for train, calibration, internal test and both external cohorts; no annotation is read at
+inference; lowest VRAM. Cost: coarser voxels, so the auxiliary Dice is expected to be lower than at 1 mm. Auxiliary Dice is confirmatory
+(SPEC §4.3) and does not enter any C1-C6 claim. The resampling uses only geometry (no intensity statistic), so nothing frozen in
+Phase 04 or 05 changes: the frozen z-score is applied on the 1 mm grid first, then the volume is resampled (linear for images,
+nearest neighbour for the segmentation, zero outside the brain).
+
+**Fixed model configuration (no search, SPEC §4.1, R-C08).** MONAI `SegResNet`, `init_filters=32`, `blocks_down=(1,2,2,4)`,
+`blocks_up=(1,1,1)`, 4 input channels, 3 auxiliary outputs (enhancing tumour, non-enhancing/necrotic core, oedema, multi-label
+sigmoid), learnable per-modality input weights initialised to 1 (SPEC §4.2; a zeroed channel stays zero), classification head on the
+stride-8 bottleneck features, a single logit. Parameter count is verified in a test against the 10-30M range of SPEC §3.4. Tumour-aware
+pooling weights the bottleneck features by the predicted whole-tumour probability (maximum over the three outputs, resampled to
+the feature grid, detached so the classification loss does not move the segmentation head); with an all-ones mask it equals global
+average pooling, and when the predicted mass falls below a floor it falls back to global average pooling. Class-balanced loss is
+weighted binary cross-entropy with `pos_weight` = negatives / positives of the training split; segmentation loss is soft Dice per
+channel, averaged over patients that have a segmentation (3 of 622 UTSW patients do not).
+
+**Owner.** Research Lead. This entry records the choices; changing any of them after R1/R2 have started is an architecture change and
+needs a new entry.
+
+---
+
+## D-038 — How the run record's twenty fields map to JSON keys (T06.7)
+**Status:** RESOLVED 2026-09-30 (Claude, engineering interpretation of `REPRODUCIBILITY_PROTOCOL.md` §1; Research Lead may overrule) · **Resolve by:** Phase 06 · **Blocking:** no
+
+**Conflict.** The protocol says "twenty fields" but its table names 22 JSON keys (rows 12 and 20 each hold two), gives no field for
+run status, end time or failure reason (Phase 06 says a failed run keeps its record), and gives no key for the normalization-statistics
+hash or a config hash. Fields 15-20 (checkpoint, history, predictions, calibration, thresholds, metrics) only exist after a run ends,
+and the Phase 06 baseline is uncalibrated and always-predict, so fields 18 and 19 have no value in this phase.
+
+**Adopted.**
+1. The mandatory keys are exactly the 22 names in the table, spelled as there (`torch_version` and `monai_version`; `metrics` and
+   `log_path`). No key is renamed or invented in that set.
+2. Lifecycle keys are added outside the mandatory set: `status` (`running`, `completed`, `failed`), `end_time_utc`, `failure_reason`.
+   Gate C does not test them; they let a failed run keep its record.
+3. The normalization-statistics hash is recorded inside `preprocessing_version` as a mapping (`version`, `parameter_hash`,
+   `normalization_stats_sha256`). `config` is the resolved config itself, so it needs no separate hash.
+4. Launch-time keys (1-14) are filled at start. Keys 15-20 are filled by `update_run_record` at the end of the run. A key that does
+   not apply in a phase carries the explicit string `not_applicable: <reason>` (Phase 06 uses it for `calibration_params` and
+   `selective_thresholds`); an absent, null or empty value counts as missing.
+5. `run_id` is a ULID, as the protocol says, generated without a new dependency.
+
+**Owner.** Research Lead.
+
+---
+
+## D-039 — What "converged" means for R1 and R2, and the training defaults
+**Status:** RESOLVED 2026-09-30 (Research Lead: calibration-split loss, patience 30) · **Resolve by:** Phase 06 · **Blocking:** yes
+
+**Conflict.** Phase 06 lists "the definition of converged" as a Research Lead decision and requires early stopping on the UTSW
+calibration split only (SI-08). AUROC on that split (124 patients, 35 mutant) moves by about 0.02 when one patient changes rank, so
+it is a poor stopping signal, and it ignores probability calibration, which every later phase depends on.
+
+**Adopted.** Stop when the class-balanced classification loss (weighted BCE, `pos_weight` = training negatives / positives) on the
+calibration split has not improved for 30 epochs, at most 300 epochs; the checkpoint with the best calibration loss is the model
+(`best.pt`). No minimum-improvement margin. The Dice term is logged but does not enter the stopping rule. Fixed here, before any
+run, so it cannot be tuned after results are seen.
+
+**Residual issue for Phase 09.** The calibration split now also picks the checkpoint, which is a mild selection effect on the
+split that Phase 07-09 use to fit temperature scaling and the conformal quantile. SI-08 requires this, and D-034 has no fourth split,
+so it is accepted and must be stated as a limitation next to the C4 coverage results. The internal test split is never used.
+
+**Defaults in `configs/training/base.yaml`.** AdamW, learning rate 3e-4, weight decay 1e-4, batch 2 with accumulation 4 (effective
+8), gradient clipping at 1.0, bf16 autocast, segmentation weight 1.0. These are starting values for the pilot (T06.9), which may
+size learning rate, batch size and accumulation on the training split only; the stopping rule above and the model configuration in
+D-037 are not open to that.
 
 **Owner.** Research Lead.
 

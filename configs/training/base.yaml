@@ -1,5 +1,17 @@
-# Placeholder so Hydra's defaults list resolves before scientific content
-# exists. Populated in Phase 06 (baseline) and Phase 08 (modality dropout);
-# named configs here are the 9 runs budgeted in docs/research/DECISION_LOG.md
-# D-005 (R1 baseline, R2-R6 modality-dropout seeds 0-4, R7-R9 ablations).
-_placeholder: true
+# Phase 06 training defaults (T06.6). Model selection uses the UTSW calibration
+# split only (SI-08). Learning rate, batch size and accumulation are sized by the
+# pilot run on the training split (T06.9); the stopping rule is fixed here and
+# recorded in D-039 so it cannot be tuned after results are seen.
+seed: 0
+max_epochs: 300
+batch_size: 2
+accumulation_steps: 4          # optimizer step every 4 batches, effective batch 8
+learning_rate: 3.0e-4
+weight_decay: 1.0e-4
+grad_clip_norm: 1.0
+amp: bf16                      # off | bf16 | fp16 (fp16 uses a GradScaler, CUDA only)
+seg_weight: 1.0
+dice_smooth: 1.0
+early_stopping_patience: 30    # epochs without a better calibration-split loss
+early_stopping_min_delta: 0.0
+checkpoint_every_steps: 0      # 0 = only at epoch boundaries; N = every N optimizer steps
