@@ -952,4 +952,42 @@ statistical procedures are written in `STATISTICAL_ANALYSIS_PLAN.md`.
 
 ---
 
+## D-036 — What the T04.6 normalization statistic is and where it is applied
+**Status:** RESOLVED 2026-09-30 (Research Lead: all three recommendations adopted) · **Resolve by:** Phase 04 (T04.6) · **Blocking:** no
+
+**Conflict.** SPEC §5.6 says per-modality z-score from training-split statistics only. It does not say which voxels enter the
+statistic, how patients are pooled, which voxels the z-score is applied to, or whether extreme values are clipped. Each choice
+changes what the model sees, and after the freeze none can move without re-preprocessing.
+
+**Alternatives.** Statistic: pooled brain-voxel mean and SD, or the mean of per-patient means and SDs. Application: brain voxels
+only with background left at 0, or the whole volume. Clipping: none, or a fixed z range.
+
+**Resolution.** Pooled brain-voxel mean and population SD (ddof = 0) per modality, over the non-zero voxels of every UTSW
+training patient (368), accumulated in float64 and combined in sorted patient order. Applied with MONAI `NormalizeIntensity`
+(`nonzero=True`), so background stays exactly 0 in every cohort. No clipping anywhere; the T04.8 range check reports, it does
+not filter. The fitting code refuses any cohort or split other than UTSW train, checks the fitting roster equals the frozen
+`splits.json` train list, and requires that manifest to match its `.sha256`. The statistics file records the cohort, split, roster
+digest and split-manifest digest and is written once.
+
+**Amendment 2026-09-30, before anything was frozen.** The real dry run on the 368 training patients gave pooled SDs about 7 times
+the means (T1 mean 3596, SD 24389). Per-patient mean brain intensity ranged from 123 to 271,321 (T1); 25 patients (7%) had at
+least one modality above 5,000 against a median of about 565, and 11 were extreme in all four. Raw and N4 means for the
+extreme patients agree to within about 20% (patient at index 8: raw T1 mean 248,872, N4 266,589), so the scale is in the
+scanner files and not introduced by preprocessing. A single global mean and SD cannot correct a multiplicative scale
+difference of that size: a typical patient would have z of about -0.12 everywhere. Alternatives put to the Research Lead:
+per-patient median rescale then the frozen train z-score; per-patient z-score with no cohort statistics (SPEC deviation);
+keep the pooled statistic. **Adopted: per-patient median rescale.** Each volume is divided by its own brain-voxel median
+(non-zero voxels, must be positive), which uses no other patient's data, and the pooled mean and SD are then fitted on the
+rescaled training voxels and applied the same way to every cohort and split. Everything else above stands (brain voxels only,
+no clipping, UTSW-train only). The statistics file records `patient_scale: brain-voxel median`, and loading refuses a file
+without it. The scale problem will also occur in UCSF-PDGM and EGD; the per-patient step handles it without reading their
+statistics.
+
+**Consequence for Phase 08 (a note, not a new decision).** A modality zeroed for a missing-modality condition is zeroed after
+normalization, in z-score space, and the frozen statistics are unaffected by any simulated drop.
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
