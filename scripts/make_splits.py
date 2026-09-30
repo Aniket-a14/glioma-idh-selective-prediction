@@ -24,11 +24,13 @@ from glioma_selective.leakage.id_normalization import (  # noqa: E402
     normalize_identifier,
 )
 from glioma_selective.splits import (  # noqa: E402
+    SplitConfig,
     SplitLabels,
     load_split_config,
     read_utsw_split_labels,
     sha256_file,
     stratified_patient_split,
+    verify_split_manifest,
     write_split_manifest,
 )
 from glioma_selective.splits.stratified import split_summary  # noqa: E402
@@ -37,9 +39,43 @@ from glioma_selective.utils import paths  # noqa: E402
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--freeze", action="store_true")
     return parser
+
+
+def _freeze_split_manifest(
+    manifest_dir: Path,
+    splits: Mapping[str, Sequence[str]],
+    labels: Mapping[str, SplitLabels],
+    config: SplitConfig,
+    exclusion_path: Path,
+    roster: Sequence[str],
+) -> str:
+    """Write and verify the one-time split freeze in a supplied manifest directory."""
+    manifest_path = manifest_dir / "splits.json"
+    sidecar_path = manifest_dir / "splits.json.sha256"
+    if manifest_path.exists() or sidecar_path.exists():
+        raise FileExistsError(
+            "frozen split manifest or sidecar already exists; a new version needs "
+            "a decision-log entry"
+        )
+
+    write_split_manifest(
+        manifest_path,
+        splits,
+        labels,
+        config,
+        exclusion_path,
+        roster,
+    )
+    digest = sha256_file(manifest_path)
+    with sidecar_path.open("x", encoding="ascii", newline="\n") as sidecar:
+        sidecar.write(f"{digest}  splits.json\n")
+    verify_split_manifest(manifest_path, digest)
+    print(f"split_manifest_sha256: {digest}")
+    return digest
 
 
 def _mapping(value: object, context: str) -> Mapping[str, object]:
@@ -88,10 +124,20 @@ def _print_summary(
 def main(argv: Sequence[str] | None = None) -> int:
     """Use post-QC UTSW inputs and emit counts only in dry-run mode."""
     args = _parser().parse_args(argv)
+    if args.freeze and args.dry_run:
+        _parser().error("--freeze cannot be used with --dry-run")
+    if args.output is None and not args.freeze:
+        _parser().error("--output is required unless --freeze is given")
     exclusion_path = paths.manifests_dir() / "exclusion_manifest_post_qc.json"
-    output_path = args.output.resolve()
     governed_split_path = (paths.manifests_dir() / "splits.json").resolve()
-    if not args.dry_run and output_path == governed_split_path:
+    output_path = (
+        args.output.resolve() if args.output is not None else governed_split_path
+    )
+    if args.freeze and output_path != governed_split_path:
+        _parser().error(
+            "--output with --freeze must equal the governed splits.json path"
+        )
+    if not args.freeze and not args.dry_run and output_path == governed_split_path:
         raise ValueError("refusing to create the governed Phase 05 split manifest")
 
     exclusion_document = _load_exclusion_document(exclusion_path)
@@ -116,7 +162,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         roster_sha256=roster_sha256,
         config_seed=config.seed,
     )
-    if not args.dry_run:
+    if args.freeze:
+        _freeze_split_manifest(
+            governed_split_path.parent,
+            splits,
+            labels,
+            config,
+            exclusion_path,
+            roster,
+        )
+    elif not args.dry_run:
         write_split_manifest(
             output_path,
             splits,

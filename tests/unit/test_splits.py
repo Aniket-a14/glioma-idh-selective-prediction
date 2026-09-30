@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from scripts.make_splits import _freeze_split_manifest
+from scripts.make_splits import main as make_splits_main
 
 from glioma_selective.splits import (
     SplitConfig,
@@ -17,6 +19,7 @@ from glioma_selective.splits import (
     verify_split_manifest,
     write_split_manifest,
 )
+from glioma_selective.splits import freeze as freeze_module
 
 
 def _synthetic_labels(
@@ -137,6 +140,101 @@ def test_manifest_is_byte_deterministic_and_verifies_exact_file_bytes(
     output_path.write_bytes(first_bytes[:-1] + b" ")
     with pytest.raises(ValueError, match="SHA-256"):
         verify_split_manifest(output_path, expected_hash)
+
+
+def test_freeze_writes_manifest_and_checksum_once(tmp_path: Path) -> None:
+    labels = _synthetic_labels()
+    roster = tuple(labels)
+    config = _config()
+    splits = stratified_patient_split(roster, labels, config)
+    exclusion_path = tmp_path / "exclusions.json"
+    exclusion_path.write_text('{"exclusions": []}\n', encoding="utf-8")
+    manifest_dir = tmp_path / "manifests"
+
+    digest = _freeze_split_manifest(
+        manifest_dir, splits, labels, config, exclusion_path, roster
+    )
+
+    manifest_path = manifest_dir / "splits.json"
+    sidecar_path = manifest_dir / "splits.json.sha256"
+    first_manifest = manifest_path.read_bytes()
+    first_sidecar = sidecar_path.read_bytes()
+    assert first_sidecar == f"{sha256_file(manifest_path)}  splits.json\n".encode(
+        "ascii"
+    )
+    assert digest == sha256_file(manifest_path)
+    verify_split_manifest(manifest_path, digest)
+
+    with pytest.raises(FileExistsError, match="decision-log entry"):
+        _freeze_split_manifest(
+            manifest_dir, splits, labels, config, exclusion_path, roster
+        )
+    assert manifest_path.read_bytes() == first_manifest
+    assert sidecar_path.read_bytes() == first_sidecar
+
+
+def test_write_split_manifest_requires_opt_in_to_overwrite(tmp_path: Path) -> None:
+    labels = _synthetic_labels()
+    roster = tuple(labels)
+    first_config = _config()
+    first_splits = stratified_patient_split(roster, labels, first_config)
+    second_config = _config(seed=20261001)
+    second_splits = stratified_patient_split(roster, labels, second_config)
+    exclusion_path = tmp_path / "exclusions.json"
+    exclusion_path.write_text('{"exclusions": []}\n', encoding="utf-8")
+    manifest_path = tmp_path / "splits.json"
+
+    write_split_manifest(
+        manifest_path, first_splits, labels, first_config, exclusion_path, roster
+    )
+    original = manifest_path.read_bytes()
+    with pytest.raises(FileExistsError):
+        write_split_manifest(
+            manifest_path, second_splits, labels, second_config, exclusion_path, roster
+        )
+    assert manifest_path.read_bytes() == original
+
+    write_split_manifest(
+        manifest_path,
+        second_splits,
+        labels,
+        second_config,
+        exclusion_path,
+        roster,
+        overwrite=True,
+    )
+    assert manifest_path.read_bytes() != original
+
+
+def test_write_split_manifest_removes_temporary_file_after_replace_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    labels = _synthetic_labels()
+    roster = tuple(labels)
+    config = _config()
+    splits = stratified_patient_split(roster, labels, config)
+    exclusion_path = tmp_path / "exclusions.json"
+    exclusion_path.write_text('{"exclusions": []}\n', encoding="utf-8")
+    manifest_path = tmp_path / "splits.json"
+
+    def fail_replace(source: Path, destination: Path) -> None:
+        raise OSError("simulated replace failure")
+
+    monkeypatch.setattr(freeze_module.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="simulated replace failure"):
+        write_split_manifest(
+            manifest_path, splits, labels, config, exclusion_path, roster
+        )
+
+    assert not manifest_path.exists()
+    assert list(tmp_path.glob(".splits.json.*.tmp")) == []
+
+
+def test_freeze_and_dry_run_are_rejected_together() -> None:
+    with pytest.raises(SystemExit) as error:
+        make_splits_main(["--freeze", "--dry-run"])
+
+    assert error.value.code == 2
 
 
 def test_manifest_matches_phase_05_regression_shape_and_assertions(

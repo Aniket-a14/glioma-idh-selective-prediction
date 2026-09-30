@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import tempfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
@@ -41,8 +43,11 @@ def write_split_manifest(
     config: SplitConfig,
     source_exclusion_manifest_path: Path,
     roster: Sequence[str],
+    overwrite: bool = False,
 ) -> Path:
     """Write a caller-selected split manifest with IDs only in split lists."""
+    if path.exists() and not overwrite:
+        raise FileExistsError(f"split manifest already exists: {path}")
     config.validate()
     expected_names = {"train", "calibration", "internal_test"}
     if set(splits) != expected_names:
@@ -77,7 +82,24 @@ def write_split_manifest(
         "splits": split_payload,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    temporary_path: Path | None = None
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+        )
+        os.close(descriptor)
+        temporary_path = Path(temporary_name)
+        temporary_path.write_text(
+            json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        with temporary_path.open("rb") as handle:
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink()
+            except FileNotFoundError:
+                pass
     return path
