@@ -26,6 +26,7 @@ from glioma_selective.training.checkpoint import (
     save_checkpoint,
     save_model_weights,
 )
+from glioma_selective.training.determinism import deterministic_mode
 from glioma_selective.training.losses import joint_loss
 from glioma_selective.training.metrics import binary_auroc, hard_dice
 
@@ -61,6 +62,7 @@ class TrainConfig:
     early_stopping_patience: int = 30
     early_stopping_min_delta: float = 0.0
     checkpoint_every_steps: int = 0
+    deterministic: bool = True
 
     def __post_init__(self) -> None:
         if self.accumulation_steps < 1 or self.max_epochs < 1:
@@ -292,6 +294,37 @@ def evaluate(
 
 
 def fit(
+    model: IDHNet,
+    train_loader: Iterable[Batch],
+    calibration_loader: Iterable[Batch],
+    config: TrainConfig,
+    *,
+    pos_weight: float,
+    checkpoint_dir: Path,
+    device: torch.device,
+    resume: bool = True,
+    stop_after_steps: int | None = None,
+) -> FitResult:
+    """Run ``_fit`` under deterministic algorithms unless the config turns them off.
+
+    Deterministic mode makes a resumed run identical to an uninterrupted one on
+    CUDA as well as on CPU (D-040); ``deterministic: false`` is for speed tests.
+    """
+    with deterministic_mode() if config.deterministic else nullcontext():
+        return _fit(
+            model,
+            train_loader,
+            calibration_loader,
+            config,
+            pos_weight=pos_weight,
+            checkpoint_dir=checkpoint_dir,
+            device=device,
+            resume=resume,
+            stop_after_steps=stop_after_steps,
+        )
+
+
+def _fit(
     model: IDHNet,
     train_loader: Iterable[Batch],
     calibration_loader: Iterable[Batch],

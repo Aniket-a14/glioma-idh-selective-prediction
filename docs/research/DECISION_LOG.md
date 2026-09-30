@@ -1074,4 +1074,24 @@ D-037 are not open to that.
 
 ---
 
+## D-040 — Training runs use deterministic GPU algorithms so a resumed run is exact
+**Status:** RESOLVED 2026-09-30 (Claude, engineering; Research Lead may overrule) · **Resolve by:** Phase 06 · **Blocking:** no
+
+**Finding.** The first real authorization run on the home GPU (RTX 2060 SUPER) failed step 6, checkpoint save/resume equivalence: the
+resumed parameters differed from an uninterrupted run by 4.6e-5, above the 1e-5 tolerance the harness used on CUDA. A probe on the
+same four patients showed the tolerance was the wrong test: two identical uninterrupted runs also differed by 5.1e-5 (resumed versus
+uninterrupted: 5.9e-5), so ordinary CUDA non-determinism is as large as any resume effect. With `cudnn.deterministic`,
+`use_deterministic_algorithms(True, warn_only=True)` and `CUBLAS_WORKSPACE_CONFIG=:4096:8`, both differences were exactly 0.0, with no
+non-deterministic operation warnings for this model.
+
+**Adopted.** `training.determinism.deterministic_mode` is on by default in `fit` (`deterministic: true` in `configs/training/base.yaml`,
+so it appears in the resolved config in the run record), and step 6 of the harness requires exact equality on CPU and CUDA. A speed
+cost is possible and is measured in the pilot (T06.9); `deterministic: false` remains available for timing tests and must be stated
+if used for a reported run. `CUBLAS_WORKSPACE_CONFIG` must be set before CUDA is first used (the harness script does it). Acceptance
+criterion 4 ("checkpoint save/resume is numerically identical") is read as bit-identical parameters after resume.
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
