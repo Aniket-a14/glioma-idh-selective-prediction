@@ -70,6 +70,12 @@ RQ1/C1–C3/C5 need a **continuous sweep** (risk–coverage curves, AURC). RQ2/C
 
 **Owner.** Research Lead. Recorded in `docs/research/protocols/PREREGISTRATION.md` and hashed before Phase 06.
 
+**Update 2026-09-30 (T05.1 power check, `docs/research/protocols/POWER_CHECK.md`).** The recommendation above rests on the external test-set half-width alone (about 2.7 pp at n = 450-500). It leaves out the calibration draw. Given a calibration set of n points, split-conformal coverage on fresh exchangeable data follows Beta(n + 1 - l, l), so at alpha = 0.10 it has SD 2.6 pp at n = 123 (95% interval 0.846 - 0.949), before any shift. Adding the test-set term, the SD of the coverage deviation with no shift at all is 3.0 pp at external n = 450 (95% half-width 5.9 pp, 9.5% chance of landing beyond 5 pp) and 3.4 pp at n = 202, UCSF-PDGM only (6.6 pp, 13.9%). Calibration n = 154 (50/25/25 split) gives 5.4 pp at n = 450. So +/-5 pp is not resolvable at 95%, and C4's own refutation clause (CI half-width above the band) would fire on precision alone, whatever the model does. Computed under exchangeability with no external labels read; shift only adds to it.
+
+Added alternatives. (d) Freeze the band at the width noise alone can explain: about +/-6 pp if EGD joins (n about 450), +/-7 pp for UCSF-PDGM only. (e) Keep +/-5 pp, but estimate the deviation CI by resampling calibration and test together, and pre-register that C4 is judged on that CI. (f) Keep +/-5 pp as written and accept that the refutation clause is expected to fire.
+
+Updated recommendation: **(d) at +/-7 pp**, chosen because EGD is not guaranteed (D-018), with +/-5 pp kept as a reported secondary band and (e)'s combined resampling as the pre-registered CI method. Cost: a looser tolerance and a weaker C4 as a claim. Benefit: the band comes from measured noise, so C4 can be refuted by shift and not by sampling alone. The choice of number stays with the Research Lead, and the freeze is T05.7/T05.10.
+
 ---
 
 ## D-005 — Compute budget cannot accommodate the deep ensemble as literally specified
