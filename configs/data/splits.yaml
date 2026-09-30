@@ -1,0 +1,5 @@
+seed: 20260930
+train: 0.6
+calibration: 0.2
+internal_test: 0.2
+stratify_on: idh
