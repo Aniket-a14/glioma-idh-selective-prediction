@@ -33,10 +33,24 @@ def composed_config():
         yield compose(config_name="config", overrides=["experiment_name=test"])
 
 
+# Groups whose base.yaml still holds only the Hydra placeholder. A group leaves this
+# tuple when its phase gives it real content (model: Phase 06).
+PLACEHOLDER_GROUPS = (
+    "data",
+    "preprocessing",
+    "training",
+    "calibration",
+    "selective",
+    "evaluation",
+)
+
+
 def test_every_group_composes(composed_config) -> None:
     for group in GROUPS:
         assert group in composed_config
+    for group in PLACEHOLDER_GROUPS:
         assert composed_config[group]["_placeholder"] is True
+    assert "_placeholder" not in composed_config["model"]
 
 
 def test_root_level_fields_present(composed_config) -> None:

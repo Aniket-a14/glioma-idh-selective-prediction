@@ -1,4 +1,14 @@
-# Placeholder so Hydra's defaults list resolves before scientific content
-# exists. Populated in Phase 06 (3D SegResNet-style MONAI backbone; no
-# architecture search — SPEC §4.1).
-_placeholder: true
+# Fixed Phase 06 model configuration (SPEC §4.1-4.3, D-006, D-011, D-037).
+# MONAI SegResNet backbone; nothing here is searched over (R-C08). Changing any
+# value after R1/R2 have started is an architecture change and needs a new
+# DECISION_LOG entry.
+in_channels: 4            # T1, T1ce, T2, FLAIR
+seg_channels: 3           # enhancing tumour, non-enhancing/necrotic core, oedema
+init_filters: 32
+blocks_down: [1, 2, 2, 4]
+blocks_up: [1, 1, 1]
+aux_segmentation: true
+tumour_aware_pooling: true
+pooling_min_mass: 1.0     # feature cells; below this a sample falls back to global average pooling
+head_hidden: 64
+head_dropout: 0.2
