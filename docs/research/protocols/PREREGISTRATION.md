@@ -1,8 +1,7 @@
 # Pre-registration: calibrated selective prediction for IDH classification
 
-**DRAFT, not frozen.** Written 2026-09-30 (Phase 05, T05.7). It becomes binding when the Research Lead hashes and commits it
-(T05.10). The hash is recorded in the freeze record at the end and in `PREREGISTRATION.md.sha256`. It predates every model
-training run and every look at external labels.
+**FROZEN 2026-09-30** (Phase 05, T05.7 and T05.10). Its own SHA-256 is in `PREREGISTRATION.md.sha256` (a document cannot contain
+its own hash). It predates every model training run and every look at external labels.
 
 Companion documents: `STATISTICAL_ANALYSIS_PLAN.md` (procedures), `POWER_CHECK.md` (what the sample sizes can resolve),
 `DECISION_LOG.md` (D-003, D-004, D-007, D-033, D-034, D-035 resolved for this document).
@@ -95,13 +94,13 @@ claim. About 12 co-deleted patients sit in the internal test set, so a null resu
 Anything in sections 2-11 changed after the freeze is logged in `DECISION_LOG.md` with the reason, the date and what is
 invalidated. Deviations are listed in the paper's methods section.
 
-## 13. Freeze record (filled at T05.3 and T05.10 by the Research Lead)
+## 13. Freeze record (T05.3 and T05.10)
 
 | Item | Value |
 |---|---|
-| Split manifest SHA-256 (`data/manifests/splits.json`) | to be recorded at T05.3 |
+| Split manifest SHA-256 (`data/manifests/splits.json`, T05.3, 2026-09-30) | `b8696d4474ce0328eb3ffd53bfb3727f85b1977ed22d0a78212111e800ec9a87` (copy in `docs/research/manifests/splits.sha256`) |
 | Post-QC UTSW roster SHA-256 | `ee550584d4276d701204b864dd8b7817f65b24f9ba1f63110e5343b32023561d` |
-| Conditions config SHA-256 (`configs/evaluation/conditions.yaml`) | to be recorded at T05.10 |
-| Statistical analysis plan SHA-256 | to be recorded at T05.10 |
-| Git commit of this document | to be recorded at T05.10 |
-| Date and Research Lead signature | to be recorded at T05.10 |
+| Conditions config SHA-256 (`configs/evaluation/conditions.yaml`) | `e74e253e31f9827c14cdf2db488afd59a6e3b1fec83d08991f8884a4d2d18283` |
+| Statistical analysis plan SHA-256 (`STATISTICAL_ANALYSIS_PLAN.md`) | `27294ac1527f86c8ba5038edacf8cb8f2a81ef74c4ef3a3936cc3c6b2628f94f` |
+| Git commit of this document | the commit that adds `PREREGISTRATION.md.sha256`; its id is recorded in `PROJECT_STATE.md` |
+| Date and Research Lead authorization | 2026-09-30; the Research Lead instructed the freeze and approved the freeze command in session |

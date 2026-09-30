@@ -1,12 +1,9 @@
 # Statistical analysis plan (Phase 05 T05.8)
 
-**DRAFT, not frozen.** Written 2026-09-30. Frozen with `PREREGISTRATION.md` at T05.10 by the Research Lead. Reviewed
-against SPEC §5.5 by contributor role C before the freeze. After the freeze, any change needs a `DECISION_LOG.md` entry and
-invalidates downstream results (Phase 05 file, Rollback section).
+**FROZEN 2026-09-30** together with `PREREGISTRATION.md` (T05.10); its SHA-256 is in that document's freeze record. The review against SPEC §5.5 by contributor role C is still open and is not a condition of this freeze. After the freeze, any change needs a `DECISION_LOG.md` entry and invalidates downstream results (Phase 05 file, Rollback section).
 
 Sources: SPEC §4.6, §4.7, §5.2, §5.4, §5.5; decisions D-003, D-004, D-007, D-033, D-034, D-035; `POWER_CHECK.md`.
-Numbers marked *proposed* below are this plan's choices where the SPEC gives none, for the Research Lead to confirm at the
-freeze.
+Numbers marked *proposed* below were this plan's choices where the SPEC gives none; the Research Lead froze them with the plan.
 
 ## 1. Data and units
 
