@@ -38,7 +38,9 @@ RQ2 and C4 are both written in **coverage** language ("empirical coverage remain
 ---
 
 ## D-003 — Abstention is operationalized two incompatible ways
-**Status:** OPEN · **Resolve by:** Phase 05 (pre-registration, before any calibration fitting) · **Blocking:** YES
+**Status:** RESOLVED 2026-09-30 (Research Lead: recommendation adopted) · **Resolve by:** Phase 05 (pre-registration, before any calibration fitting) · **Blocking:** YES until frozen in `PREREGISTRATION.md` (T05.7)
+
+**Resolution 2026-09-30.** Both operationalizations, as recommended below: the nonconformity-score threshold produces the risk-coverage curve and AURC (RQ1, C1-C3, C5, C6); the set-valued conformal predictor at nominal 1-alpha produces the empirical-vs-nominal coverage comparison (RQ2, C4). An empty set counts as abstention and its rate is reported separately. The alpha grid is {0.05, 0.10, 0.20}, confirmed by the Research Lead on 2026-09-30 (recorded under D-033).
 
 **Conflict.** SPEC §1.2 defines rejection as a **threshold on a score**: *"g(x) → {0,1} ... a rejection threshold τ on the conformal nonconformity score."* But split conformal on a **binary** label set naturally produces prediction sets `∅`, `{0}`, `{1}`, `{0,1}`, where the idiomatic abstention rule is "abstain iff the set is not a singleton." These give different objects:
 
@@ -58,7 +60,9 @@ RQ1/C1–C3/C5 need a **continuous sweep** (risk–coverage curves, AURC). RQ2/C
 ---
 
 ## D-004 — C4's tolerance band is an example, not a number
-**Status:** OPEN · **Resolve by:** Phase 05, before any external data is touched · **Blocking:** YES
+**Status:** RESOLVED 2026-09-30 (Research Lead: option (d) at +/-7 pp, see the update below) · **Resolve by:** Phase 05, before any external data is touched · **Blocking:** YES until frozen in `PREREGISTRATION.md` (T05.7)
+
+**Resolution 2026-09-30.** C4's tolerance band is **+/-7 percentage points**, derived from measured noise (T05.1, `POWER_CHECK.md`): the 95% half-width of coverage deviation with no shift is 6.6 pp at UCSF-PDGM-only n = 202 and 5.9 pp with EGD, calibration n = 123. +/-5 pp is reported as a secondary band. The CI for the coverage deviation resamples calibration and test together. C4's own refutation clause stays: if that CI half-width exceeds the band, C4 is refuted (deviation not reliably characterizable), a reportable finding. The number is frozen when `PREREGISTRATION.md` is hashed (T05.10) and does not move after that.
 
 **Conflict.** C4 reads *"against a pre-registered tolerance band **such as** ±5 percentage points."* "Such as" is illustrative. **A claim with an unspecified threshold cannot be falsified**, and C4's own falsification condition ("the deviation cannot be reliably characterized ... at the pre-registered tolerance") explicitly presupposes that a tolerance exists.
 
@@ -69,6 +73,12 @@ RQ1/C1–C3/C5 need a **continuous sweep** (risk–coverage curves, AURC). RQ2/C
 **Recommendation.** **(a) informed by (b)**: freeze **±5 percentage points**, and record in the pre-registration the power calculation showing this band is resolvable at the expected external n. Also pre-register the answer to C4's *own* falsification clause: if the bootstrap CI half-width on coverage deviation exceeds the band itself, C4 is refuted (deviation not reliably characterizable) — and that is a reportable finding, not a failure.
 
 **Owner.** Research Lead. Recorded in `docs/research/protocols/PREREGISTRATION.md` and hashed before Phase 06.
+
+**Update 2026-09-30 (T05.1 power check, `docs/research/protocols/POWER_CHECK.md`).** The recommendation above rests on the external test-set half-width alone (about 2.7 pp at n = 450-500). It leaves out the calibration draw. Given a calibration set of n points, split-conformal coverage on fresh exchangeable data follows Beta(n + 1 - l, l), so at alpha = 0.10 it has SD 2.6 pp at n = 123 (95% interval 0.846 - 0.949), before any shift. Adding the test-set term, the SD of the coverage deviation with no shift at all is 3.0 pp at external n = 450 (95% half-width 5.9 pp, 9.5% chance of landing beyond 5 pp) and 3.4 pp at n = 202, UCSF-PDGM only (6.6 pp, 13.9%). Calibration n = 154 (50/25/25 split) gives 5.4 pp at n = 450. So +/-5 pp is not resolvable at 95%, and C4's own refutation clause (CI half-width above the band) would fire on precision alone, whatever the model does. Computed under exchangeability with no external labels read; shift only adds to it.
+
+Added alternatives. (d) Freeze the band at the width noise alone can explain: about +/-6 pp if EGD joins (n about 450), +/-7 pp for UCSF-PDGM only. (e) Keep +/-5 pp, but estimate the deviation CI by resampling calibration and test together, and pre-register that C4 is judged on that CI. (f) Keep +/-5 pp as written and accept that the refutation clause is expected to fire.
+
+Updated recommendation: **(d) at +/-7 pp**, chosen because EGD is not guaranteed (D-018), with +/-5 pp kept as a reported secondary band and (e)'s combined resampling as the pre-registered CI method. Cost: a looser tolerance and a weaker C4 as a claim. Benefit: the band comes from measured noise, so C4 can be refuted by shift and not by sampling alone. The choice of number stays with the Research Lead, and the freeze is T05.7/T05.10.
 
 ---
 
@@ -97,7 +107,9 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 ---
 
 ## D-007 — RQ4 (1p/19q) has a research question but no compute or cohort budget
-**Status:** OPEN · **Resolve by:** Phase 05 · **Blocking:** yes
+**Status:** RESOLVED 2026-09-30 (Research Lead: option (c)) · **Resolve by:** Phase 05 · **Blocking:** yes until frozen in `PREREGISTRATION.md` (T05.7)
+
+**Resolution 2026-09-30.** Option (c), the frozen-encoder probe, exploratory only. Power check input: UTSW post-QC has 62 co-deleted and 270 non-co-deleted labelled patients, about 12 co-deleted in a 20% test share, so the Hanley-McNeil AUROC half-width is 0.12-0.18. Reported with wide CIs and no inferential claim; the too-few-positives failure condition in the Phase 05 file (drop RQ4 with a decision-log entry) stays available.
 
 **Conflict.** RQ4 is a named research question and C-level analyses are expected for it, but SPEC §3.6's experiment grid and §3.4's compute estimate are sized for IDH alone. §5.3 separately warns 1p/19q (63 codeleted pre-exclusion) *"is underpowered for anything beyond a descriptive, wide-CI exploratory analysis."*
 
@@ -849,7 +861,9 @@ after observing the data. If a later phase wants that form it should be pre-spec
 **Owner.** Research Lead.
 
 ## D-033 — Metric conventions the SPEC leaves open: ECE variant and binning, RC-curve ties, AURC integration
-**Status:** OPEN · **Resolve by:** Phase 05 (the pre-registration lists the metrics) · **Blocking:** YES for merging metric code in Phase 07 T07.7 and Phase 09 T09.2/T09.3; no for anything before that
+**Status:** RESOLVED 2026-09-30 (Research Lead: proposed choices adopted) · **Resolve by:** Phase 05 (the pre-registration lists the metrics) · **Blocking:** was YES for merging metric code in Phase 07 T07.7 and Phase 09 T09.2/T09.3; cleared once `PREREGISTRATION.md` (T05.7) states these conventions
+
+**Resolution 2026-09-30.** The proposed choices below are adopted: positive-class ECE, equal-width, 10 bins, left-closed with 1.0 in the last bin, as the primary; 5 bins, 15 bins and equal-mass 10 bins as a sensitivity table; top-label ECE as a secondary. Risk-coverage curve with tied scores handled as blocks. AURC as the mean selective risk over all cutoffs, with block ties. Selective risk at a target coverage taken at the smallest attainable coverage at or above the target, reported with the attained coverage. Coverage grid {0.9, 0.8, 0.7, 0.6, 0.5} and conformal alpha grid {0.05, 0.10, 0.20} confirmed at the same time (also settles the alpha grid left open in D-003). Contributor rows C-017 and C-018 stay useful: their reference functions cover the adopted variants and the ones not adopted, so the sensitivity table can be checked.
 
 **Conflict.** SPEC §1.2 and §4.7 say AURC is the integral of the risk–coverage curve and Phase 07 says the ECE "binning
 convention is documented and tested", but no text fixes these choices, and each changes the number computed from the same
@@ -886,5 +900,56 @@ standard-library reference implementations with every variant as a named functio
 nothing; they make the differences visible before the choice.
 
 **Owner.** Research Lead.
+
+---
+
+## D-034 — Phase 05 split proportions and split procedure
+**Status:** RESOLVED 2026-09-30 (Research Lead: 60/20/20) · **Resolve by:** Phase 05 · **Blocking:** no
+
+**Conflict.** The Phase 05 file leaves the train/calibration/internal-test proportions to the Research Lead, subject to the power check (T05.1).
+
+**Alternatives.** 60/20/20, 50/25/25, 70/15/15 (numbers in `POWER_CHECK.md`).
+
+**Resolution.** 60/20/20 on the 616 post-QC UTSW patients, patient-level, stratified on IDH only, seeded, computed from the post-QC roster and exclusion manifest. Per-class rounding puts 35 mutant and 89 wildtype patients in each of calibration and internal test (about 124 each, 368 train); the exact sizes are whatever the frozen manifest records. The seed is fixed in `configs/data/splits.yaml` before the split is run and is not changed after seeing the result; if the stratification test fails, that is reported, not fixed by trying other seeds. 1p/19q counts per split are reported, not stratified on. UCSF-PDGM and EGD are never split.
+
+**Consequence.** Test-set AUROC half-width about +/-0.086 at true AUROC 0.80; calibration-draw SD of coverage 2.6 pp at alpha 0.10. Both are inputs to D-004 above.
+
+**Owner.** Research Lead.
+
+## D-035 — How the SPEC's refutation criteria for C1, C2, C3, C5 and C6 are applied to finite samples
+**Status:** RESOLVED 2026-09-30 (Research Lead: alternative (c), three-way rule) · **Resolve by:** Phase 05 (before `PREREGISTRATION.md` is hashed, T05.10) · **Blocking:** was YES for T05.7 and T05.10; cleared once the rule is written into `PREREGISTRATION.md` and `STATISTICAL_ANALYSIS_PLAN.md`
+
+**Conflict.** SPEC §1.4 states the results that would prove each claim wrong in words that cannot be applied literally to
+estimates from a 124-patient test set. C1: "selective risk at *any* fixed coverage >= always-predict risk". C5: curves
+become non-monotonic, but the empirical risk-coverage curve of a finite sample is almost never strictly monotone, so a
+literal reading refutes C5 on noise. C2 and C3 say the advantage "disappears" or is absent without saying how that is
+judged. C6 says abstained cases are "no more likely" to be wrong than a random subset, without a test. Acceptance
+criterion 7 of Phase 05 requires the refutation criteria in the pre-registration, and after the freeze they cannot move
+(R-C09).
+
+**Alternatives.**
+(a) Literal point-estimate rule: a claim is refuted when the point estimate breaks the stated inequality at any grid
+coverage in any condition it covers. Simple and exactly as written, but with 5 coverage levels and up to 6 modality
+conditions the chance of refuting by noise alone is high.
+(b) Confidence-interval rule: a claim is refuted only when the 95% interval lies on the wrong side. Hard to refute at
+n = 124 (intervals of +/-0.06 to +/-0.09, see `POWER_CHECK.md`), so most claims come out unresolved.
+(c) **Three-way rule**, fixed in advance. For each condition and each coverage level phi in the grid, let D(phi) be the
+selective risk of the mechanism minus the always-predict risk, paired bootstrap over patients. The claim is
+*supported* in that condition when the upper 95% limit of D(phi) is below 0 at every phi; *refuted* when the point
+estimate of D(phi) is >= 0 at any phi (the SPEC's wording); otherwise *inconclusive at this n*, which is reported as its
+own result. The same shape is used for C5 (adjacent-coverage risk differences, *refuted* only when a statistically
+significant increase, i.e. a lower 95% limit above 0, appears at any adjacent pair) and C6 (error rate among abstained
+cases minus overall error rate, one-sided permutation test, 10,000 permutations, Benjamini-Hochberg adjusted across the
+grid; *refuted* when the point estimate is <= 0 at any phi). C4 is settled by D-004. Claim-level status is the worst
+status across the conditions the claim covers, listed per condition in the report.
+
+**Recommendation.** (c). It keeps the SPEC's refutation wording as the refuting event, so nothing is softened after the
+fact, and it adds an explicit third outcome so that noise is neither counted as a refutation nor as support. Cost: the
+paper will report "inconclusive at this n" for some conditions, which is a true statement about the design. The exact
+statistical procedures are written in `STATISTICAL_ANALYSIS_PLAN.md`.
+
+**Owner.** Research Lead.
+
+---
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
