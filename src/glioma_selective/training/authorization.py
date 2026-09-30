@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
@@ -123,6 +124,44 @@ def _sidecar_digest(path: Path) -> str:
     if not re.fullmatch(r"[0-9a-f]{64}", expected) or actual != expected:
         raise ValueError(f"frozen hash verification failed for {path.name}")
     return actual
+
+
+def _atomic_json_once(path: Path, payload: str, *, prefix: str) -> Path:
+    """Atomically publish JSON once, including filesystems without hard links."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, name = tempfile.mkstemp(prefix=prefix, suffix=".tmp", dir=path.parent)
+    temporary = Path(name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            raise FileExistsError(f"file already exists: {path}") from None
+        except OSError as exc:
+            unsupported_link = {errno.ENOTSUP, errno.EOPNOTSUPP, errno.EXDEV}
+            if exc.errno not in unsupported_link:
+                raise
+            lock = path.with_name(f".{path.name}.authorization-lock")
+            lock_fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            try:
+                if path.exists():
+                    raise FileExistsError(f"file already exists: {path}")
+                os.replace(temporary, path)
+                directory_fd = os.open(path.parent, os.O_RDONLY)
+                try:
+                    os.fsync(directory_fd)
+                finally:
+                    os.close(directory_fd)
+            finally:
+                os.close(lock_fd)
+                lock.unlink(missing_ok=True)
+        temporary.unlink(missing_ok=True)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return path
 
 
 def _frozen_hashes() -> dict[str, str]:
@@ -729,7 +768,19 @@ def step_deterministic_logging(
         )
         record = replace(record, run_id=authorization_run_id)
         assert_launch_ready(record)
-        write_run_record(record)
+        hard_link_fallback = False
+        try:
+            write_run_record(record)
+        except OSError as exc:
+            if exc.errno not in {errno.ENOTSUP, errno.EOPNOTSUPP, errno.EXDEV}:
+                raise
+            record_path = paths.experiments_dir() / authorization_run_id / "record.json"
+            _atomic_json_once(
+                record_path,
+                json.dumps(asdict(record), indent=2, sort_keys=True) + "\n",
+                prefix=".record-",
+            )
+            hard_link_fallback = True
         deterministic_ops: list[str] = []
         was_deterministic = torch.are_deterministic_algorithms_enabled()
         was_warn_only = torch.is_deterministic_algorithms_warn_only_enabled()
@@ -772,6 +823,8 @@ def step_deterministic_logging(
         detail = "launch record accepted; clean checkout; " + "; ".join(
             deterministic_ops
         )
+        if hard_link_fallback:
+            detail += "; atomic rename used because hard links are unsupported"
         if synthetic:
             detail += "; synthetic run is never authorized"
         return _result(STEP_NAMES[6], "passed", detail, started)
@@ -950,27 +1003,8 @@ def _make_report(
 
 def write_harness_report(report: HarnessReport, report_path: Path) -> Path:
     """Atomically create one report, refusing to overwrite any existing file."""
-    report_path.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(asdict(report), indent=2, sort_keys=True) + "\n"
-    descriptor, name = tempfile.mkstemp(
-        prefix=".authorization-", suffix=".tmp", dir=report_path.parent
-    )
-    temporary = Path(name)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-        try:
-            os.link(temporary, report_path)
-        except FileExistsError:
-            raise FileExistsError(
-                f"authorization report already exists: {report_path}"
-            ) from None
-        temporary.unlink()
-    finally:
-        temporary.unlink(missing_ok=True)
-    return report_path
+    return _atomic_json_once(report_path, payload, prefix=".authorization-")
 
 
 def assert_authorized(

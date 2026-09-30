@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import json
 from pathlib import Path
 from typing import Literal
@@ -108,6 +109,35 @@ def test_report_round_trip_and_write_once(tmp_path: Path) -> None:
     stored = json.loads(path.read_text(encoding="utf-8"))
     assert stored["authorized"] is False
     assert stored["results"][0]["name"] == auth.STEP_NAMES[0]
+    with pytest.raises(FileExistsError, match="already exists"):
+        auth.write_harness_report(report, path)
+
+
+def test_report_writer_uses_atomic_rename_without_hard_links(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    report = auth.HarnessReport(
+        results=(),
+        authorized=False,
+        device="cpu",
+        git_sha="sha",
+        git_dirty=False,
+        config_sha256="config",
+        frozen_hashes={},
+        timestamp_utc="2026-09-30T00:00:00Z",
+        harness_version=auth.HARNESS_VERSION,
+        authorization_run_id="01K6AZE69H5X32FK2PB1YNJ0MZ",
+    )
+    path = tmp_path / "authorization_report.json"
+
+    def unsupported_hardlink(*args, **kwargs):  # type: ignore[no-untyped-def]
+        del args, kwargs
+        raise OSError(errno.EOPNOTSUPP, "hard links are unavailable")
+
+    monkeypatch.setattr(auth.os, "link", unsupported_hardlink)
+    auth.write_harness_report(report, path)
+
+    assert json.loads(path.read_text(encoding="utf-8"))["authorized"] is False
     with pytest.raises(FileExistsError, match="already exists"):
         auth.write_harness_report(report, path)
 
