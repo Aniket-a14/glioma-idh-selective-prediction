@@ -1,0 +1,70 @@
+modality_conditions:
+  - id: full
+    label: Full
+    present: [T1, T1CE, T2, FLAIR]
+    zeroed: []
+  - id: drop_t1
+    label: Drop T1
+    present: [T1CE, T2, FLAIR]
+    zeroed: [T1]
+  - id: drop_t1ce
+    label: Drop T1CE
+    present: [T1, T2, FLAIR]
+    zeroed: [T1CE]
+  - id: drop_t2
+    label: Drop T2
+    present: [T1, T1CE, FLAIR]
+    zeroed: [T2]
+  - id: drop_flair
+    label: Drop FLAIR
+    present: [T1, T1CE, T2]
+    zeroed: [FLAIR]
+  - id: t1ce_flair_only
+    label: T1CE and FLAIR only
+    present: [T1CE, FLAIR]
+    zeroed: [T1, T2]
+
+cohorts:
+  - id: utsw_internal_test
+    role: internal
+    available: true
+  - id: ucsf_pdgm
+    role: external
+    available: true
+  - id: egd
+    role: external
+    available: false
+    blocked_on: D-018 EGD data-use agreement
+
+mechanisms:
+  - id: M1
+    name: Always-predict, uncalibrated (raw softmax)
+    selective: false
+    needs_own_training_run: false
+    primary: false
+  - id: M2
+    name: Always-predict, temperature-scaled
+    selective: false
+    needs_own_training_run: false
+    primary: false
+  - id: M3
+    name: Selective, MC-dropout predictive entropy
+    selective: true
+    needs_own_training_run: false
+    primary: false
+  - id: M4
+    name: Selective, deep ensemble predictive variance
+    selective: true
+    needs_own_training_run: true
+    primary: false
+  - id: M5
+    name: Selective, conformal
+    selective: true
+    needs_own_training_run: false
+    primary: true
+  - id: M6
+    name: Always-predict, tumor-aware joint comparator
+    selective: false
+    needs_own_training_run: false
+    primary: false
+    note: definition pending D-006
