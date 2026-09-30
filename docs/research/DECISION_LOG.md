@@ -96,7 +96,9 @@ Final budget: **9 training runs** (R1 no-modality-dropout baseline; R2–R6 moda
 ---
 
 ## D-006 — Baseline 5 ("reproduced published comparator") is unbounded in scope
-**Status:** OPEN · **Resolve by:** Phase 06 · **Blocking:** yes
+**Status:** RESOLVED 2026-09-30 (Research Lead: option (b)) · **Resolve by:** Phase 06 · **Blocking:** yes
+
+**Resolution 2026-09-30.** Option (b). M6 is our own SegResNet backbone with the auxiliary segmentation head and tumour-aware pooling, trained and evaluated always-predict. It is described in the manuscript as a tumour-aware joint-learning comparator in the style of COM-Net/MTS-UNET/GMMAS, implemented on our backbone for cohort-matched comparability, and not as a reproduction of those systems. Published numbers are cited as context only.
 
 **Conflict.** SPEC §4.8 baseline 5 asks for *"an always-predict, tumor-aware, joint-learning model in the style of COM-Net/MTS-UNET/GMMAS ... reproduced only to the extent needed to serve as a fair always-predict comparison point, not as an attempt to match published SOTA numbers exactly."* The hedge is present, but "reproduce a published multi-task architecture" is an open-ended engineering commitment inside a project whose SPEC closes with *"the risk in this project is scope creep, not insufficient novelty."*
 
@@ -167,7 +169,9 @@ counts, once available, disagree materially with the SPEC's claim.
 ---
 
 ## D-011 — BraTS pretraining is permitted but not required
-**Status:** OPEN · **Resolve by:** Phase 06 · **Blocking:** yes
+**Status:** RESOLVED 2026-09-30 (Research Lead: option (a)) · **Resolve by:** Phase 06 · **Blocking:** yes
+
+**Resolution 2026-09-30.** Option (a). No BraTS pretraining: every network is trained from random initialization on UTSW train only. This removes the BraTS-to-UCSF/TCGA/EGD ID-overlap leakage class. Reopening it requires its own Gate-D-level exclusion audit and Research Lead sign-off recorded here.
 
 **Conflict.** SPEC §2.5 permits BraTS *"only as a source of segmentation pretraining weights (if at all)"* and, if used, requires excluding every subject ID also appearing in UCSF-PDGM, TCGA-GBM/LGG, or EGD — *"or the 'external' claim for those cohorts is void."* SPEC §4.1 does not require pretraining at all.
 
@@ -987,6 +991,37 @@ statistics.
 normalization, in z-score space, and the frozen statistics are unaffected by any simulated drop.
 
 **Owner.** Research Lead.
+
+---
+
+## D-037 — Network input geometry and the fixed Phase 06 model configuration
+**Status:** RESOLVED 2026-09-30 (Research Lead: whole brain at 2 mm, 96³) · **Resolve by:** Phase 06 · **Blocking:** yes
+
+**Conflict.** SPEC §4.2 says each volume is "patch-cropped to 96³ or 128³" but the preprocessed grid is 240×240×155 at 1 mm, and the brain
+bounding box is about 135×170×150 mm. A 128³ crop at 1 mm cannot cover the brain, and a tumour-centred crop needs a tumour location at
+inference, which differs between cohorts and would make the tumour-aware pooling circular.
+
+**Alternatives.** (a) Whole brain resampled to 2 mm, centred on the brain and padded or cropped to 96³ (192 mm). (b) Tumour-centred 128³
+at 1 mm. (c) Random 128³ crops at 1 mm with sliding-window evaluation.
+
+**Adopted: (a).** Same input construction for train, calibration, internal test and both external cohorts; no annotation is read at
+inference; lowest VRAM. Cost: coarser voxels, so the auxiliary Dice is expected to be lower than at 1 mm. Auxiliary Dice is confirmatory
+(SPEC §4.3) and does not enter any C1-C6 claim. The resampling uses only geometry (no intensity statistic), so nothing frozen in
+Phase 04 or 05 changes: the frozen z-score is applied on the 1 mm grid first, then the volume is resampled (linear for images,
+nearest neighbour for the segmentation, zero outside the brain).
+
+**Fixed model configuration (no search, SPEC §4.1, R-C08).** MONAI `SegResNet`, `init_filters=32`, `blocks_down=(1,2,2,4)`,
+`blocks_up=(1,1,1)`, 4 input channels, 3 auxiliary outputs (enhancing tumour, non-enhancing/necrotic core, oedema, multi-label
+sigmoid), learnable per-modality input weights initialised to 1 (SPEC §4.2; a zeroed channel stays zero), classification head on the
+stride-8 bottleneck features, a single logit. Parameter count is verified in a test against the 10-30M range of SPEC §3.4. Tumour-aware
+pooling weights the bottleneck features by the predicted whole-tumour probability (maximum over the three outputs, resampled to
+the feature grid, detached so the classification loss does not move the segmentation head); with an all-ones mask it equals global
+average pooling, and when the predicted mass falls below a floor it falls back to global average pooling. Class-balanced loss is
+weighted binary cross-entropy with `pos_weight` = negatives / positives of the training split; segmentation loss is soft Dice per
+channel, averaged over patients that have a segmentation (3 of 622 UTSW patients do not).
+
+**Owner.** Research Lead. This entry records the choices; changing any of them after R1/R2 have started is an architecture change and
+needs a new entry.
 
 ---
 
