@@ -15,4 +15,6 @@ dice_smooth: 1.0
 early_stopping_patience: 30    # epochs without a better calibration-split loss
 early_stopping_min_delta: 0.0
 checkpoint_every_steps: 0      # 0 = only at epoch boundaries; N = every N optimizer steps
+modality_dropout: false        # R1 trains without it; R2-R6 set true (D-041)
+modality_dropout_keep_all_probability: 0.5   # otherwise one of the 14 non-empty proper subsets, uniformly
 deterministic: true            # deterministic cuDNN/torch algorithms so resume is exact (D-040)
