@@ -1049,4 +1049,29 @@ and the Phase 06 baseline is uncalibrated and always-predict, so fields 18 and 1
 
 ---
 
+## D-039 — What "converged" means for R1 and R2, and the training defaults
+**Status:** RESOLVED 2026-09-30 (Research Lead: calibration-split loss, patience 30) · **Resolve by:** Phase 06 · **Blocking:** yes
+
+**Conflict.** Phase 06 lists "the definition of converged" as a Research Lead decision and requires early stopping on the UTSW
+calibration split only (SI-08). AUROC on that split (124 patients, 35 mutant) moves by about 0.02 when one patient changes rank, so
+it is a poor stopping signal, and it ignores probability calibration, which every later phase depends on.
+
+**Adopted.** Stop when the class-balanced classification loss (weighted BCE, `pos_weight` = training negatives / positives) on the
+calibration split has not improved for 30 epochs, at most 300 epochs; the checkpoint with the best calibration loss is the model
+(`best.pt`). No minimum-improvement margin. The Dice term is logged but does not enter the stopping rule. Fixed here, before any
+run, so it cannot be tuned after results are seen.
+
+**Residual issue for Phase 09.** The calibration split now also picks the checkpoint, which is a mild selection effect on the
+split that Phase 07-09 use to fit temperature scaling and the conformal quantile. SI-08 requires this, and D-034 has no fourth split,
+so it is accepted and must be stated as a limitation next to the C4 coverage results. The internal test split is never used.
+
+**Defaults in `configs/training/base.yaml`.** AdamW, learning rate 3e-4, weight decay 1e-4, batch 2 with accumulation 4 (effective
+8), gradient clipping at 1.0, bf16 autocast, segmentation weight 1.0. These are starting values for the pilot (T06.9), which may
+size learning rate, batch size and accumulation on the training split only; the stopping rule above and the model configuration in
+D-037 are not open to that.
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
