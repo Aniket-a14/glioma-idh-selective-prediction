@@ -1025,4 +1025,28 @@ needs a new entry.
 
 ---
 
+## D-038 — How the run record's twenty fields map to JSON keys (T06.7)
+**Status:** RESOLVED 2026-09-30 (Claude, engineering interpretation of `REPRODUCIBILITY_PROTOCOL.md` §1; Research Lead may overrule) · **Resolve by:** Phase 06 · **Blocking:** no
+
+**Conflict.** The protocol says "twenty fields" but its table names 22 JSON keys (rows 12 and 20 each hold two), gives no field for
+run status, end time or failure reason (Phase 06 says a failed run keeps its record), and gives no key for the normalization-statistics
+hash or a config hash. Fields 15-20 (checkpoint, history, predictions, calibration, thresholds, metrics) only exist after a run ends,
+and the Phase 06 baseline is uncalibrated and always-predict, so fields 18 and 19 have no value in this phase.
+
+**Adopted.**
+1. The mandatory keys are exactly the 22 names in the table, spelled as there (`torch_version` and `monai_version`; `metrics` and
+   `log_path`). No key is renamed or invented in that set.
+2. Lifecycle keys are added outside the mandatory set: `status` (`running`, `completed`, `failed`), `end_time_utc`, `failure_reason`.
+   Gate C does not test them; they let a failed run keep its record.
+3. The normalization-statistics hash is recorded inside `preprocessing_version` as a mapping (`version`, `parameter_hash`,
+   `normalization_stats_sha256`). `config` is the resolved config itself, so it needs no separate hash.
+4. Launch-time keys (1-14) are filled at start. Keys 15-20 are filled by `update_run_record` at the end of the run. A key that does
+   not apply in a phase carries the explicit string `not_applicable: <reason>` (Phase 06 uses it for `calibration_params` and
+   `selective_thresholds`); an absent, null or empty value counts as missing.
+5. `run_id` is a ULID, as the protocol says, generated without a new dependency.
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
