@@ -52,7 +52,7 @@ institution's referral mix, not a random subsample of UCSF-PDGM.
 
 The tables above are the **pre-QC** record and stay unchanged (they match the frozen
 `docs/research/manifests/cohort_manifest.json`). Phase 04's visual QC excluded 6 UTSW patients
-(all `qc:skullstrip-over`, part of the brain missing; D-024, D-028, D-031) and 0 UCSF-PDGM patients. The post-QC roster is
+(all `qc:skullstrip-over`, part of the brain is missing; D-024, D-028, D-031) and 0 UCSF-PDGM patients. The post-QC roster is
 `docs/research/manifests/cohort_manifest_post_qc.json`, built by `scripts/build_post_qc_manifests.py` from the
 Phase 03 exclusion manifest plus the QC decisions in `preprocessing_status.json`.
 
