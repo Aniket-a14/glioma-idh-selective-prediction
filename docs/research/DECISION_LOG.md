@@ -1094,4 +1094,21 @@ criterion 4 ("checkpoint save/resume is numerically identical") is read as bit-i
 
 ---
 
+## D-042 — `pyarrow` becomes a runtime dependency (parquet for frozen prediction artifacts)
+**Status:** RESOLVED 2026-09-30 (Research Lead: add it) · **Resolve by:** Phase 06 · **Blocking:** no
+
+**Conflict.** Phase 06 acceptance criterion 9 requires prediction artifacts "frozen to parquet". No parquet engine was declared or
+installed (pandas 3 is present in the lock but cannot read or write parquet by itself).
+
+**Alternatives.** (a) `pyarrow`, the reference parquet engine, declared in `pyproject.toml` and added to `requirements.lock.txt`. (b)
+`fastparquet`, smaller but less used and it needs pandas paths the project does not use. (c) CSV or JSON, which breaks the acceptance
+criterion and loses exact float round trips.
+
+**Adopted.** (a), `pyarrow>=17,<26`. Regenerating the lock with `uv pip compile --universal` changed one thing: it added
+`pyarrow==25.0.1` (no other pin moved). Both machines install it from the lock.
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
