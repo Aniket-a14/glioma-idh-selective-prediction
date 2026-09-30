@@ -916,4 +916,40 @@ nothing; they make the differences visible before the choice.
 
 **Owner.** Research Lead.
 
+## D-035 — How the SPEC's refutation criteria for C1, C2, C3, C5 and C6 are applied to finite samples
+**Status:** RESOLVED 2026-09-30 (Research Lead: alternative (c), three-way rule) · **Resolve by:** Phase 05 (before `PREREGISTRATION.md` is hashed, T05.10) · **Blocking:** was YES for T05.7 and T05.10; cleared once the rule is written into `PREREGISTRATION.md` and `STATISTICAL_ANALYSIS_PLAN.md`
+
+**Conflict.** SPEC §1.4 states the results that would prove each claim wrong in words that cannot be applied literally to
+estimates from a 124-patient test set. C1: "selective risk at *any* fixed coverage >= always-predict risk". C5: curves
+become non-monotonic, but the empirical risk-coverage curve of a finite sample is almost never strictly monotone, so a
+literal reading refutes C5 on noise. C2 and C3 say the advantage "disappears" or is absent without saying how that is
+judged. C6 says abstained cases are "no more likely" to be wrong than a random subset, without a test. Acceptance
+criterion 7 of Phase 05 requires the refutation criteria in the pre-registration, and after the freeze they cannot move
+(R-C09).
+
+**Alternatives.**
+(a) Literal point-estimate rule: a claim is refuted when the point estimate breaks the stated inequality at any grid
+coverage in any condition it covers. Simple and exactly as written, but with 5 coverage levels and up to 6 modality
+conditions the chance of refuting by noise alone is high.
+(b) Confidence-interval rule: a claim is refuted only when the 95% interval lies on the wrong side. Hard to refute at
+n = 124 (intervals of +/-0.06 to +/-0.09, see `POWER_CHECK.md`), so most claims come out unresolved.
+(c) **Three-way rule**, fixed in advance. For each condition and each coverage level phi in the grid, let D(phi) be the
+selective risk of the mechanism minus the always-predict risk, paired bootstrap over patients. The claim is
+*supported* in that condition when the upper 95% limit of D(phi) is below 0 at every phi; *refuted* when the point
+estimate of D(phi) is >= 0 at any phi (the SPEC's wording); otherwise *inconclusive at this n*, which is reported as its
+own result. The same shape is used for C5 (adjacent-coverage risk differences, *refuted* only when a statistically
+significant increase, i.e. a lower 95% limit above 0, appears at any adjacent pair) and C6 (error rate among abstained
+cases minus overall error rate, one-sided permutation test, 10,000 permutations, Benjamini-Hochberg adjusted across the
+grid; *refuted* when the point estimate is <= 0 at any phi). C4 is settled by D-004. Claim-level status is the worst
+status across the conditions the claim covers, listed per condition in the report.
+
+**Recommendation.** (c). It keeps the SPEC's refutation wording as the refuting event, so nothing is softened after the
+fact, and it adds an explicit third outcome so that noise is neither counted as a refutation nor as support. Cost: the
+paper will report "inconclusive at this n" for some conditions, which is a true statement about the design. The exact
+statistical procedures are written in `STATISTICAL_ANALYSIS_PLAN.md`.
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
