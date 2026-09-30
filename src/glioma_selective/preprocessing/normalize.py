@@ -1,9 +1,12 @@
 """Per-modality z-score statistics from the frozen UTSW training split only.
 
-T04.6 is a leakage control (D-023, D-036). Statistics are pooled over the brain
-(non-zero) voxels of every training patient, one mean and one population standard
-deviation per modality, and are then applied unchanged to every cohort and split.
-Applying never recomputes anything, and there is no clipping.
+T04.6 is a leakage control (D-023, D-036). Raw intensity units differ by up to
+several hundred times between patients, so each volume is first divided by its own
+brain-voxel median (a per-patient step that uses no other patient's data). The
+statistics are then pooled over the rescaled brain (non-zero) voxels of every
+training patient, one mean and one population standard deviation per modality, and
+applied unchanged to every cohort and split. Applying never recomputes anything,
+and there is no clipping.
 """
 
 from __future__ import annotations
@@ -39,6 +42,7 @@ __all__ = [
 
 STATS_VERSION = 1
 FIT_SPLIT = "train"
+PATIENT_SCALE = "brain-voxel median"
 _SEQUENCE_NAMES = tuple(sequence.value for sequence in CORE_SEQUENCES)
 
 
@@ -72,14 +76,27 @@ class NormalizationStats:
     modalities: Mapping[str, ModalityStats]
 
 
-def patient_moments(volume: np.ndarray) -> PatientMoments:
-    """Moments of the non-zero voxels of one volume, accumulated in float64."""
+def _brain_voxels(volume: np.ndarray) -> np.ndarray:
     array = np.asarray(volume)
-    brain = array[array != 0].astype(np.float64)
+    brain: np.ndarray = np.asarray(array[array != 0], dtype=np.float64)
     if brain.size == 0:
         raise ValueError("volume has no non-zero brain voxels")
     if not np.all(np.isfinite(brain)):
         raise ValueError("volume contains non-finite values")
+    return brain
+
+
+def _patient_scale(brain: np.ndarray) -> float:
+    scale = float(np.median(brain))
+    if not scale > 0:
+        raise ValueError("brain-voxel median must be positive to rescale a volume")
+    return scale
+
+
+def patient_moments(volume: np.ndarray) -> PatientMoments:
+    """Moments of one patient's brain voxels after dividing by their own median."""
+    brain = _brain_voxels(volume)
+    brain = brain / _patient_scale(brain)
     mean = float(brain.mean())
     return PatientMoments(
         n=int(brain.size), mean=mean, m2=float(np.sum((brain - mean) ** 2))
@@ -160,7 +177,11 @@ def _to_document(stats: NormalizationStats) -> dict[str, object]:
         "patient_count": stats.patient_count,
         "train_roster_sha256": stats.train_roster_sha256,
         "split_manifest_sha256": stats.split_manifest_sha256,
-        "statistic": "pooled brain-voxel mean and population std (ddof=0), voxels != 0",
+        "patient_scale": PATIENT_SCALE,
+        "statistic": (
+            "pooled mean and population std (ddof=0) of brain voxels (!= 0) "
+            "after dividing each volume by its own brain-voxel median"
+        ),
         "modalities": {
             name: {"mean": m.mean, "std": m.std, "voxel_count": m.voxel_count}
             for name, m in stats.modalities.items()
@@ -196,6 +217,8 @@ def load_normalization_stats(
     document = json.loads(path.read_text(encoding="utf-8"))
     if document.get("stats_version") != STATS_VERSION:
         raise ValueError("unsupported normalization statistics version")
+    if document.get("patient_scale") != PATIENT_SCALE:
+        raise ValueError("statistics were fitted with a different patient scale")
     if (
         document["fit_cohort"] != Cohort.UTSW.value
         or document["fit_split"] != FIT_SPLIT
@@ -224,8 +247,14 @@ def load_normalization_stats(
 def normalize_volume(
     volume: np.ndarray, sequence: CanonicalSequence | str, stats: NormalizationStats
 ) -> np.ndarray:
-    """Apply frozen statistics to brain voxels; background stays exactly 0."""
+    """Divide by the volume's own brain median, then apply the frozen z-score.
+
+    Only brain voxels change; background stays exactly 0. The caller's array is
+    never modified.
+    """
     modality = stats.modalities[CanonicalSequence(sequence).value]
+    scale = _patient_scale(_brain_voxels(volume))
+    rescaled = np.array(volume, dtype=np.float64) / scale
     transform = NormalizeIntensity(
         subtrahend=[modality.mean],
         divisor=[modality.std],
@@ -233,8 +262,7 @@ def normalize_volume(
         channel_wise=True,
         dtype=np.float32,
     )
-    # MONAI edits its input in place; copy so the caller's array is never changed.
     normalized = np.asarray(
-        transform(np.array(volume, dtype=np.float32)[None]), dtype=np.float32
+        transform(rescaled.astype(np.float32)[None]), dtype=np.float32
     )
     return normalized.reshape(np.shape(volume))
