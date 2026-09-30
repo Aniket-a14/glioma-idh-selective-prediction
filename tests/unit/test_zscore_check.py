@@ -54,30 +54,50 @@ def _summary(
 
 
 def test_summary_matches_hand_worked_values_and_excludes_background() -> None:
-    # Brain input {2, 4, 6}, with frozen mean=2 and std=2, becomes {0, 1, 2}.
-    # Thus n=3, mean=1, population std=sqrt(2/3), min=0, max=2;
-    # linear percentiles at 0.1 and 99.9 are 0.002 and 1.998.
+    # Brain input {2, 4, 6} has median 4, so it rescales to {0.5, 1, 1.5}.
+    # Frozen mean=2 and std=2 give z={-0.75, -0.5, -0.25}; thus n=3,
+    # mean=-0.5, population std=sqrt(0.125/3), min=-0.75, max=-0.25.
+    # Linear percentiles are -0.75 + 0.002*0.25 = -0.7495 and
+    # -0.5 + 0.998*0.25 = -0.2505.
     volume = np.array([0, 2, 4, 0, 6], dtype=np.float32)
     summary = summarize_volume(volume, "T1", _stats())
 
     assert summary.n == 3
-    assert summary.mean == 1.0
-    assert math.isclose(summary.std, math.sqrt(2.0 / 3.0))
-    assert summary.minimum == 0.0
-    assert summary.maximum == 2.0
-    assert math.isclose(summary.p0_1, 0.002)
-    assert math.isclose(summary.p99_9, 1.998)
+    assert summary.mean == -0.5
+    assert math.isclose(summary.std, math.sqrt(0.125 / 3.0))
+    assert summary.minimum == -0.75
+    assert summary.maximum == -0.25
+    assert math.isclose(summary.p0_1, -0.7495)
+    assert math.isclose(summary.p99_9, -0.2505)
     assert summary.finite
 
 
 def test_percentile_is_computed_on_brain_values_with_numpy_linear_interpolation() -> (
     None
 ):
+    # Brain input {1, 2, 3, 4} has median 2.5 and rescales to
+    # {0.4, 0.8, 1.2, 1.6}; mean=0 and std=1 leave those values unchanged.
+    # p99.9 is at position 0.999*3=2.997: 1.2 + 0.997*0.4 = 1.5988.
     volume = np.array([0, 1, 2, 3, 4], dtype=np.float32)
     summary = summarize_volume(volume, "T2", _stats(mean=0.0, std=1.0))
 
     assert summary.n == 4
-    assert math.isclose(summary.p99_9, 3.997)
+    assert math.isclose(summary.p99_9, 1.5988, rel_tol=1e-7)
+
+
+def test_summary_is_invariant_to_volume_scale() -> None:
+    volume = np.array([0, 2, 4, 0, 6], dtype=np.float32)
+    original = summarize_volume(volume, "T1", _stats())
+    scaled = summarize_volume(volume * 1000, "T1", _stats())
+
+    assert scaled.n == original.n
+    assert scaled.finite == original.finite
+    for field in ("mean", "std", "minimum", "maximum", "p0_1", "p99_9"):
+        assert math.isclose(
+            getattr(scaled, field),
+            getattr(original, field),
+            rel_tol=1e-5,
+        )
 
 
 def test_summarizing_does_not_change_the_input_array() -> None:
