@@ -24,13 +24,14 @@ from glioma_selective.preprocessing.normalize import (
     write_normalization_stats,
 )
 
-# Hand-worked: patient A brain voxels {2, 4, 6}, patient B brain voxel {10}.
-# Pooled {2, 4, 6, 10}: mean 5.5, squared deviations 12.25 + 2.25 + 0.25 + 20.25 = 35,
-# population variance 35 / 4 = 8.75, std = sqrt(8.75).
+# Hand-worked: patient A brain voxels {2, 4, 6} (median 4), patient B brain voxel {10}
+# (median 10). Each is divided by its own median: A -> {0.5, 1, 1.5}, B -> {1}.
+# Pooled {0.5, 1, 1.5, 1}: mean 1, squared deviations 0.25 + 0 + 0.25 + 0 = 0.5,
+# population variance 0.5 / 4 = 0.125, std = sqrt(0.125).
 VOLUME_A = np.array([0, 2, 4, 0, 6], dtype=np.float32)
 VOLUME_B = np.array([0, 10, 0, 0], dtype=np.float32)
-POOLED_MEAN = 5.5
-POOLED_STD = math.sqrt(8.75)
+POOLED_MEAN = 1.0
+POOLED_STD = math.sqrt(0.125)
 
 
 def _write_manifest(directory: Path, train: list[str], *, sidecar: bool = True) -> Path:
@@ -67,7 +68,8 @@ def _fit(tmp_path: Path) -> NormalizationStats:
 
 def test_patient_moments_match_hand_values_and_ignore_background() -> None:
     moments = patient_moments(VOLUME_A)
-    assert (moments.n, moments.mean, moments.m2) == (3, 4.0, 8.0)
+    # {2, 4, 6} / median 4 = {0.5, 1, 1.5}: mean 1, squared deviations 0.25 + 0 + 0.25
+    assert (moments.n, moments.mean, moments.m2) == (3, 1.0, 0.5)
 
 
 def test_combine_moments_matches_hand_values_in_either_order() -> None:
@@ -75,14 +77,19 @@ def test_combine_moments_matches_hand_values_in_either_order() -> None:
     for pooled in (combine_moments([a, b]), combine_moments([b, a])):
         assert pooled.n == 4
         assert math.isclose(pooled.mean, POOLED_MEAN)
-        assert math.isclose(pooled.m2, 35.0)
+        assert math.isclose(pooled.m2, 0.5)
 
 
 def test_combine_moments_matches_numpy_on_random_patients() -> None:
     rng = np.random.default_rng(3)
     volumes = [rng.normal(300, 80, size=(6, 7, 5)).astype(np.float32) for _ in range(5)]
     pooled = combine_moments([patient_moments(volume) for volume in volumes])
-    every = np.concatenate([volume.ravel() for volume in volumes]).astype(np.float64)
+    every = np.concatenate(
+        [
+            volume.astype(np.float64).ravel() / np.median(volume.astype(np.float64))
+            for volume in volumes
+        ]
+    )
     assert pooled.n == every.size
     assert math.isclose(pooled.mean, every.mean(), rel_tol=1e-12)
     assert math.isclose(math.sqrt(pooled.m2 / pooled.n), every.std(), rel_tol=1e-12)
@@ -170,10 +177,21 @@ def test_normalize_volume_matches_hand_formula_and_keeps_background_zero(
     out = normalize_volume(VOLUME_A, "T1", stats)
     assert out.dtype == np.float32
     assert out[0] == 0 and out[3] == 0
+    # A's own median is 4: raw 2, 4, 6 -> 0.5, 1, 1.5 -> (r - 1) / sqrt(0.125)
     for index, raw in ((1, 2.0), (2, 4.0), (4, 6.0)):
-        assert math.isclose(
-            float(out[index]), (raw - POOLED_MEAN) / POOLED_STD, rel_tol=1e-6
-        )
+        expected = (raw / 4.0 - POOLED_MEAN) / POOLED_STD
+        assert math.isclose(float(out[index]), expected, rel_tol=1e-6, abs_tol=1e-7)
+
+
+def test_scale_invariance_and_positive_median_requirement(tmp_path: Path) -> None:
+    stats = _fit(tmp_path)
+    volume = np.array([0, 2, 4, 0, 6], dtype=np.float32)
+    base = normalize_volume(volume, "T1", stats)
+    for factor in (1000.0, 0.001):
+        scaled = normalize_volume((volume * factor).astype(np.float32), "T1", stats)
+        assert np.allclose(scaled, base, rtol=1e-5, atol=1e-6)
+    with pytest.raises(ValueError, match="median must be positive"):
+        normalize_volume(np.array([0, -2, -4, -6], dtype=np.float32), "T1", stats)
 
 
 def test_normalize_volume_never_changes_the_input_array(tmp_path: Path) -> None:
@@ -206,7 +224,11 @@ def test_applying_to_a_held_out_volume_uses_train_statistics_and_recomputes_noth
     )
     held_out = np.array([0, 1000, 2000, 0, 3000], dtype=np.float32)
     out = normalize_volume(held_out, "T2", stats)
-    expected = (held_out[held_out != 0].astype(np.float64) - POOLED_MEAN) / POOLED_STD
+    # held-out median is 2000, so the volume becomes {0.5, 1, 1.5} and the train
+    # statistics (mean 1, std sqrt(0.125)) are applied, not the volume's own
+    expected = (held_out[held_out != 0].astype(np.float64) / 2000.0 - POOLED_MEAN) / (
+        POOLED_STD
+    )
     assert np.allclose(out[held_out != 0], expected, rtol=1e-5)
     after = json.dumps(
         {name: vars(m) for name, m in stats.modalities.items()},
@@ -217,9 +239,10 @@ def test_applying_to_a_held_out_volume_uses_train_statistics_and_recomputes_noth
 
 def test_no_clipping_of_extreme_intensities(tmp_path: Path) -> None:
     stats = _fit(tmp_path)
-    huge = np.array([0, 1.0e6], dtype=np.float32)
+    # brain voxels {1, 1, 1, 1e6}: median 1, so the hot voxel stays 1e6 after rescale
+    huge = np.array([0, 1, 1, 1, 1.0e6], dtype=np.float32)
     out = normalize_volume(huge, "T1ce", stats)
-    assert math.isclose(float(out[1]), (1.0e6 - POOLED_MEAN) / POOLED_STD, rel_tol=1e-5)
+    assert math.isclose(float(out[4]), (1.0e6 - POOLED_MEAN) / POOLED_STD, rel_tol=1e-5)
 
 
 def test_stats_file_is_byte_deterministic_never_overwritten_and_hash_checked(
@@ -245,6 +268,18 @@ def test_load_rejects_statistics_not_fitted_on_utsw_train(tmp_path: Path) -> Non
     document["fit_cohort"] = Cohort.UCSF_PDGM.value
     path.write_text(json.dumps(document))
     with pytest.raises(ValueError, match="UTSW training split"):
+        load_normalization_stats(path)
+
+
+def test_load_rejects_statistics_fitted_with_a_different_patient_scale(
+    tmp_path: Path,
+) -> None:
+    stats = _fit(tmp_path)
+    path = write_normalization_stats(tmp_path / "s.json", stats)
+    document = json.loads(path.read_text())
+    document["patient_scale"] = "none"
+    path.write_text(json.dumps(document))
+    with pytest.raises(ValueError, match="patient scale"):
         load_normalization_stats(path)
 
 
