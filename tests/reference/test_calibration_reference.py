@@ -112,6 +112,31 @@ def test_edge_values_switch_bins_with_right_closed() -> None:
     )
 
 
+def test_zero_and_one_are_included_at_equal_width_boundaries() -> None:
+    case = _fixture("probability_boundaries")
+    for right_closed in (False, True):
+        bins = calibration_reference.reliability_bins(
+            case["probs"],
+            case["labels"],
+            case["n_bins"],
+            right_closed=right_closed,
+        )
+        assert sum(entry["count"] for entry in bins) == 2
+        assert [entry["mean_confidence"] for entry in bins] == case["expected_means"]
+
+
+def test_top_label_half_probability_predicts_zero() -> None:
+    case = _fixture("top_label_half_tie")
+    bins = calibration_reference.reliability_bins(
+        case["probs"],
+        case["labels"],
+        case["n_bins"],
+        variant="top_label",
+    )
+    assert bins[0]["mean_confidence"] == case["expected_mean_confidence"]
+    assert bins[0]["observed"] == case["expected_observed"]
+
+
 def test_equal_mass_remainder_and_empty_bins() -> None:
     case = _fixture("equal_mass_remainder")
     bins = calibration_reference.reliability_bins(
@@ -177,6 +202,13 @@ def test_conformal_rank_avoids_float_rounding_failure() -> None:
     )
     naive = math.ceil((case["n"] + 1) * (1 - float(case["alpha"])))
     assert naive != case["expected_rank"]
+
+
+def test_float_alpha_uses_decimal_spelling_for_rank_and_quantile() -> None:
+    assert calibration_reference.conformal_rank(9, 0.7) == 3
+    assert calibration_reference.conformal_rank(19, 0.85) == 3
+    scores = [index / 10 for index in range(1, 10)]
+    assert calibration_reference.conformal_quantile(scores, 0.7) == 0.3
 
 
 def test_brier_wrong_variants_are_caught() -> None:
