@@ -1,4 +1,4 @@
-# Phase 04 end-to-end runbook
+# Phase 04 preprocessing and QC runbook
 
 This runbook is for a run from the repository root on a machine where the
 external data drive is mounted. The scripts resolve storage through
@@ -10,6 +10,12 @@ Use the project virtual environment's Python. The commands below are written
 as `python ...` and assume the environment is already active. Every command in
 the canonical sequence is marked **[DATA DRIVE]** because it reads or writes
 the mounted data, private metadata, manifests, caches, or generated figures.
+
+Phase 04 is complete and its committed manifests are frozen. A rerun must use
+explicit output paths outside `docs/research/manifests/` (`--manifest-output`
+for step 6 and `--output` for steps 7 and 8), or be performed only at the
+Research Lead's request. Step 3 merges verification into the existing
+`preprocessing_status.json`; it does not recreate that status history.
 
 ## Canonical order
 
@@ -311,9 +317,9 @@ and returns `0` when no checks fail or `1` when any check fails.
 
 ## Decision notes
 
-- **D-023:** Phase 05 split freeze precedes normalization statistics and the
-  related z-score check; this runbook therefore stops at the available Phase
-  04 artifacts and does not add a normalization command.
+- **D-023:** The Phase 05 split freeze precedes T04.6 normalization statistics
+  and the related T04.8 z-score check; those commands are outside this Phase
+  04 preprocessing and QC runbook.
 - **D-026:** The retained UTSW and UCSF-PDGM inputs are verified passthrough
   inputs for the relevant preprocessing stages; the scripts still run their
   checks.
