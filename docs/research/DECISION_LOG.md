@@ -1184,4 +1184,28 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 ---
 
+## D-047 — Phase 09 core metrics and the Phase 07 score formulas are built early; M1, M2 and M5 are rank-equivalent
+**Status:** RESOLVED 2026-10-05 (Research Lead: "go" on the pull-forward) · **Resolve by:** Phase 06 · **Blocking:** no
+
+**Conflict.** Phase 09's entry criteria require Phase 08 complete. The selective-prediction metrics (risk-coverage points, selective risk at a coverage, AURC, monotonicity violations, rejected-but-correct rate) need only scores and losses, are mathematically checkable, and every one of the 108 result cells depends on them. Building them while R1 and R2 train follows D-041 and D-045.
+
+**Adopted.** (1) The contracts are `docs/research/protocols/PHASE09_METRIC_CONTRACTS.md` and `tests/fixtures/phase09_selective.json`, using the conventions already fixed in D-033 and PREREGISTRATION.md section 6 (block ties, AURC as the mean over cutoffs, selective risk at the smallest attainable coverage at or above the target). Claude builds the risk-coverage points, monotonicity violations and the per-mechanism score functions; Codex builds AURC, selective risk at coverage, the rejected-but-correct rate and the oracle AURC independently; the C-018 contributor reference stays a third check. Nothing here reads a prediction artifact; no Phase 09 gate is claimed. (2) The M4 ensemble variance is the population variance (divide by N); the MC-dropout score is minus the entropy of the mean MC probability. (3) **Finding for the Research Lead.** For the score-threshold risk-coverage view, M1 (raw), M2 (temperature-scaled) and M5 (conformal score threshold) all rank patients by `max(p, 1 - p)` of a monotone transform of the same logit, so their risk-coverage curves and AURC are identical up to rounding ties. M5 differs from M2 only through the set-valued coverage analysis (RQ2, C4) and the operating points. A comparison of AURC between M2 and M5 is therefore uninformative by construction, and only M3 and M4 can differ in AURC from M1. This does not change the pre-registration, but the paper must say it, and C1 and C2 should be read with it in mind.
+
+**Owner.** Research Lead. If you want M5's score-threshold view to use something other than `max(p, 1 - p)`, say so before Phase 09.
+
+---
+
+## D-048 — MC-dropout: the number of passes is not pre-registered and dropout lives only in the head
+**Status:** OPEN · **Resolve by:** Phase 07 (before T07.4) · **Blocking:** no (T07.4 is not started)
+
+**Conflict.** M3 is "MC-dropout predictive entropy" (SPEC 4.6, PREREGISTRATION section 4), but (a) no text fixes the number of stochastic passes T, and (b) the only dropout layer in the model is inside the classification head (`ClassificationHead`, p = 0.2, `models/heads.py`), so MC-dropout perturbs only a 256-to-64-to-1 head on fixed bottleneck features and cannot express backbone uncertainty.
+
+**Alternatives.** (a) Head-only MC-dropout with T = 30 (cheap: the backbone features are computed once per patient, so all T passes are head-only). (b) Add dropout inside the backbone for M3 only: that is an architecture change and a new trained model, ruled out by R-C08 without a decision. (c) Keep M3 as head-only and say so in the paper as a limitation.
+
+**Recommendation.** (a) plus (c): T = 30, stated plainly as head-only MC-dropout, because the study compares mechanisms on one trained backbone and the paper reports how each behaves, not that each is the best possible version.
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
