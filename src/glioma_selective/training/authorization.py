@@ -494,7 +494,7 @@ def step_tiny_overfit(
     max_steps: int = 150,
     overfit_threshold: float = 0.05,
     synthetic: bool = False,
-    learning_rate: float = 1.0e-3,
+    learning_rate: float = 3.0e-4,
 ) -> StepResult:
     started = time.monotonic()
     if not synthetic:

@@ -1129,4 +1129,24 @@ criterion and loses exact float round trips.
 
 ---
 
+## D-043 — Tiny-overfit harness step uses the real training learning rate (3e-4), not 1e-3
+**Status:** RESOLVED 2026-10-05 (engineering, harness parameter only; Research Lead informed) · **Resolve by:** Phase 06 · **Blocking:** no
+
+**Conflict.** Step 4 of the authorization harness (T06.8) overfits 4 real patients to classification loss < 0.05 within 150 steps. It
+ran at lr 1e-3 with an unseeded initialization and passed in 39, 39 and 131 steps. After the step was seeded
+(`torch.manual_seed(0)`), the same step diverged on the home GPU at `ddc044c` (min loss 0.632, final 3.922 at step 150), so the
+harness failed and no authorization report exists at that commit. The earlier passes depended on the random initialization.
+
+**Alternatives.** (a) Use the real training rate, 3e-4 (`configs/training/base.yaml`). (b) Keep 1e-3 and try other seeds until one
+passes: rejected, it is seed shopping and weakens the gate. (c) Raise `max_steps` or loosen the 0.05 threshold: rejected, it weakens
+the criterion.
+
+**Adopted.** (a). A probe on the home GPU with seed 0 passed at lr 3e-4 (43 steps, final loss 0.0111) and at lr 5e-4 (54 steps,
+0.0362). 3e-4 was the first value tried. Threshold (0.05) and step budget (150) are unchanged. Step 6 (resume equivalence) keeps its
+own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes the base `ModelConfig` and `TrainConfig(seed=0)`.
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
