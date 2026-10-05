@@ -37,6 +37,10 @@ dependencies = [
     # artifacts are parquet files, which needs a parquet engine; pandas alone
     # cannot read or write them.
     "pyarrow>=17,<26",
+    # src/glioma_selective/tracking/predictions.py imports pandas directly. It was
+    # only present as a transitive dependency of the Phase 04 stack, so a venv
+    # without that stack failed at the first prediction freeze.
+    "pandas>=2,<4",
 ]
 
 [project.optional-dependencies]

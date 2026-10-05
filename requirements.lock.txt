@@ -225,6 +225,7 @@ packaging==26.3
     #   scikit-image
 pandas==3.0.6
     # via
+    #   glioma-selective (pyproject.toml)
     #   batchgenerators
     #   nnunetv2
     #   seaborn
