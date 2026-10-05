@@ -204,3 +204,44 @@ def test_report_merges_metrics_and_writes_hash_sidecar(
     assert record["metrics"]["prior"] == 7
     assert record["metrics"]["internal_test"]["n"] == 4
     assert "patient-" not in capsys.readouterr().out
+
+
+def test_report_includes_verified_dice_and_rejects_a_tampered_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_id, run_dir, _record = _report_fixture(tmp_path / "good", monkeypatch)
+    document = {
+        "run_id": run_id,
+        "git_sha": "a" * 40,
+        "checkpoint_hash": "c" * 64,
+        "splits": {"internal_test": {"mean": 0.5}},
+    }
+    payload = (json.dumps(document, sort_keys=True) + "\n").encode()
+    dice_path = run_dir / "segmentation_dice.json"
+    dice_path.write_bytes(payload)
+    dice_path.with_name(dice_path.name + ".sha256").write_text(
+        f"{hashlib.sha256(payload).hexdigest()}  {dice_path.name}\n", encoding="ascii"
+    )
+    result = json.loads(report_phase06(run_id).read_text(encoding="utf-8"))
+    assert result["segmentation_dice"]["splits"]["internal_test"]["mean"] == 0.5
+
+    run_id, run_dir, _record = _report_fixture(tmp_path / "bad", monkeypatch)
+    dice_path = run_dir / "segmentation_dice.json"
+    dice_path.write_bytes(payload)
+    dice_path.with_name(dice_path.name + ".sha256").write_text(
+        f"{'0' * 64}  {dice_path.name}\n", encoding="ascii"
+    )
+    with pytest.raises(ValueError, match="sidecar"):
+        report_phase06(run_id)
+
+    run_id, run_dir, _record = _report_fixture(tmp_path / "other", monkeypatch)
+    wrong = dict(document, run_id="01K6JQY7YGXSP6ZBZD3YF8QXPV")
+    wrong_payload = (json.dumps(wrong, sort_keys=True) + "\n").encode()
+    dice_path = run_dir / "segmentation_dice.json"
+    dice_path.write_bytes(wrong_payload)
+    dice_path.with_name(dice_path.name + ".sha256").write_text(
+        f"{hashlib.sha256(wrong_payload).hexdigest()}  {dice_path.name}\n",
+        encoding="ascii",
+    )
+    with pytest.raises(ValueError, match="provenance"):
+        report_phase06(run_id)

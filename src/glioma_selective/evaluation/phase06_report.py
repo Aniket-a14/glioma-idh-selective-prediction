@@ -120,6 +120,26 @@ def _write_exclusive(path: Path, payload: bytes) -> None:
         os.fsync(stream.fileno())
 
 
+def _read_dice(path: Path, *, run_id: str, checkpoint_hash: str) -> Any:
+    """Read segmentation_dice.json after its sidecar hash and provenance match."""
+    sidecar = path.with_name(path.name + ".sha256")
+    try:
+        expected = sidecar.read_text(encoding="ascii").split()[0]
+        content = path.read_bytes()
+        document = json.loads(content.decode("utf-8"))
+    except (OSError, UnicodeError, IndexError, json.JSONDecodeError) as error:
+        raise ValueError("segmentation_dice.json or its sidecar is invalid") from error
+    if hashlib.sha256(content).hexdigest() != expected.lower():
+        raise ValueError("segmentation_dice.json does not match its SHA-256 sidecar")
+    if (
+        not isinstance(document, dict)
+        or document.get("run_id") != run_id
+        or document.get("checkpoint_hash") != checkpoint_hash
+    ):
+        raise ValueError("segmentation_dice.json provenance does not match the run")
+    return document
+
+
 def report_phase06(run_id: str) -> Path:
     """Validate provenance, report internal-test metrics, and merge run metrics."""
     record_path = paths.experiments_dir() / run_id / "record.json"
@@ -160,10 +180,9 @@ def report_phase06(run_id: str) -> Path:
     flags = criterion_flags(auroc, [float(ci[0]), float(ci[1])])
     dice_path = run_dir / "segmentation_dice.json"
     if dice_path.exists():
-        try:
-            segmentation_dice: Any = json.loads(dice_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as error:
-            raise ValueError("segmentation_dice.json is invalid") from error
+        segmentation_dice: Any = _read_dice(
+            dice_path, run_id=run_id, checkpoint_hash=metadata["checkpoint_hash"]
+        )
     else:
         segmentation_dice = "not_available: run scripts/freeze_predictions.py first"
     report: dict[str, Any] = {
