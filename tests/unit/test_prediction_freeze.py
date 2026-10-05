@@ -105,25 +105,27 @@ def fake_run(
 )
 def test_freeze_refuses_ineligible_run_record(
     fake_run: tuple[str, Path, dict[str, Any]],
-    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
     field: str,
     value: Any,
     message: str,
 ) -> None:
-    run_id, checkpoint_path, record = fake_run
+    run_id, _checkpoint_path, record = fake_run
+    record_path = tmp_path / "artifacts" / "experiments" / run_id / "record.json"
+    record_path.write_text(json.dumps({**record, field: value}), encoding="utf-8")
     with pytest.raises(ValueError, match=message):
-        freeze_predictions._check_run(
-            {**record, field: value}, checkpoint_path, allow_sha_mismatch=False
-        )
+        freeze_predictions.freeze_run(run_id, device="cpu")
 
 
 def test_freeze_refuses_git_sha_mismatch_and_reports_both(
-    fake_run: tuple[str, Path, dict[str, Any]], monkeypatch: pytest.MonkeyPatch
+    fake_run: tuple[str, Path, dict[str, Any]],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _run_id, checkpoint_path, record = fake_run
     monkeypatch.setattr(freeze_predictions, "_current_git_sha", lambda: "c" * 40)
     with pytest.raises(ValueError, match="current git SHA c.*run git SHA a"):
-        freeze_predictions._check_run(record, checkpoint_path, allow_sha_mismatch=False)
+        freeze_predictions.freeze_run(_run_id, device="cpu")
     current, recorded, _checkpoint = freeze_predictions._check_run(
         record, checkpoint_path, allow_sha_mismatch=True
     )
