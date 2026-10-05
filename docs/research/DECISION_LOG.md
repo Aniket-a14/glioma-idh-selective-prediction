@@ -1173,4 +1173,15 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 ---
 
+## D-046 — Phase 06 criteria 6-8 are reported from the frozen artifact; Dice on both UTSW splits
+**Status:** RESOLVED 2026-10-05 (engineering; Research Lead informed) · **Resolve by:** Phase 06 · **Blocking:** no
+
+**Conflict.** Acceptance criterion 8 ("auxiliary segmentation Dice recorded") does not say on which split, and criteria 6 and 7 (AUROC with a bootstrap CI, AUPRC) had no code computing them.
+
+**Adopted.** (1) `scripts/report_phase06.py` reads only the frozen `predictions.parquet` (hash-verified) and reports internal-test AUROC and AUPRC with patient-level percentile bootstrap CIs (2000 iterations, seed 0, per PREREGISTRATION section 10), with Brier, ECE, prevalence and coverage 1.0 beside them; AURC and selective metrics stay in Phase 09. `criterion_6_met` is AUROC >= 0.75 with the CI lower bound above 0.5; it reports, it never gates or re-runs. (2) Hard Dice (threshold 0.5) of the three auxiliary channels (enhancing, necrotic core, oedema) is recorded for both the calibration and internal-test splits at the best checkpoint, in the same forward pass as the predictions, weighted by patients with a mask (the same aggregation as `training/loop.py::evaluate`); patients without a segmentation are excluded and counted. It is written to `segmentation_dice.json` with a SHA-256 sidecar by `scripts/freeze_predictions.py`, and the report refuses a Dice file whose hash or provenance does not match.
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
