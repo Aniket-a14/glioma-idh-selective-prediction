@@ -369,6 +369,8 @@ The real deadline pressure lands at Phase 11, not sooner.
 **Owner.** Research Lead — resume T02.1 whenever ready; no agent should treat this as something to
 chase or escalate on its own.
 
+**Update 2026-10-05.** The Research Lead sent the EGD DUA request (see `DATA_ACCESS_LOG.md`, T02.1). The decision to defer is closed; the DUA itself is still pending Health-RI's review. Two commitments in the request limit later choices: EGD stays on the external SSD (no copy to the home GPU server or a cloud A100 without a new request to Health-RI) and is retained for three months only (the request does not say from when; the DUA text Health-RI returns will fix it), which must be planned around Gate E (Phase 11) and the Phase 12 evaluation.
+
 ---
 
 ## D-019 — T03.7 ambiguous-label exclusion boundary (UTSW no-IDH, UCSF-PDGM relative co-deletion)
