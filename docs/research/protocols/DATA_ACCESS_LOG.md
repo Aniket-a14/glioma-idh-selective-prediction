@@ -90,7 +90,7 @@ UTSW/UCSF-PDGM against. Full acquisition-method detail and verification in **D-0
 | BraTS-2021 | `BraTS2021_MappingToTCIA.xlsx`, official TCIA wiki attachment, CC BY 4.0, no DUA. 1,488 rows (train+validation only — **challenge test set is sequestered on Synapse `syn25829067`, not obtainable here**) |
 | Storage | `paths.private_data_dir() / "external_cohort_ids"` (external SSD, **not committed** — raw-identifier tier per `DATA_GOVERNANCE_PROTOCOL.md` §3) |
 | Licence | GDC data is public domain / open per NIH data-sharing policy; TCIA wiki attachment is CC BY 4.0. Neither requires a DUA |
-| Consumed by | T03.4 (full overlap matrix), T03.5 (UCSF-PDGM ⇄ BraTS-2021 exclusion) — not yet run |
+| Consumed by | T03.4 (full overlap matrix), T03.5 (UCSF-PDGM ⇄ BraTS-2021 exclusion) — run 2026-09-18 (see the T03.4 and T03.5 entries in the progress log) |
 
 ---
 

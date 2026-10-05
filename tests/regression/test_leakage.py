@@ -259,10 +259,10 @@ def test_egd_overlap_check_is_deferred_until_egd_arrives() -> None:
 def test_split_leakage_checks_wait_for_phase_05_manifest(
     request: pytest.FixtureRequest,
 ) -> None:
-    """Run the split assertions as soon as Phase 05 creates its manifest."""
+    """Run the split assertions whenever the frozen split manifest is available."""
 
     if not SPLIT_MANIFEST_PATH.exists():
-        pytest.skip("split manifest not yet created — Phase 05")
+        pytest.skip("frozen split manifest not found (storage not mounted?)")
 
     real_phase03_artifacts = cast(
         dict[str, object], request.getfixturevalue("real_phase03_artifacts")
