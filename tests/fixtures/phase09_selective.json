@@ -1,0 +1,603 @@
+{
+ "schema": "phase09_contracts.v1",
+ "convention": "scores: higher = more confident, accepted first; ties are blocks (D-033); numbers are exact fractions as strings",
+ "cases": [
+  {
+   "name": "distinct_four",
+   "scores": [
+    0.9,
+    0.8,
+    0.7,
+    0.6
+   ],
+   "losses": [
+    0,
+    0,
+    1,
+    0
+   ],
+   "correct": [
+    1,
+    1,
+    0,
+    1
+   ],
+   "target_coverage": 0.5,
+   "points": [
+    [
+     "1/4",
+     "0"
+    ],
+    [
+     "1/2",
+     "0"
+    ],
+    [
+     "3/4",
+     "1/3"
+    ],
+    [
+     "1",
+     "1/4"
+    ]
+   ],
+   "aurc_mean_block": "7/48",
+   "aurc_mean_input_order": "7/48",
+   "aurc_trapezoid": "11/96",
+   "aurc_trapezoid_from_zero": "11/96",
+   "selective_risk_at_target": [
+    "1/2",
+    "0"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1/4"
+   ],
+   "monotonicity": [
+    1,
+    "1/12"
+   ],
+   "rejected_but_correct": [
+    "1/2",
+    2
+   ],
+   "oracle_aurc": "1/16",
+   "working": "risks at cutoffs k=1..4 are 0, 0, 1/3, 1/4"
+  },
+  {
+   "name": "tie_block_top_10_0",
+   "scores": [
+    0.9,
+    0.9,
+    0.5
+   ],
+   "losses": [
+    1,
+    0,
+    0
+   ],
+   "correct": [
+    0,
+    1,
+    1
+   ],
+   "target_coverage": 0.5,
+   "points": [
+    [
+     "2/3",
+     "1/2"
+    ],
+    [
+     "1",
+     "1/3"
+    ]
+   ],
+   "aurc_mean_block": "4/9",
+   "aurc_mean_input_order": "11/18",
+   "aurc_trapezoid": "5/36",
+   "aurc_trapezoid_from_zero": "17/36",
+   "selective_risk_at_target": [
+    "2/3",
+    "1/2"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1/3"
+   ],
+   "monotonicity": [
+    1,
+    "1/6"
+   ],
+   "rejected_but_correct": [
+    "1",
+    1
+   ],
+   "oracle_aurc": "1/9",
+   "working": "block {0.9,0.9} ends at coverage 2/3 with risk 1/2; then coverage 1 with risk 1/3"
+  },
+  {
+   "name": "tie_block_top_01_0",
+   "scores": [
+    0.9,
+    0.9,
+    0.5
+   ],
+   "losses": [
+    0,
+    1,
+    0
+   ],
+   "correct": [
+    1,
+    0,
+    1
+   ],
+   "target_coverage": 0.5,
+   "points": [
+    [
+     "2/3",
+     "1/2"
+    ],
+    [
+     "1",
+     "1/3"
+    ]
+   ],
+   "aurc_mean_block": "4/9",
+   "aurc_mean_input_order": "5/18",
+   "aurc_trapezoid": "5/36",
+   "aurc_trapezoid_from_zero": "17/36",
+   "selective_risk_at_target": [
+    "2/3",
+    "1/2"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1/3"
+   ],
+   "monotonicity": [
+    1,
+    "1/6"
+   ],
+   "rejected_but_correct": [
+    "1",
+    1
+   ],
+   "oracle_aurc": "1/9",
+   "working": "same block risks as the previous case, so the same block-tie answers"
+  },
+  {
+   "name": "all_scores_equal",
+   "scores": [
+    0.5,
+    0.5,
+    0.5,
+    0.5
+   ],
+   "losses": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "correct": [
+    0,
+    1,
+    1,
+    1
+   ],
+   "target_coverage": 0.5,
+   "points": [
+    [
+     "1",
+     "1/4"
+    ]
+   ],
+   "aurc_mean_block": "1/4",
+   "aurc_mean_input_order": "25/48",
+   "aurc_trapezoid": "0",
+   "aurc_trapezoid_from_zero": "1/4",
+   "selective_risk_at_target": [
+    "1",
+    "1/4"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1/4"
+   ],
+   "monotonicity": [
+    0,
+    "0"
+   ],
+   "rejected_but_correct": [
+    null,
+    0
+   ],
+   "oracle_aurc": "1/16",
+   "working": "a single block: coverage 1, risk 1/4"
+  },
+  {
+   "name": "one_case",
+   "scores": [
+    0.3
+   ],
+   "losses": [
+    1
+   ],
+   "correct": [
+    0
+   ],
+   "target_coverage": 1.0,
+   "points": [
+    [
+     "1",
+     "1"
+    ]
+   ],
+   "aurc_mean_block": "1",
+   "aurc_mean_input_order": "1",
+   "aurc_trapezoid": "0",
+   "aurc_trapezoid_from_zero": "1",
+   "selective_risk_at_target": [
+    "1",
+    "1"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1"
+   ],
+   "monotonicity": [
+    0,
+    "0"
+   ],
+   "rejected_but_correct": [
+    null,
+    0
+   ],
+   "oracle_aurc": "1",
+   "working": "one point (1, 1)"
+  },
+  {
+   "name": "all_losses_zero",
+   "scores": [
+    0.9,
+    0.7,
+    0.2
+   ],
+   "losses": [
+    0,
+    0,
+    0
+   ],
+   "correct": [
+    1,
+    1,
+    1
+   ],
+   "target_coverage": 0.5,
+   "points": [
+    [
+     "1/3",
+     "0"
+    ],
+    [
+     "2/3",
+     "0"
+    ],
+    [
+     "1",
+     "0"
+    ]
+   ],
+   "aurc_mean_block": "0",
+   "aurc_mean_input_order": "0",
+   "aurc_trapezoid": "0",
+   "aurc_trapezoid_from_zero": "0",
+   "selective_risk_at_target": [
+    "2/3",
+    "0"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "0"
+   ],
+   "monotonicity": [
+    0,
+    "0"
+   ],
+   "rejected_but_correct": [
+    "1",
+    1
+   ],
+   "oracle_aurc": "0",
+   "working": "risk 0 everywhere"
+  },
+  {
+   "name": "all_losses_one",
+   "scores": [
+    0.9,
+    0.7,
+    0.2
+   ],
+   "losses": [
+    1,
+    1,
+    1
+   ],
+   "correct": [
+    0,
+    0,
+    0
+   ],
+   "target_coverage": 0.5,
+   "points": [
+    [
+     "1/3",
+     "1"
+    ],
+    [
+     "2/3",
+     "1"
+    ],
+    [
+     "1",
+     "1"
+    ]
+   ],
+   "aurc_mean_block": "1",
+   "aurc_mean_input_order": "1",
+   "aurc_trapezoid": "2/3",
+   "aurc_trapezoid_from_zero": "1",
+   "selective_risk_at_target": [
+    "2/3",
+    "1"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1"
+   ],
+   "monotonicity": [
+    0,
+    "0"
+   ],
+   "rejected_but_correct": [
+    "0",
+    1
+   ],
+   "oracle_aurc": "1",
+   "working": "risk 1 everywhere"
+  },
+  {
+   "name": "target_between_points",
+   "scores": [
+    0.9,
+    0.8,
+    0.8,
+    0.1
+   ],
+   "losses": [
+    0,
+    1,
+    0,
+    1
+   ],
+   "correct": [
+    1,
+    0,
+    1,
+    0
+   ],
+   "target_coverage": 0.5,
+   "points": [
+    [
+     "1/4",
+     "0"
+    ],
+    [
+     "3/4",
+     "1/3"
+    ],
+    [
+     "1",
+     "1/2"
+    ]
+   ],
+   "aurc_mean_block": "7/24",
+   "aurc_mean_input_order": "1/3",
+   "aurc_trapezoid": "3/16",
+   "aurc_trapezoid_from_zero": "3/16",
+   "selective_risk_at_target": [
+    "3/4",
+    "1/3"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1/2"
+   ],
+   "monotonicity": [
+    0,
+    "0"
+   ],
+   "rejected_but_correct": [
+    "0",
+    1
+   ],
+   "oracle_aurc": "5/24",
+   "working": "blocks end at coverage 1/4 (risk 0), 3/4 (risk 1/3), 1 (risk 1/2)"
+  },
+  {
+   "name": "tie_block_top_two_errors",
+   "scores": [
+    0.9,
+    0.9,
+    0.4,
+    0.3
+   ],
+   "losses": [
+    1,
+    1,
+    0,
+    0
+   ],
+   "correct": [
+    0,
+    0,
+    1,
+    1
+   ],
+   "target_coverage": 0.6,
+   "points": [
+    [
+     "1/2",
+     "1"
+    ],
+    [
+     "3/4",
+     "2/3"
+    ],
+    [
+     "1",
+     "1/2"
+    ]
+   ],
+   "aurc_mean_block": "19/24",
+   "aurc_mean_input_order": "19/24",
+   "aurc_trapezoid": "17/48",
+   "aurc_trapezoid_from_zero": "41/48",
+   "selective_risk_at_target": [
+    "3/4",
+    "2/3"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1/2"
+   ],
+   "monotonicity": [
+    3,
+    "1"
+   ],
+   "rejected_but_correct": [
+    "1",
+    1
+   ],
+   "oracle_aurc": "5/24",
+   "working": "blocks end at 1/2 (risk 1), 3/4 (risk 2/3), 1 (risk 1/2)"
+  },
+  {
+   "name": "tie_block_bottom",
+   "scores": [
+    0.9,
+    0.7,
+    0.2,
+    0.2
+   ],
+   "losses": [
+    0,
+    0,
+    1,
+    0
+   ],
+   "correct": [
+    1,
+    1,
+    0,
+    1
+   ],
+   "target_coverage": 0.5,
+   "points": [
+    [
+     "1/4",
+     "0"
+    ],
+    [
+     "1/2",
+     "0"
+    ],
+    [
+     "1",
+     "1/4"
+    ]
+   ],
+   "aurc_mean_block": "1/8",
+   "aurc_mean_input_order": "7/48",
+   "aurc_trapezoid": "1/16",
+   "aurc_trapezoid_from_zero": "1/16",
+   "selective_risk_at_target": [
+    "1/2",
+    "0"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1/4"
+   ],
+   "monotonicity": [
+    0,
+    "0"
+   ],
+   "rejected_but_correct": [
+    "1/2",
+    2
+   ],
+   "oracle_aurc": "1/16",
+   "working": "blocks end at 1/4 (0), 1/2 (0), 1 (risk 1/4)"
+  },
+  {
+   "name": "tie_block_middle",
+   "scores": [
+    0.9,
+    0.6,
+    0.6,
+    0.1
+   ],
+   "losses": [
+    0,
+    1,
+    1,
+    0
+   ],
+   "correct": [
+    1,
+    0,
+    0,
+    1
+   ],
+   "target_coverage": 0.5,
+   "points": [
+    [
+     "1/4",
+     "0"
+    ],
+    [
+     "3/4",
+     "2/3"
+    ],
+    [
+     "1",
+     "1/2"
+    ]
+   ],
+   "aurc_mean_block": "11/24",
+   "aurc_mean_input_order": "5/12",
+   "aurc_trapezoid": "5/16",
+   "aurc_trapezoid_from_zero": "5/16",
+   "selective_risk_at_target": [
+    "3/4",
+    "2/3"
+   ],
+   "selective_risk_at_1": [
+    "1",
+    "1/2"
+   ],
+   "monotonicity": [
+    1,
+    "1/6"
+   ],
+   "rejected_but_correct": [
+    "1",
+    1
+   ],
+   "oracle_aurc": "5/24",
+   "working": "blocks end at 1/4 (0), 3/4 (risk 2/3), 1 (risk 1/2)"
+  }
+ ]
+}
