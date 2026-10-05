@@ -1094,4 +1094,22 @@ criterion 4 ("checkpoint save/resume is numerically identical") is read as bit-i
 
 ---
 
+## D-041 — Modality dropout is built now (T08.1 pulled forward) so R2 can train in Phase 06
+**Status:** RESOLVED 2026-09-30 (Research Lead: build it now, schedule below) · **Resolve by:** Phase 06 · **Blocking:** yes
+
+**Conflict.** Phase 06 asks for R1 (no modality dropout) and R2 (the primary model), and D-005 defines R2 as the first modality-dropout
+run. Modality dropout is a Phase 08 task (T08.1), and Phase 07 needs the R2 checkpoint, so Phase 08 cannot come first.
+
+**Adopted.** T08.1's implementation is done in Phase 06 (`training/modality_dropout.py`) with this fixed schedule: per training patient,
+with probability 0.5 all four sequences stay; otherwise one of the 14 non-empty proper subsets of {T1, T1ce, T2, FLAIR} is kept,
+uniformly, and the other channels are zeroed after normalization and augmentation (zeroed, never imputed). At least one sequence always
+stays. The draw depends only on (seed, epoch, batch index), so a resumed run reproduces it exactly. The schedule is the same in every
+epoch and for R2-R6; R1 sets `modality_dropout: false`. Calibration-split loss for early stopping (D-039) is computed on full
+four-sequence input, with no dropout, so R1 and R2 are stopped by the same rule on the same input. Phase 08 T08.1 becomes a review of
+this schedule (T08.2 documents it), not new code.
+
+**Owner.** Research Lead. Changing the probability or the subset rule after R2 has started is a new decision.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.

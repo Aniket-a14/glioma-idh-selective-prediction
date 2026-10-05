@@ -42,6 +42,7 @@ __all__ = [
     "step_tiny_overfit",
     "step_gpu_memory",
     "step_checkpoint_equivalence",
+    "base_config_sha256",
     "step_deterministic_logging",
     "write_harness_report",
 ]
@@ -238,6 +239,18 @@ def _inputs(synthetic: bool, *, seed: int = 0) -> _Inputs:
     training_config = TrainConfig(seed=seed)
     training_mapping = asdict(training_config)
     return _Inputs(model_config, training_config, model_mapping, training_mapping)
+
+
+def _config_sha256(inputs: _Inputs) -> str:
+    payload = {"model": inputs.model_mapping, "training": inputs.training_mapping}
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def base_config_sha256() -> str:
+    """Digest of the base model and training configs an authorization report covers."""
+    return _config_sha256(_inputs(False))
 
 
 def _result(name: str, status: StepStatus, detail: str, started: float) -> StepResult:
@@ -851,13 +864,7 @@ def run_harness(
         raise ValueError("max_steps must be at least one")
     selected = _device(device)
     inputs = _inputs(synthetic)
-    config_payload = {
-        "model": inputs.model_mapping,
-        "training": inputs.training_mapping,
-    }
-    config_sha = hashlib.sha256(
-        json.dumps(config_payload, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
+    config_sha = _config_sha256(inputs)
     try:
         git_sha = _git("rev-parse", "HEAD")
         git_dirty = bool(_git("status", "--porcelain"))

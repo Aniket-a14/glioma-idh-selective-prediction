@@ -232,6 +232,11 @@ class IDHDataset(Dataset[dict[str, Any]]):
             "preprocessing output index",
         )
 
+    @property
+    def labels(self) -> tuple[float, ...]:
+        """IDH labels in dataset order: 1.0 mutant, 0.0 wildtype."""
+        return self._labels
+
     def set_epoch(self, epoch: int) -> None:
         """Set the epoch used to derive each sample's augmentation stream."""
         if isinstance(epoch, bool) or not isinstance(epoch, int) or epoch < 0:

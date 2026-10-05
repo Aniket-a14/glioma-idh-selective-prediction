@@ -29,6 +29,7 @@ from glioma_selective.training.checkpoint import (
 from glioma_selective.training.determinism import deterministic_mode
 from glioma_selective.training.losses import joint_loss
 from glioma_selective.training.metrics import binary_auroc, hard_dice
+from glioma_selective.training.modality_dropout import apply_modality_dropout
 
 __all__ = [
     "EvalResult",
@@ -63,6 +64,8 @@ class TrainConfig:
     early_stopping_min_delta: float = 0.0
     checkpoint_every_steps: int = 0
     deterministic: bool = True
+    modality_dropout: bool = False
+    modality_dropout_keep_all_probability: float = 0.5
 
     def __post_init__(self) -> None:
         if self.accumulation_steps < 1 or self.max_epochs < 1:
@@ -189,6 +192,19 @@ def _train_epoch(
     optimizer.zero_grad(set_to_none=True)
     for batch in batches:
         tensors = _to_device(batch, device)
+        if config.modality_dropout:
+            # The stream depends only on (seed, epoch, batch index), so a resumed
+            # run draws the same channels as an uninterrupted one.
+            dropout_rng = np.random.default_rng(
+                np.random.SeedSequence(
+                    [config.seed, state.epoch, state.epoch_batches, 41]
+                )
+            )
+            tensors["image"] = apply_modality_dropout(
+                tensors["image"],
+                dropout_rng,
+                config.modality_dropout_keep_all_probability,
+            )
         losses, _ = _batch_loss(model, tensors, config, pos_weight, device)
         scaled = losses.total / config.accumulation_steps
         (scaler.scale(scaled) if scaler is not None else scaled).backward()
