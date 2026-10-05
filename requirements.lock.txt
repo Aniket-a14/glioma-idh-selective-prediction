@@ -235,6 +235,8 @@ pillow==12.3.0
     #   matplotlib
     #   scikit-image
     #   torchvision
+pyarrow==25.0.1
+    # via glioma-selective (pyproject.toml)
 pydantic==2.13.5
     # via blosc2
 pydantic-core==2.46.5

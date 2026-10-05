@@ -33,6 +33,10 @@ dependencies = [
     # Phase 04 QC overlay figures (D-028). Already in the lock as a transitive
     # dependency; declared here because src/ imports it directly.
     "matplotlib>=3.9,<4",
+    # Phase 06 T06.11 (docs/research/DECISION_LOG.md D-042): frozen prediction
+    # artifacts are parquet files, which needs a parquet engine; pandas alone
+    # cannot read or write them.
+    "pyarrow>=17,<26",
 ]
 
 [project.optional-dependencies]
