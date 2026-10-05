@@ -20,7 +20,9 @@ Records every point where the source documents were ambiguous, contradictory, in
 ---
 
 ## D-002 — "Split conformal prediction" and "conformal risk control" are used interchangeably
-**Status:** OPEN · **Resolve by:** Phase 07 (before any calibration is fitted) · **Blocking:** YES
+**Status:** RESOLVED 2026-10-05 (Research Lead: recommendation adopted) · **Resolve by:** Phase 07 (before any calibration is fitted) · **Blocking:** YES until Phase 07 starts
+
+**Resolution 2026-10-05.** Alternative (a) with (c) as the reported form: split conformal prediction is the primary instrument (M5), conformal risk control is a named secondary on an accepted-error loss (see D-045 for the exact loss). C4 keeps its coverage wording unchanged. T07.1 is closed by this entry.
 
 **Conflict.** SPEC §4.6 titles the primary mechanism *"split conformal prediction / conformal risk control — selected as the PRIMARY mechanism"* and later describes the implementation as *"a calibration-split nonconformity-score computation plus a quantile threshold."* These are **different procedures**:
 
@@ -1144,6 +1146,28 @@ the criterion.
 **Adopted.** (a). A probe on the home GPU with seed 0 passed at lr 3e-4 (43 steps, final loss 0.0111) and at lr 5e-4 (54 steps,
 0.0362). 3e-4 was the first value tried. Threshold (0.05) and step budget (150) are unchanged. Step 6 (resume equivalence) keeps its
 own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes the base `ModelConfig` and `TrainConfig(seed=0)`.
+
+**Owner.** Research Lead.
+
+---
+
+## D-044 — Prediction artifact conventions for T06.11
+**Status:** RESOLVED 2026-10-05 (engineering, within REPRODUCIBILITY_PROTOCOL.md section 5; Research Lead informed) · **Resolve by:** Phase 06 · **Blocking:** no
+
+**Conflict.** The protocol fixes 11 columns but not what goes in `patient_id` or `cohort` for the two UTSW splits that Phase 07 needs (calibration for fitting, internal test for evaluation).
+
+**Adopted.** (1) `patient_id` holds the first 16 hex characters of the SHA-256 of the canonical patient id, never the raw id, so artifacts can be shared and the raw-id rule holds even inside `artifacts/`; the same function joins them back to metadata. (2) `cohort` takes `utsw_calibration` and `utsw_internal_test`; `modality_condition` is `full` in Phase 06. (3) One parquet per run holds both splits. (4) `mc_dropout_samples`, `ensemble_member_probs` and `nonconformity_score` are all-null in Phase 06 with fixed Arrow types, so Phase 07 writes the same schema. (5) The freezer refuses a run whose record is not completed and clean, whose `best.pt` hash differs from the record, or whose code SHA differs from the record's, unless `--allow-sha-mismatch` is given and both SHAs are stored.
+
+**Owner.** Research Lead.
+
+---
+
+## D-045 — Phase 07 contracts are written and implemented early; M5 score and CRC loss defined
+**Status:** RESOLVED 2026-10-05 (Research Lead chose the options below) · **Resolve by:** Phase 06 · **Blocking:** no
+
+**Conflict.** Phase 07's entry criteria require Phase 06 to be complete (R2 checkpoint frozen). R1 and R2 need days of GPU time, and the mechanisms that only need calibration-split probabilities (temperature scaling, ECE, Brier, the conformal quantile, CRC) can be built and tested on synthetic inputs and hand-calculated fixtures without a checkpoint.
+
+**Adopted.** (1) The CPU-only parts of Phase 07 are pulled forward in the same way D-041 pulled modality dropout forward: contracts and fixtures in `docs/research/protocols/PHASE07_METRIC_CONTRACTS.md` and `tests/fixtures/phase07_contracts.json`; T07.5 and T07.6 by Claude in `calibration/`; T07.3 and T07.7 by Codex plus an independent conformal reference for T07.10. Nothing is fitted on real predictions and no Phase 07 gate is claimed until Phase 06 is complete. (2) The M5 nonconformity score is `1 - p(true class)` on the temperature-scaled probability, so M2 and M5 share one calibration fit (PREREGISTRATION.md section 5, "one calibrated score"); temperature is fit on the calibration split only. (3) The CRC secondary controls `P(accepted and wrong)` with the bounded loss `1[confidence >= tau and wrong]`, B = 1. This is not the conditional selective risk (which is a ratio and not an expectation of a bounded loss); the realized selective risk is always reported next to it. If the Research Lead prefers a different CRC loss, it is a one-function change before R2 predictions exist.
 
 **Owner.** Research Lead.
 
