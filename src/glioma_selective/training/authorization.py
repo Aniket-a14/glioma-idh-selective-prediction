@@ -430,6 +430,7 @@ def _overfit(
     threshold: float,
     learning_rate: float,
 ) -> tuple[StepStatus, int, float, list[float]]:
+    torch.manual_seed(0)
     model = build_model(model_config).to(device)
     model.train()
     config = TrainConfig(
