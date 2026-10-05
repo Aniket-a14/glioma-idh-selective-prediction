@@ -1,0 +1,83 @@
+[
+  {
+    "name": "one_hypothesis",
+    "p_values": [0.5],
+    "q": 0.05,
+    "expected_bh": [0.5],
+    "expected_reject": [false],
+    "expected_holm": [0.5],
+    "working": "With m=1, the only raw BH value is 0.5*1/1=0.5; the Holm value is also 1*0.5=0.5, and 0.5 is greater than the q=0.05 threshold"
+  },
+  {
+    "name": "all_equal_and_boundary_reject",
+    "p_values": [0.2, 0.2, 0.2],
+    "q": 0.2,
+    "expected_bh": [0.2, 0.2, 0.2],
+    "expected_reject": [true, true, true],
+    "expected_holm": [0.6, 0.6, 0.6],
+    "working": "The BH raw values are 0.6, 0.3, and 0.2, whose reverse running minimum is 0.2 for every rank; rank 3 satisfies 0.2 <= 3*0.2/3 exactly, so all three ranks reject"
+  },
+  {
+    "name": "already_sorted",
+    "p_values": [0.01, 0.03, 0.04, 0.08],
+    "q": 0.05,
+    "expected_bh": [0.04, 0.05333333333333334, 0.05333333333333334, 0.08],
+    "expected_reject": [true, false, false, false],
+    "expected_holm": [0.04, 0.09, 0.09, 0.09],
+    "working": "BH raw values are 0.04, 0.06, 0.053333..., and 0.08; the running minimum changes rank 2 to 0.053333...; only 0.01 <= 0.05/4 rejects"
+  },
+  {
+    "name": "reverse_sorted",
+    "p_values": [0.8, 0.4, 0.2, 0.1],
+    "q": 0.1,
+    "expected_bh": [0.8, 0.5333333333333333, 0.4, 0.4],
+    "expected_reject": [false, false, false, false],
+    "expected_holm": [0.8, 0.8, 0.6, 0.4],
+    "working": "Sorting gives 0.1, 0.2, 0.4, 0.8 and BH raw values 0.4, 0.4, 0.533333..., 0.8; mapping the running minima back to input order gives [0.8,0.533333...,0.4,0.4]"
+  },
+  {
+    "name": "running_minimum_binds",
+    "p_values": [0.04, 0.02, 0.03],
+    "q": 0.05,
+    "expected_bh": [0.04, 0.04, 0.04],
+    "expected_reject": [true, true, true],
+    "expected_holm": [0.06, 0.06, 0.06],
+    "working": "Sorted p-values 0.02,0.03,0.04 have raw BH values 0.06,0.045,0.04; the reverse minimum pulls the first two adjusted values down to 0.04, and ranks 2 and 3 meet their q=0.05 thresholds"
+  },
+  {
+    "name": "cap_at_one",
+    "p_values": [0.8, 1.0],
+    "q": 0.05,
+    "expected_bh": [1.0, 1.0],
+    "expected_reject": [false, false],
+    "expected_holm": [1.0, 1.0],
+    "working": "Sorted raw BH values are 0.8*2/1=1.6 and 1.0*2/2=1.0; the first adjusted value is capped at 1"
+  },
+  {
+    "name": "zero_and_one",
+    "p_values": [0.0, 1.0],
+    "q": 0.05,
+    "expected_bh": [0.0, 1.0],
+    "expected_reject": [true, false],
+    "expected_holm": [0.0, 1.0],
+    "working": "The p=0 raw value is 0 and the p=1 raw value is 2, which caps to 1; 0 <= 0.05/2 rejects only the first hypothesis"
+  },
+  {
+    "name": "ties_at_step_boundary",
+    "p_values": [0.05, 0.9, 0.01, 0.05],
+    "q": 0.1,
+    "expected_bh": [0.06666666666666667, 0.9, 0.04, 0.06666666666666667],
+    "expected_reject": [true, false, true, true],
+    "expected_holm": [0.15, 0.9, 0.04, 0.15],
+    "working": "Sorted values are 0.01,0.05,0.05,0.9; the tied 0.05 values receive ranks 2 and 3, and rank 2 meets 0.05 <= 2*0.1/4 exactly, so ranks 1 through 3 reject"
+  },
+  {
+    "name": "exact_equality_boundary",
+    "p_values": [0.01, 0.02, 0.03],
+    "q": 0.03,
+    "expected_bh": [0.03, 0.03, 0.03],
+    "expected_reject": [true, true, true],
+    "expected_holm": [0.03, 0.04, 0.04],
+    "working": "Each BH raw value is 0.03; every rank satisfies p_(k) <= k*0.03/3 at equality, while Holm gives running maxima 0.03,0.04,0.04"
+  }
+]
