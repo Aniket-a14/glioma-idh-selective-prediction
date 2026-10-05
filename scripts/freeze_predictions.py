@@ -187,7 +187,9 @@ def freeze_run(
     print(f"artifact_sha256={_artifact_sha256(artifact_path)}")
     for cohort, count in counts.items():
         print(f"rows[{cohort}]={count}")
-    print(f"internal_test_auroc={auroc:.6f}")
+    # Sanity check for Phase 06 acceptance criterion 6, not a reported result: a
+    # reported AUROC needs ECE, Brier, AURC and coverage beside it (SPEC 5.4).
+    print(f"internal_test_auroc_sanity_check_only={auroc:.6f}")
     print(f"internal_test_class_counts=positive:{positives},negative:{negatives}")
     return artifact_path
 
