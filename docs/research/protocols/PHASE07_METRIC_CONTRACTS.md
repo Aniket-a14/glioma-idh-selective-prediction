@@ -26,7 +26,11 @@ If `k > n`, return `+inf` (the set is every label; the guarantee still holds). O
 ## K3. Prediction set, abstention, coverage
 
 Given `q = conformal_quantile(...)`:
-- class 1 is in the set iff `1 - p_hat <= q`; class 0 is in the set iff `p_hat <= q` (both `<=`, matching K2).
+- class 1 is in the set iff `1 - p_hat <= q`; class 0 is in the set iff `p_hat <= q` (both `<=`, matching K2). The left side is
+  the K1 score of that label, computed exactly and rounded once to a double, so a calibration point is always inside the set
+  built from a quantile equal to its own score. Where the exact decimal value of a score and its rounded double differ by
+  less than one ulp, the two readings can disagree for a point that sits exactly on `q`; the T07.10 cross-check found no
+  such case on about 58,000 random and grid set comparisons (10,201 on the 0.01 decimal grid, 48,000 random).
 - `prediction_set(p_hat, q)` returns a sorted tuple: `()`, `(0,)`, `(1,)` or `(0, 1)`.
 - The predictor **abstains iff the set is not a singleton** (D-003). An empty set is an abstention, reported separately.
 - `empirical_coverage(sets, labels)` = fraction of patients whose true label is in their set.
