@@ -10,8 +10,11 @@ import torch
 from torch import nn
 
 from glioma_selective.training.determinism import deterministic_mode
+from glioma_selective.training.metrics import hard_dice
 
-__all__ = ["predict_split"]
+__all__ = ["predict_split", "predict_split_with_dice"]
+
+_SEGMENTATION_CHANNELS = ("enhancing", "necrotic_core", "oedema")
 
 
 def _scalar_logit(output: Any) -> torch.Tensor:
@@ -25,24 +28,23 @@ def _scalar_logit(output: Any) -> torch.Tensor:
     raise ValueError("model output logit must have shape (B,) or (B, 1)")
 
 
-def predict_split(
+def _predict_split(
     model: nn.Module,
     dataset: Sequence[Mapping[str, Any]] | Any,
     *,
     device: torch.device | str,
     batch_size: int,
-) -> list[dict[str, Any]]:
-    """Return ordered patient predictions from full four-sequence inputs.
-
-    The supplied dataset must be built with augmentation disabled and no zeroed
-    channels. Each output logit is stored as float32; its sigmoid is evaluated
-    in float64 and then stored as float32.
-    """
+    collect_dice: bool,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Score one split, optionally aggregating auxiliary segmentation Dice."""
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
     model.to(device)
     model.eval()
     results: list[dict[str, Any]] = []
+    dice_sum: torch.Tensor | None = None
+    n_with_segmentation = 0
+    n_without_segmentation = 0
     with deterministic_mode(), torch.no_grad():
         for offset in range(0, len(dataset), batch_size):
             samples = [
@@ -79,4 +81,75 @@ def predict_split(
                         "label": label,
                     }
                 )
+            if not collect_dice:
+                continue
+            has_seg = torch.stack(
+                [cast(torch.Tensor, sample["has_seg"]).bool() for sample in samples]
+            )
+            present = int(has_seg.sum())
+            n_with_segmentation += present
+            n_without_segmentation += len(samples) - present
+            seg_logits = getattr(output, "seg_logits", None)
+            if seg_logits is None:
+                raise ValueError(
+                    "model output seg_logits is None; segmentation Dice unavailable"
+                )
+            if present:
+                target = torch.stack(
+                    [cast(torch.Tensor, sample["seg"]) for sample in samples]
+                )
+                per_channel = hard_dice(
+                    seg_logits.float().cpu(), target.cpu(), has_seg.cpu()
+                )
+                dice_sum = (
+                    per_channel * present
+                    if dice_sum is None
+                    else dice_sum + per_channel * present
+                )
+    if dice_sum is None:
+        per_channel_values: list[float | None] = [None] * len(_SEGMENTATION_CHANNELS)
+    else:
+        per_channel_values = [
+            float(value) for value in (dice_sum / n_with_segmentation).tolist()
+        ]
+    dice_by_channel = dict(zip(_SEGMENTATION_CHANNELS, per_channel_values, strict=True))
+    available = [value for value in per_channel_values if value is not None]
+    dice_block: dict[str, Any] = {
+        "per_channel": dice_by_channel,
+        "mean": float(np.mean(available)) if available else None,
+        "n_with_segmentation": n_with_segmentation,
+        "n_without_segmentation": n_without_segmentation,
+    }
+    return results, dice_block
+
+
+def predict_split(
+    model: nn.Module,
+    dataset: Sequence[Mapping[str, Any]] | Any,
+    *,
+    device: torch.device | str,
+    batch_size: int,
+) -> list[dict[str, Any]]:
+    """Return ordered patient predictions from full four-sequence inputs.
+
+    The supplied dataset must be built with augmentation disabled and no zeroed
+    channels. Each output logit is stored as float32; its sigmoid is evaluated
+    in float64 and then stored as float32.
+    """
+    results, _ = _predict_split(
+        model, dataset, device=device, batch_size=batch_size, collect_dice=False
+    )
     return results
+
+
+def predict_split_with_dice(
+    model: nn.Module,
+    dataset: Sequence[Mapping[str, Any]] | Any,
+    *,
+    device: torch.device | str,
+    batch_size: int,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Return predictions and evaluate-style, patient-weighted hard Dice."""
+    return _predict_split(
+        model, dataset, device=device, batch_size=batch_size, collect_dice=True
+    )

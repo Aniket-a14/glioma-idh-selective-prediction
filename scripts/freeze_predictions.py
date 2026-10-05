@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
+import os
 import subprocess
 import sys
 from collections import Counter
@@ -23,6 +25,14 @@ for import_root in (REPOSITORY_ROOT, SOURCE_ROOT):
 
 LOGGER = logging.getLogger("freeze_predictions")
 _SPLITS = (("calibration", "utsw_calibration"), ("internal_test", "utsw_internal_test"))
+
+
+def _write_exclusive(path: Path, payload: bytes) -> None:
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    with os.fdopen(descriptor, "wb") as stream:
+        stream.write(payload)
+        stream.flush()
+        os.fsync(stream.fileno())
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -110,7 +120,7 @@ def freeze_run(
     from omegaconf import OmegaConf
 
     from glioma_selective.data.dataset import IDHDataset, load_split_patient_ids
-    from glioma_selective.evaluation.freeze import predict_split
+    from glioma_selective.evaluation.freeze import predict_split_with_dice
     from glioma_selective.models.segresnet import ModelConfig, build_model
     from glioma_selective.tracking.predictions import write_prediction_artifact
     from glioma_selective.tracking.run_record import update_run_record
@@ -119,6 +129,17 @@ def freeze_run(
     from glioma_selective.training.run import _build_datasets
 
     run_dir, record = _load_record(run_id)
+    dice_path = run_dir / "segmentation_dice.json"
+    if any(
+        path.exists()
+        for path in (
+            run_dir / "predictions.parquet",
+            run_dir / "predictions.parquet.sha256",
+            dice_path,
+            dice_path.with_name(dice_path.name + ".sha256"),
+        )
+    ):
+        raise FileExistsError("prediction or segmentation Dice artifact already exists")
     checkpoint_path = run_dir / "checkpoints" / "best.pt"
     current_sha, record_sha, checkpoint_hash = _check_run(
         record, checkpoint_path, allow_sha_mismatch=allow_sha_mismatch
@@ -149,12 +170,14 @@ def freeze_run(
     )
     all_rows: list[dict[str, Any]] = []
     internal_rows: list[dict[str, Any]] = []
+    dice_by_split: dict[str, dict[str, Any]] = {}
     batch_size = int(record.get("config", {}).get("training", {}).get("batch_size", 1))
     for split, cohort in _SPLITS:
         dataset = calibration_dataset if split == "calibration" else internal_dataset
-        scored = predict_split(
+        scored, dice = predict_split_with_dice(
             model, dataset, device=resolved_device, batch_size=batch_size
         )
+        dice_by_split[split] = dice
         rows = [
             {
                 **row,
@@ -176,6 +199,21 @@ def freeze_run(
         checkpoint_hash=checkpoint_hash,
         record_git_sha=record_sha if record_sha != current_sha else None,
     )
+    dice_document = {
+        "run_id": run_id,
+        "git_sha": current_sha,
+        "checkpoint_hash": checkpoint_hash,
+        "splits": dice_by_split,
+    }
+    dice_payload = (
+        json.dumps(dice_document, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    ).encode("utf-8")
+    dice_digest = hashlib.sha256(dice_payload).hexdigest()
+    _write_exclusive(dice_path, dice_payload)
+    _write_exclusive(
+        dice_path.with_name(dice_path.name + ".sha256"),
+        f"{dice_digest}  {dice_path.name}\n".encode("ascii"),
+    )
     update_run_record(run_id, predictions_path=str(artifact_path))
 
     counts: dict[str, int] = dict(Counter(row["cohort"] for row in all_rows))
@@ -191,6 +229,8 @@ def freeze_run(
     # reported AUROC needs ECE, Brier, AURC and coverage beside it (SPEC 5.4).
     print(f"internal_test_auroc_sanity_check_only={auroc:.6f}")
     print(f"internal_test_class_counts=positive:{positives},negative:{negatives}")
+    for split, dice in dice_by_split.items():
+        print(f"{split}_segmentation_dice_mean={dice['mean']}")
     return artifact_path
 
 

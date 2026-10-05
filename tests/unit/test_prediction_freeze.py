@@ -10,7 +10,7 @@ import torch
 from scripts import freeze_predictions
 from torch import nn
 
-from glioma_selective.evaluation.freeze import predict_split
+from glioma_selective.evaluation.freeze import predict_split, predict_split_with_dice
 from glioma_selective.models.segresnet import ModelOutput
 from glioma_selective.training import checkpoint
 from glioma_selective.utils import paths
@@ -47,6 +47,54 @@ class _TinyModel(nn.Module):
         return ModelOutput(values[:, None] if self.column_logits else values, None)
 
 
+class _DiceDataset:
+    def __init__(self) -> None:
+        self.samples = []
+        targets = [
+            [[1, 0], [1, 0], [1, 1]],
+            [[0, 0], [0, 0], [0, 0]],
+            [[1, 1], [1, 0], [0, 0]],
+        ]
+        for index, target in enumerate(targets):
+            self.samples.append(
+                {
+                    "patient_id": f"p{index}",
+                    "label": torch.tensor(index % 2),
+                    "image": torch.full((4, 1, 1, 1), float(index)),
+                    "has_seg": torch.tensor(index != 1),
+                    "seg": torch.tensor(target, dtype=torch.float32).reshape(
+                        3, 1, 1, 2
+                    ),
+                }
+            )
+
+    def __len__(self) -> int:
+        return len(self.samples)
+
+    def __getitem__(self, index: int) -> dict[str, Any]:
+        return self.samples[index]
+
+
+class _DiceModel(_TinyModel):
+    def forward(self, image: torch.Tensor) -> ModelOutput:
+        values = image[:, 0, 0, 0, 0]
+        templates = torch.tensor(
+            [
+                [[1, 0], [0, 0], [1, 0]],
+                [[1, 0], [1, 0], [1, 1]],
+                [[1, 1], [1, 0], [0, 0]],
+            ],
+            dtype=image.dtype,
+            device=image.device,
+        )
+        seg_logits = templates[values.long()].reshape(-1, 3, 1, 1, 2) * 2 - 1
+        return ModelOutput(values, seg_logits)
+
+
+class _NoSegModel(_TinyModel):
+    pass
+
+
 @pytest.mark.parametrize("column_logits", [False, True])
 def test_predict_split_preserves_order_and_matches_manual_forward(
     column_logits: bool,
@@ -68,6 +116,27 @@ def test_predict_split_preserves_order_and_matches_manual_forward(
     assert not model.training
     assert [row["label"] for row in predictions] == [1, 1, 0, 0, 1]
     assert all(0.0 <= row["p_hat"] <= 1.0 for row in predictions)
+
+
+def test_predict_split_with_dice_matches_patient_weighted_hand_calculation() -> None:
+    predictions, dice = predict_split_with_dice(
+        _DiceModel(), _DiceDataset(), device="cpu", batch_size=2
+    )
+    assert len(predictions) == 3
+    assert dice["n_with_segmentation"] == 2
+    assert dice["n_without_segmentation"] == 1
+    per_channel = dice["per_channel"]
+    assert per_channel["enhancing"] == pytest.approx(1.0)
+    assert per_channel["necrotic_core"] == pytest.approx(0.5)
+    assert per_channel["oedema"] == pytest.approx(5 / 6)
+    assert dice["mean"] == pytest.approx((1 + 0.5 + 5 / 6) / 3)
+
+
+def test_predict_split_with_dice_rejects_missing_segmentation_head() -> None:
+    with pytest.raises(ValueError, match="seg_logits is None"):
+        predict_split_with_dice(
+            _NoSegModel(), _DiceDataset(), device="cpu", batch_size=2
+        )
 
 
 @pytest.fixture
