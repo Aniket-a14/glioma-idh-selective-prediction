@@ -5,7 +5,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from scripts import check_setup as setup
 
 
@@ -25,7 +24,9 @@ def project(tmp_path: Path, requirement: str = ">=3.12") -> Path:
 
 
 def git_repo(tmp_path: Path) -> Path:
-    subprocess.run(["git", "init", str(tmp_path)], check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "init", str(tmp_path)], check=True, capture_output=True, text=True
+    )
     return tmp_path
 
 
@@ -45,22 +46,34 @@ def test_package_import_pass_and_fail(tmp_path):
     module_file = repo / "src" / "glioma_selective" / "__init__.py"
     module_file.parent.mkdir(parents=True)
     module_file.write_text("", encoding="utf-8")
-    importer = lambda _: type("Module", (), {"__file__": str(module_file)})()
+
+    def importer(_):
+        return type("Module", (), {"__file__": str(module_file)})()
+
     assert setup.check_package_import(repo, importer).status == "PASS"
-    assert setup.check_package_import(repo, lambda _: (_ for _ in ()).throw(ImportError())).status == "FAIL"
+    assert (
+        setup.check_package_import(
+            repo, lambda _: (_ for _ in ()).throw(ImportError())
+        ).status
+        == "FAIL"
+    )
 
 
 def test_git_pass_warn_and_fail(tmp_path):
-    good = runner_for({
-        ("git", "--version"): (0, "git version"),
-        ("git", "config", "--get", "user.name"): (0, "Contributor"),
-        ("git", "config", "--get", "user.email"): (0, "contributor@example.com"),
-    })
-    identity_missing = runner_for({
-        ("git", "--version"): (0, "git version"),
-        ("git", "config", "--get", "user.name"): (1, ""),
-        ("git", "config", "--get", "user.email"): (0, ""),
-    })
+    good = runner_for(
+        {
+            ("git", "--version"): (0, "git version"),
+            ("git", "config", "--get", "user.name"): (0, "Contributor"),
+            ("git", "config", "--get", "user.email"): (0, "contributor@example.com"),
+        }
+    )
+    identity_missing = runner_for(
+        {
+            ("git", "--version"): (0, "git version"),
+            ("git", "config", "--get", "user.name"): (1, ""),
+            ("git", "config", "--get", "user.email"): (0, ""),
+        }
+    )
     unavailable = runner_for({})
     assert setup.check_git(tmp_path, good).status == "PASS"
     assert setup.check_git(tmp_path, identity_missing).status == "WARN"
@@ -89,10 +102,20 @@ def test_git_hooks_worktree_path_and_missing(tmp_path):
 
 
 def test_precommit_and_gh_statuses(monkeypatch, tmp_path):
-    monkeypatch.setattr(setup.shutil, "which", lambda name: "/bin/tool" if name in {"pre-commit", "gh"} else None)
+    monkeypatch.setattr(
+        setup.shutil,
+        "which",
+        lambda name: "/bin/tool" if name in {"pre-commit", "gh"} else None,
+    )
     assert setup.check_precommit_tool().status == "PASS"
-    assert setup.check_gh_auth(runner_for({("gh", "auth", "status"): (0, "ok")})).status == "PASS"
-    assert setup.check_gh_auth(runner_for({("gh", "auth", "status"): (1, "")})).status == "WARN"
+    assert (
+        setup.check_gh_auth(runner_for({("gh", "auth", "status"): (0, "ok")})).status
+        == "PASS"
+    )
+    assert (
+        setup.check_gh_auth(runner_for({("gh", "auth", "status"): (1, "")})).status
+        == "WARN"
+    )
     monkeypatch.setattr(setup.shutil, "which", lambda _: None)
     assert setup.check_precommit_tool().status == "WARN"
     assert setup.check_gh_auth(runner_for({})).status == "WARN"
@@ -112,8 +135,14 @@ def test_external_flag_process_and_dotenv_values(tmp_path):
     repo = project(tmp_path)
     assert setup.check_external_eval_flag(repo, {}).status == "PASS"
     assert "unset" in setup.check_external_eval_flag(repo, {}).message
-    assert setup.check_external_eval_flag(repo, {setup.EXTERNAL_EVAL_FLAG: "0"}).status == "PASS"
-    assert setup.check_external_eval_flag(repo, {setup.EXTERNAL_EVAL_FLAG: "1"}).status == "FAIL"
+    assert (
+        setup.check_external_eval_flag(repo, {setup.EXTERNAL_EVAL_FLAG: "0"}).status
+        == "PASS"
+    )
+    assert (
+        setup.check_external_eval_flag(repo, {setup.EXTERNAL_EVAL_FLAG: "1"}).status
+        == "FAIL"
+    )
     (repo / ".env").write_text(f"{setup.EXTERNAL_EVAL_FLAG}=0\n", encoding="utf-8")
     assert setup.check_external_eval_flag(repo, {}).status == "PASS"
     (repo / ".env").write_text(f"{setup.EXTERNAL_EVAL_FLAG}=yes\n", encoding="utf-8")
@@ -129,22 +158,24 @@ def test_wsl_info_and_warn(tmp_path):
 def test_line_endings_info_and_warn(tmp_path):
     repo = project(tmp_path)
     (repo / "README.md").write_bytes(b"title\r\n")
-    run = runner_for({
-        ("git", "config", "--get", "core.autocrlf"): (0, "true"),
-        ("git", "config", "--get", "core.eol"): (1, ""),
-        (
-            "git",
-            "ls-files",
-            "-z",
-            "--",
-            "*.md",
-            "*.py",
-            "*.toml",
-            "*.yaml",
-            ":(exclude)data/**",
-            ":(exclude)artifacts/**",
-        ): (0, "README.md\0"),
-    })
+    run = runner_for(
+        {
+            ("git", "config", "--get", "core.autocrlf"): (0, "true"),
+            ("git", "config", "--get", "core.eol"): (1, ""),
+            (
+                "git",
+                "ls-files",
+                "-z",
+                "--",
+                "*.md",
+                "*.py",
+                "*.toml",
+                "*.yaml",
+                ":(exclude)data/**",
+                ":(exclude)artifacts/**",
+            ): (0, "README.md\0"),
+        }
+    )
     assert setup.check_line_endings(repo, run).status == "WARN"
     (repo / "README.md").write_bytes(b"title\n")
     assert setup.check_line_endings(repo, run).status == "INFO"
@@ -161,14 +192,18 @@ def test_storage_root_never_exposes_path(tmp_path):
 
 
 def test_branch_info_and_main_warning():
-    clean = runner_for({
-        ("git", "branch", "--show-current"): (0, "feature"),
-        ("git", "status", "--porcelain", "--untracked-files=no"): (0, ""),
-    })
-    dirty_main = runner_for({
-        ("git", "branch", "--show-current"): (0, "main"),
-        ("git", "status", "--porcelain", "--untracked-files=no"): (0, " M file.py"),
-    })
+    clean = runner_for(
+        {
+            ("git", "branch", "--show-current"): (0, "feature"),
+            ("git", "status", "--porcelain", "--untracked-files=no"): (0, ""),
+        }
+    )
+    dirty_main = runner_for(
+        {
+            ("git", "branch", "--show-current"): (0, "main"),
+            ("git", "status", "--porcelain", "--untracked-files=no"): (0, " M file.py"),
+        }
+    )
     assert setup.check_branch(clean).status == "INFO"
     assert setup.check_branch(dirty_main).status == "WARN"
 
@@ -181,7 +216,9 @@ def test_json_output_contains_all_checks_and_exit_codes(monkeypatch, capsys, tmp
     assert payload["checks"][0]["name"] == "example"
     assert payload["summary"]["PASS"] == 1
 
-    monkeypatch.setattr(setup, "collect_checks", lambda _: [setup.Check("example", "FAIL", "bad")])
+    monkeypatch.setattr(
+        setup, "collect_checks", lambda _: [setup.Check("example", "FAIL", "bad")]
+    )
     assert setup.main(["--repo", str(tmp_path)]) == 1
     assert "FAIL  example" in capsys.readouterr().out
     assert setup.main(["--repo", str(tmp_path / "missing")]) == 2

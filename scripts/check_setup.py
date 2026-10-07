@@ -11,10 +11,10 @@ import shutil
 import subprocess
 import sys
 import tomllib
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Callable, Literal, Sequence
-
+from typing import Literal
 
 Status = Literal["PASS", "WARN", "FAIL", "INFO"]
 Runner = Callable[[Sequence[str]], tuple[int, str]]
@@ -61,11 +61,21 @@ def check_python_version(repo: Path, current: tuple[int, int] | None = None) -> 
             project = tomllib.load(stream).get("project", {})
         requirement = str(project["requires-python"])
     except (OSError, KeyError, tomllib.TOMLDecodeError):
-        return Check("python-version", "FAIL", "could not read project requires-python", "restore pyproject.toml")
+        return Check(
+            "python-version",
+            "FAIL",
+            "could not read project requires-python",
+            "restore pyproject.toml",
+        )
 
     match = re.search(r">=\s*(\d+)\.(\d+)", requirement)
     if match is None:
-        return Check("python-version", "FAIL", "could not determine the Python version floor", "use a readable requires-python floor")
+        return Check(
+            "python-version",
+            "FAIL",
+            "could not determine the Python version floor",
+            "use a readable requires-python floor",
+        )
 
     floor = (int(match.group(1)), int(match.group(2)))
     running = current or (sys.version_info.major, sys.version_info.minor)
@@ -73,10 +83,17 @@ def check_python_version(repo: Path, current: tuple[int, int] | None = None) -> 
         return Check(
             "python-version",
             "FAIL",
-            f"Python {running[0]}.{running[1]} is below the project floor {floor[0]}.{floor[1]}",
+            (
+                f"Python {running[0]}.{running[1]} is below the project floor "
+                f"{floor[0]}.{floor[1]}"
+            ),
             f"use Python {floor[0]}.{floor[1]} or newer",
         )
-    return Check("python-version", "PASS", f"Python {running[0]}.{running[1]} meets the {floor[0]}.{floor[1]} floor")
+    return Check(
+        "python-version",
+        "PASS",
+        f"Python {running[0]}.{running[1]} meets the {floor[0]}.{floor[1]} floor",
+    )
 
 
 def check_virtualenv(
@@ -85,7 +102,12 @@ def check_virtualenv(
     current_prefix = prefix if prefix is not None else sys.prefix
     current_base = base_prefix if base_prefix is not None else sys.base_prefix
     if current_prefix == current_base:
-        return Check("virtualenv", "WARN", "running outside a virtual environment", "activate the project .venv")
+        return Check(
+            "virtualenv",
+            "WARN",
+            "running outside a virtual environment",
+            "activate the project .venv",
+        )
     return Check("virtualenv", "PASS", "running inside a virtual environment")
 
 
@@ -95,12 +117,22 @@ def check_package_import(
     try:
         module = importer("glioma_selective")
     except Exception:
-        return Check("package-import", "FAIL", "could not import glioma_selective", "install the project in editable mode")
+        return Check(
+            "package-import",
+            "FAIL",
+            "could not import glioma_selective",
+            "install the project in editable mode",
+        )
 
     module_file = getattr(module, "__file__", None)
     src_root = (repo / "src").resolve()
     if not module_file:
-        return Check("package-import", "FAIL", "glioma_selective has no module file", "install the project in editable mode")
+        return Check(
+            "package-import",
+            "FAIL",
+            "glioma_selective has no module file",
+            "install the project in editable mode",
+        )
     try:
         Path(module_file).resolve().relative_to(src_root)
     except ValueError:
@@ -110,13 +142,20 @@ def check_package_import(
             "glioma_selective is imported from outside this checkout's src directory",
             "reinstall this checkout with pip install -e .",
         )
-    return Check("package-import", "PASS", "glioma_selective imports from this checkout")
+    return Check(
+        "package-import", "PASS", "glioma_selective imports from this checkout"
+    )
 
 
 def check_git(repo: Path, run: Runner) -> Check:
     git_status, _ = run(("git", "--version"))
     if git_status != 0:
-        return Check("git", "FAIL", "git is not available on PATH", "install Git and reopen the shell")
+        return Check(
+            "git",
+            "FAIL",
+            "git is not available on PATH",
+            "install Git and reopen the shell",
+        )
 
     missing_identity: list[str] = []
     for field in ("user.name", "user.email"):
@@ -136,29 +175,55 @@ def check_git(repo: Path, run: Runner) -> Check:
 def check_git_hooks(repo: Path, run: Runner) -> Check:
     status, hook_path = run(("git", "rev-parse", "--git-path", "hooks"))
     if status != 0 or not hook_path:
-        return Check("git-hooks", "WARN", "could not determine the repository hooks directory", "run pre-commit install")
+        return Check(
+            "git-hooks",
+            "WARN",
+            "could not determine the repository hooks directory",
+            "run pre-commit install",
+        )
     hooks = Path(hook_path)
     if not hooks.is_absolute():
         hooks = repo / hooks
     if not (hooks / "pre-commit").is_file():
-        return Check("git-hooks", "WARN", "pre-commit hook is not installed", "run pre-commit install")
+        return Check(
+            "git-hooks",
+            "WARN",
+            "pre-commit hook is not installed",
+            "run pre-commit install",
+        )
     return Check("git-hooks", "PASS", "pre-commit hook is installed")
 
 
-def check_precommit_tool(which: Callable[[str], str | None] = shutil.which) -> Check:
+def check_precommit_tool(
+    which: Callable[[str], str | None] | None = None,
+) -> Check:
+    which = shutil.which if which is None else which
     if which("pre-commit") is None:
-        return Check("pre-commit-tool", "WARN", "pre-commit is not available on PATH", "activate the project environment or install pre-commit")
+        return Check(
+            "pre-commit-tool",
+            "WARN",
+            "pre-commit is not available on PATH",
+            "activate the project environment or install pre-commit",
+        )
     return Check("pre-commit-tool", "PASS", "pre-commit is available on PATH")
 
 
 def check_gh_auth(
-    run: Runner, which: Callable[[str], str | None] = shutil.which
+    run: Runner, which: Callable[[str], str | None] | None = None
 ) -> Check:
+    which = shutil.which if which is None else which
     if which("gh") is None:
-        return Check("gh-auth", "WARN", "GitHub CLI is not available on PATH", "install gh and run gh auth login")
+        return Check(
+            "gh-auth",
+            "WARN",
+            "GitHub CLI is not available on PATH",
+            "install gh and run gh auth login",
+        )
     status, _ = run(("gh", "auth", "status"))
     if status != 0:
-        return Check("gh-auth", "WARN", "GitHub CLI is not authenticated", "run gh auth login")
+        return Check(
+            "gh-auth", "WARN", "GitHub CLI is not authenticated", "run gh auth login"
+        )
     return Check("gh-auth", "PASS", "GitHub CLI is authenticated")
 
 
@@ -180,7 +245,12 @@ def _dotenv_value(path: Path, key: str) -> str | None:
 def check_env_file(repo: Path, run: Runner) -> Check:
     tracked_status, _ = run(("git", "ls-files", "--error-unmatch", ".env"))
     if tracked_status == 0:
-        return Check("env-file", "FAIL", ".env is tracked by git", "remove .env from git and keep it ignored")
+        return Check(
+            "env-file",
+            "FAIL",
+            ".env is tracked by git",
+            "remove .env from git and keep it ignored",
+        )
     if not (repo / ".env").exists():
         return Check("env-file", "INFO", ".env is absent")
     return Check("env-file", "PASS", ".env exists and is not tracked")
@@ -211,7 +281,9 @@ def check_external_eval_flag(
             "GLIOMA_EXTERNAL_EVAL_AUTHORIZED is NOT ZERO",
             "set GLIOMA_EXTERNAL_EVAL_AUTHORIZED=0 or unset it",
         )
-    return Check("external-eval-flag", "PASS", f"GLIOMA_EXTERNAL_EVAL_AUTHORIZED: {state}")
+    return Check(
+        "external-eval-flag", "PASS", f"GLIOMA_EXTERNAL_EVAL_AUTHORIZED: {state}"
+    )
 
 
 def check_wsl(repo: Path, proc_version: str | None = None) -> Check:
@@ -223,9 +295,18 @@ def check_wsl(repo: Path, proc_version: str | None = None) -> Check:
     lowered = proc_version.lower()
     if "microsoft" not in lowered and "wsl" not in lowered:
         return Check("wsl", "INFO", "not running under WSL")
-    version = "WSL2" if "wsl2" in lowered or "microsoft-standard" in lowered else "WSL version not determined"
+    version = (
+        "WSL2"
+        if "wsl2" in lowered or "microsoft-standard" in lowered
+        else "WSL version not determined"
+    )
     if str(repo).replace("\\", "/").startswith("/mnt/"):
-        return Check("wsl", "WARN", f"{version}; repository is under /mnt", "keep the checkout in the WSL filesystem")
+        return Check(
+            "wsl",
+            "WARN",
+            f"{version}; repository is under /mnt",
+            "keep the checkout in the WSL filesystem",
+        )
     return Check("wsl", "INFO", version)
 
 
@@ -271,18 +352,24 @@ def check_line_endings(repo: Path, run: Runner) -> Check:
         except OSError:
             continue
     if crlf_files:
+        message = (
+            f"core.autocrlf={autocrlf}; core.eol={eol}; "
+            f"CRLF found in {', '.join(crlf_files)}"
+        )
         return Check(
             "line-endings",
             "WARN",
-            f"core.autocrlf={autocrlf}; core.eol={eol}; CRLF found in {', '.join(crlf_files)}",
+            message,
             "convert checked text files to LF",
         )
-    return Check("line-endings", "INFO", f"core.autocrlf={autocrlf}; core.eol={eol}; no CRLF found in checked files")
+    return Check(
+        "line-endings",
+        "INFO",
+        f"core.autocrlf={autocrlf}; core.eol={eol}; no CRLF found in checked files",
+    )
 
 
-def check_storage_root(
-    repo: Path, environ: dict[str, str] | None = None
-) -> Check:
+def check_storage_root(repo: Path, environ: dict[str, str] | None = None) -> Check:
     values = dict(os.environ) if environ is None else environ
     value = values.get(STORAGE_ROOT)
     if value is None:
@@ -299,7 +386,12 @@ def check_branch(run: Runner) -> Check:
         return Check("branch", "INFO", "branch could not be determined")
     status, changes = run(("git", "status", "--porcelain", "--untracked-files=no"))
     if branch == "main" and status == 0 and changes.strip():
-        return Check("branch", "WARN", "main has uncommitted changes", "work on a contributor branch")
+        return Check(
+            "branch",
+            "WARN",
+            "main has uncommitted changes",
+            "work on a contributor branch",
+        )
     return Check("branch", "INFO", f"branch: {branch}")
 
 
@@ -323,13 +415,18 @@ def collect_checks(repo: Path) -> list[Check]:
 
 
 def _summary(checks: Sequence[Check]) -> dict[str, int]:
-    return {status: sum(check.status == status for check in checks) for status in ("PASS", "WARN", "FAIL", "INFO")}
+    return {
+        status: sum(check.status == status for check in checks)
+        for status in ("PASS", "WARN", "FAIL", "INFO")
+    }
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, help="repository to inspect")
-    parser.add_argument("--json", action="store_true", dest="as_json", help="emit one JSON object")
+    parser.add_argument(
+        "--json", action="store_true", dest="as_json", help="emit one JSON object"
+    )
     return parser
 
 
@@ -344,12 +441,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     checks = collect_checks(repo)
     counts = _summary(checks)
     if args.as_json:
-        print(json.dumps({"checks": [check.as_dict() for check in checks], "summary": counts}))
+        print(
+            json.dumps(
+                {"checks": [check.as_dict() for check in checks], "summary": counts}
+            )
+        )
     else:
         for check in checks:
             fix = f"  (fix: {check.fix})" if check.fix else ""
             print(f"{check.status}  {check.name}  {check.message}{fix}")
-        print("SUMMARY  " + "  ".join(f"{status}={counts[status]}" for status in counts))
+        print(
+            "SUMMARY  " + "  ".join(f"{status}={counts[status]}" for status in counts)
+        )
     return 1 if counts["FAIL"] else 0
 
 
