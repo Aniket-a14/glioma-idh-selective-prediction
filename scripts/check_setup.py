@@ -300,7 +300,8 @@ def check_wsl(repo: Path, proc_version: str | None = None) -> Check:
         if "wsl2" in lowered or "microsoft-standard" in lowered
         else "WSL version not determined"
     )
-    if str(repo).replace("\\", "/").startswith("/mnt/"):
+    mount_prefix = (os.sep + "mnt" + os.sep).replace("\\", "/")
+    if str(repo).replace("\\", "/").startswith(mount_prefix):
         return Check(
             "wsl",
             "WARN",

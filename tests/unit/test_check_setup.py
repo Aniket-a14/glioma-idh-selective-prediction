@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -152,7 +153,8 @@ def test_external_flag_process_and_dotenv_values(tmp_path):
 def test_wsl_info_and_warn(tmp_path):
     assert setup.check_wsl(tmp_path, "Linux version 6.0").status == "INFO"
     assert setup.check_wsl(Path("/home/user/repo"), "Microsoft WSL2").status == "INFO"
-    assert setup.check_wsl(Path("/mnt/c/repo"), "Microsoft WSL2").status == "WARN"
+    wsl_repo = Path(os.sep) / "mnt" / "c" / "repo"
+    assert setup.check_wsl(wsl_repo, "Microsoft WSL2").status == "WARN"
 
 
 def test_line_endings_info_and_warn(tmp_path):
