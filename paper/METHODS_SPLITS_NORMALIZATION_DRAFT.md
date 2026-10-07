@@ -47,7 +47,7 @@ downstream results.
 |---|---|---|
 | Development cohort | 616 post-QC UTSW patients | `docs/research/DECISION_LOG.md:921`; `docs/research/protocols/POWER_CHECK.md:10-12` |
 | Split proportions and unit | 60/20/20; patient-level; stratified on IDH | `docs/research/DECISION_LOG.md:914-921`; `docs/research/protocols/STATISTICAL_ANALYSIS_PLAN.md:8-16` |
-| Split seed | Fixed before the split and not retuned after inspection | `docs/research/DECISION_LOG.md:921` |
+| Split seed | Fixed before the split and not changed after inspection | `docs/research/DECISION_LOG.md:921` |
 | Exact class counts | Train 103 mutant / 265 wildtype; calibration 35 / 89; internal test 35 / 89 | `docs/research/DECISION_LOG.md:921`; totals 173/443 in `docs/research/protocols/POWER_CHECK.md:10-12`; arithmetic shown in text |
 | Split sizes | Train 368; calibration 124; internal test 124 | `docs/research/protocols/PHASE_04_ZSCORE_CHECK.md:9-12,35-42` |
 | 1p/19q handling | Reported, not used for stratification | `docs/research/DECISION_LOG.md:921` |
