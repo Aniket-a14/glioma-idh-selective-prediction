@@ -1198,7 +1198,9 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 ---
 
 ## D-048 — MC-dropout: the number of passes is not pre-registered and dropout lives only in the head
-**Status:** OPEN · **Resolve by:** Phase 07 (before T07.4) · **Blocking:** no (T07.4 is not started)
+**Status:** RESOLVED 2026-10-09 (Research Lead: head-only, T = 30) · **Resolve by:** Phase 07 (before T07.4) · **Blocking:** no (T07.4 is not started)
+
+**Resolution 2026-10-09.** Option (a) plus (c). M3 is head-only MC-dropout with T = 30 stochastic passes on features computed once per patient, with dropout p = 0.2 as trained. The paper states that it is head-only and cannot express backbone uncertainty. No backbone dropout and no new trained model.
 
 **Conflict.** M3 is "MC-dropout predictive entropy" (SPEC 4.6, PREREGISTRATION section 4), but (a) no text fixes the number of stochastic passes T, and (b) the only dropout layer in the model is inside the classification head (`ClassificationHead`, p = 0.2, `models/heads.py`), so MC-dropout perturbs only a 256-to-64-to-1 head on fixed bottleneck features and cannot express backbone uncertainty.
 
@@ -1211,7 +1213,9 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 ---
 
 ## D-049 — T06.9 pilot was a timing run only; R1 and R2 used the D-039 starting values
-**Status:** OPEN · **Resolve by:** Phase 06 exit (Gate D) · **Blocking:** no
+**Status:** RESOLVED 2026-10-09 (Research Lead: option (a)) · **Resolve by:** Phase 06 exit (Gate D) · **Blocking:** no
+
+**Resolution 2026-10-09.** Option (a). T06.9 is satisfied by the timing pilot and the D-043 overfit probe. No hyperparameter sizing was run, and the paper states that no hyperparameter search was run. R1 and R2 stand.
 
 **Conflict.** Task T06.9 reads "pilot run; hyperparameter sizing on the training split only". The only pilot executed was `pilot-timing` (`01M3RQCSDVMPZHN4Z9P0848425`, 2026-09-30, one epoch), which measured speed. No sizing sweep was run. R1 and R2 trained with the D-039 starting values (`configs/training/base.yaml`: batch 2, accumulation 4, AdamW lr 3e-4, weight decay 1e-4, bf16, grad clip 1.0, seg weight 1.0). The tiny-overfit step of the harness used lr 3e-4 after D-043, the same value as training; nothing in the training config was tuned.
 
