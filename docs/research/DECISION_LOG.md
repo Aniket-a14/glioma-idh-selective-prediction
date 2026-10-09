@@ -1210,4 +1210,17 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 ---
 
+## D-049 — T06.9 pilot was a timing run only; R1 and R2 used the D-039 starting values
+**Status:** OPEN · **Resolve by:** Phase 06 exit (Gate D) · **Blocking:** no
+
+**Conflict.** Task T06.9 reads "pilot run; hyperparameter sizing on the training split only". The only pilot executed was `pilot-timing` (`01M3RQCSDVMPZHN4Z9P0848425`, 2026-09-30, one epoch), which measured speed. No sizing sweep was run. R1 and R2 trained with the D-039 starting values (`configs/training/base.yaml`: batch 2, accumulation 4, AdamW lr 3e-4, weight decay 1e-4, bf16, grad clip 1.0, seg weight 1.0). The tiny-overfit step of the harness used lr 3e-4 after D-043, the same value as training; nothing in the training config was tuned.
+
+**Alternatives.** (a) Accept T06.9 as satisfied by the timing pilot and the D-043 overfit probe, and say plainly in the paper that no hyperparameter search was run (consistent with no architecture search, SI-11). (b) Run a sizing pilot now on the training split only, and re-run R1 and R2 if it changes anything; this delays R3-R6 by the pilot time plus two re-runs. (c) Mark T06.9 as skipped with this entry as the record.
+
+**Recommendation.** (a). The calibration split already picks the checkpoint (D-039), so more selection on it would add to a selection effect that D-039 asks to be stated as a limitation. R1 and R2 reach AUROC 0.872 and 0.878 with the starting values, so the Phase 06 failure condition does not apply. Re-running R2 after a sweep would also invalidate the R3-R6 seed ensemble, which must share R2's configuration.
+
+**Owner.** Research Lead. Evidence: `docs/research/protocols/PHASE06_CLOSEOUT.md`.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.

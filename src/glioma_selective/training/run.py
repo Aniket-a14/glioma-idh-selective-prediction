@@ -12,6 +12,7 @@ import json
 import logging
 import subprocess
 from dataclasses import asdict, dataclass, replace
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -65,6 +66,42 @@ def training_config_for(spec: RunSpec) -> TrainConfig:
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _utc_now() -> str:
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+
+def _record_failure(run_id: str, error: BaseException) -> None:
+    update_run_record(
+        run_id,
+        status="failed",
+        failure_reason=repr(error)[:500],
+        end_time_utc=_utc_now(),
+    )
+
+
+def _record_completion(
+    run_id: str, result: FitResult, run_dir: Path, log_path: Path
+) -> None:
+    best = result.state.history[result.state.best_epoch]
+    update_run_record(
+        run_id,
+        status="completed",
+        end_time_utc=_utc_now(),
+        checkpoint_hash=file_sha256(run_dir / "checkpoints" / "best.pt"),
+        training_history=result.state.history,
+        predictions_path=PREDICTIONS_PENDING,
+        calibration_params=NOT_APPLICABLE_CALIBRATION,
+        selective_thresholds=NOT_APPLICABLE_THRESHOLDS,
+        metrics={
+            "best_epoch": result.state.best_epoch,
+            "stopped_early": result.stopped_early,
+            "calibration_classification_loss": result.state.best_value,
+            "calibration_auroc_at_best_epoch": best["calibration_auroc"],
+        },
+        log_path=str(log_path),
+    )
 
 
 def _git_head() -> str:
@@ -189,27 +226,11 @@ def train_run(
             resume=spec.resume_run_id is not None,
         )
     except BaseException as error:
-        update_run_record(run_id, status="failed", failure_reason=repr(error)[:500])
+        _record_failure(run_id, error)
         raise
     finally:
         logging.getLogger().removeHandler(handler)
         handler.close()
 
-    best = result.state.history[result.state.best_epoch]
-    update_run_record(
-        run_id,
-        status="completed",
-        checkpoint_hash=file_sha256(run_dir / "checkpoints" / "best.pt"),
-        training_history=result.state.history,
-        predictions_path=PREDICTIONS_PENDING,
-        calibration_params=NOT_APPLICABLE_CALIBRATION,
-        selective_thresholds=NOT_APPLICABLE_THRESHOLDS,
-        metrics={
-            "best_epoch": result.state.best_epoch,
-            "stopped_early": result.stopped_early,
-            "calibration_classification_loss": result.state.best_value,
-            "calibration_auroc_at_best_epoch": best["calibration_auroc"],
-        },
-        log_path=str(log_path),
-    )
+    _record_completion(run_id, result, run_dir, log_path)
     return run_id, result
