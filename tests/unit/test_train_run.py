@@ -53,3 +53,55 @@ def test_a_missing_report_is_refused(tmp_path: Path) -> None:
             authorization_report=tmp_path / "nope.json",
             device=torch.device("cpu"),
         )
+
+
+def _capture_updates(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, object]]:
+    from glioma_selective.training import run as run_module
+
+    calls: list[dict[str, object]] = []
+
+    def record(run_id: str, **fields: object) -> None:
+        calls.append({"run_id": run_id, **fields})
+
+    monkeypatch.setattr(run_module, "update_run_record", record)
+    return calls
+
+
+def test_a_completed_run_stamps_its_end_time(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from types import SimpleNamespace
+
+    from glioma_selective.training import run as run_module
+
+    calls = _capture_updates(monkeypatch)
+    (tmp_path / "checkpoints").mkdir()
+    (tmp_path / "checkpoints" / "best.pt").write_bytes(b"weights")
+    state = SimpleNamespace(
+        history=[{"calibration_auroc": 0.5}, {"calibration_auroc": 0.9}],
+        best_epoch=1,
+        best_value=0.4,
+    )
+    result = SimpleNamespace(state=state, stopped_early=True)
+    run_module._record_completion(
+        "RUN",
+        result,
+        tmp_path,
+        tmp_path / "train.log",  # type: ignore[arg-type]
+    )
+    (call,) = calls
+    assert call["status"] == "completed"
+    end_time = str(call["end_time_utc"])
+    assert end_time.endswith("Z") and "T" in end_time
+    assert call["metrics"]["best_epoch"] == 1  # type: ignore[index]
+
+
+def test_a_failed_run_stamps_its_end_time(monkeypatch: pytest.MonkeyPatch) -> None:
+    from glioma_selective.training import run as run_module
+
+    calls = _capture_updates(monkeypatch)
+    run_module._record_failure("RUN", RuntimeError("boom"))
+    (call,) = calls
+    assert call["status"] == "failed"
+    assert "boom" in str(call["failure_reason"])
+    assert str(call["end_time_utc"]).endswith("Z")
