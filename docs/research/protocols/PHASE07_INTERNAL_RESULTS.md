@@ -69,3 +69,20 @@ Loss 1[confidence >= tau and wrong] (D-045); tau is the smallest threshold whose
 | R2 | 0.05 | 0.778 | 0.589 | 0.040 | 0.068 |
 | R2 | 0.1 | 0.666 | 0.806 | 0.129 | 0.160 |
 | R2 | 0.2 | 0.504 | 1.000 | 0.218 | 0.218 |
+
+## M3: head-only MC-dropout entropy, R2 internal test (D-048)
+
+30 stochastic head passes per patient (dropout p = 0.2), Mac CPU, seed 0; `mc_dropout.parquet` SHA-256 `071a43cf62c53716...`. The deterministic p_hat of this artifact matches `predictions.parquet` (maximum absolute difference 1.1324882507324219e-06). Score is minus the binary entropy of the mean probability; the decision (p_hat >= 0.5) and the loss are the same as for M2, so only the ranking differs.
+
+| | M2 (confidence) | M3 (MC entropy) |
+|---|---|---|
+| AURC (mean over cutoffs) | 0.0755 | 0.0804 |
+| AURC (trapezoid) | 0.0747 | 0.0795 |
+| Monotonicity violations (pairs) | 253 | 217 |
+| Risk at coverage 0.9 | 0.1696 | 0.1786 |
+| Risk at coverage 0.8 | 0.1600 | 0.1700 |
+| Risk at coverage 0.7 | 0.1149 | 0.1149 |
+| Risk at coverage 0.6 | 0.0933 | 0.1067 |
+| Risk at coverage 0.5 | 0.0484 | 0.0645 |
+
+M3 minus M2 AURC = +0.0048: head-only MC-dropout ranks slightly worse than the temperature-scaled confidence on this split. The mean standard deviation of the 30 passes is 0.095, so the head perturbation is small next to the confidence signal. With 124 patients a difference of 0.005 is within sampling noise; it is reported as found (negative results are valid) and the paper states that M3 is head-only.
