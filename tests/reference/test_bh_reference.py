@@ -132,7 +132,10 @@ def test_wrong_variant_catalogue_is_caught() -> None:
         return [float(value) for value in output]
 
     def wrong_m_instead_of_rank(values: list[float]) -> list[float]:
-        return list(values)
+        exact = _fractions(values)
+        count = len(exact)
+        # This deliberately uses m/m instead of the rank-specific m/k.
+        return [float(value * count / count) for value in exact]
 
     def wrong_divide_by_m_minus_k(values: list[float]) -> list[float]:
         exact = _fractions(values)
@@ -145,6 +148,7 @@ def test_wrong_variant_catalogue_is_caught() -> None:
         return [float(value) for value in output]
 
     assert wrong_no_running_minimum(binding["p_values"]) != binding["expected_bh"]
+    assert wrong_no_running_minimum(tie["p_values"]) != tie["expected_bh"]
     assert (
         wrong_ascending_running_minimum(binding["p_values"]) != binding["expected_bh"]
     )
