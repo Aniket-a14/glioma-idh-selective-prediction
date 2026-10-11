@@ -157,6 +157,10 @@ def check_git(repo: Path, run: Runner) -> Check:
             "install Git and reopen the shell",
         )
 
+    return Check("git", "PASS", "git is available")
+
+
+def check_git_identity(run: Runner) -> Check:
     missing_identity: list[str] = []
     for field in ("user.name", "user.email"):
         status, value = run(("git", "config", "--get", field))
@@ -164,12 +168,12 @@ def check_git(repo: Path, run: Runner) -> Check:
             missing_identity.append(field)
     if missing_identity:
         return Check(
-            "git",
+            "git-identity",
             "WARN",
-            f"git is available; identity unset: {', '.join(missing_identity)}",
+            f"git identity unset: {', '.join(missing_identity)}",
             "set git config user.name and user.email",
         )
-    return Check("git", "PASS", "git is available and identity is configured")
+    return Check("git-identity", "PASS", "git identity is configured")
 
 
 def check_git_hooks(repo: Path, run: Runner) -> Check:
@@ -227,19 +231,25 @@ def check_gh_auth(
     return Check("gh-auth", "PASS", "GitHub CLI is authenticated")
 
 
-def _dotenv_value(path: Path, key: str) -> str | None:
+def _dotenv_values(path: Path, key: str) -> list[str]:
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except (OSError, UnicodeError):
-        return None
+        return []
+    values: list[str] = []
     for line in lines:
         candidate = line.strip()
         if not candidate or candidate.startswith("#") or "=" not in candidate:
             continue
         name, value = candidate.split("=", 1)
-        if name.strip() == key:
-            return value.strip().strip("'\"")
-    return None
+        if name.strip().removeprefix("export ").strip() == key:
+            values.append(value.strip().strip("'\""))
+    return values
+
+
+def _dotenv_value(path: Path, key: str) -> str | None:
+    values = _dotenv_values(path, key)
+    return values[-1] if values else None
 
 
 def check_env_file(repo: Path, run: Runner) -> Check:
@@ -260,9 +270,7 @@ def _flag_state(repo: Path, environ: dict[str, str]) -> str:
     values: list[str] = []
     if EXTERNAL_EVAL_FLAG in environ:
         values.append(environ[EXTERNAL_EVAL_FLAG])
-    dotenv_value = _dotenv_value(repo / ".env", EXTERNAL_EVAL_FLAG)
-    if dotenv_value is not None:
-        values.append(dotenv_value)
+    values.extend(_dotenv_values(repo / ".env", EXTERNAL_EVAL_FLAG))
     if not values:
         return "unset"
     if all(value == "0" for value in values):
@@ -293,13 +301,9 @@ def check_wsl(repo: Path, proc_version: str | None = None) -> Check:
         except (OSError, UnicodeError):
             proc_version = ""
     lowered = proc_version.lower()
-    if "microsoft" not in lowered and "wsl" not in lowered:
-        return Check("wsl", "INFO", "not running under WSL")
-    version = (
-        "WSL2"
-        if "wsl2" in lowered or "microsoft-standard" in lowered
-        else "WSL version not determined"
-    )
+    if "microsoft" not in lowered:
+        return Check("wsl", "INFO", "not WSL")
+    version = "WSL2" if "wsl2" in lowered else "WSL (version not determined)"
     mount_prefix = (os.sep + "mnt" + os.sep).replace("\\", "/")
     if str(repo).replace("\\", "/").startswith(mount_prefix):
         return Check(
@@ -316,9 +320,7 @@ def _git_config(run: Runner, key: str) -> str:
     return value if status == 0 and value else "unset"
 
 
-def check_line_endings(repo: Path, run: Runner) -> Check:
-    autocrlf = _git_config(run, "core.autocrlf")
-    eol = _git_config(run, "core.eol")
+def _tracked_text_files(run: Runner) -> list[Path]:
     status, output = run(
         (
             "git",
@@ -339,12 +341,14 @@ def check_line_endings(repo: Path, run: Runner) -> Check:
             path = Path(name)
             if path.suffix.lower() not in {".md", ".py", ".toml", ".yaml"}:
                 continue
-            if path.parts and path.parts[0] in {"data", "artifacts"}:
-                continue
             candidates.append(path)
             if len(candidates) == 50:
                 break
 
+    return candidates
+
+
+def _crlf_files(repo: Path, candidates: Sequence[Path]) -> list[str]:
     crlf_files: list[str] = []
     for relative in candidates:
         try:
@@ -352,6 +356,13 @@ def check_line_endings(repo: Path, run: Runner) -> Check:
                 crlf_files.append(relative.as_posix())
         except OSError:
             continue
+    return crlf_files
+
+
+def check_line_endings(repo: Path, run: Runner) -> Check:
+    autocrlf = _git_config(run, "core.autocrlf")
+    eol = _git_config(run, "core.eol")
+    crlf_files = _crlf_files(repo, _tracked_text_files(run))
     if crlf_files:
         message = (
             f"core.autocrlf={autocrlf}; core.eol={eol}; "
@@ -403,6 +414,7 @@ def collect_checks(repo: Path) -> list[Check]:
         check_virtualenv(),
         check_package_import(repo),
         check_git(repo, run),
+        check_git_identity(run),
         check_git_hooks(repo, run),
         check_precommit_tool(),
         check_gh_auth(run),

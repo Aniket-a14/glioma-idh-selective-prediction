@@ -77,7 +77,9 @@ def test_git_pass_warn_and_fail(tmp_path):
     )
     unavailable = runner_for({})
     assert setup.check_git(tmp_path, good).status == "PASS"
-    assert setup.check_git(tmp_path, identity_missing).status == "WARN"
+    assert setup.check_git_identity(good).status == "PASS"
+    assert setup.check_git(tmp_path, identity_missing).status == "PASS"
+    assert setup.check_git_identity(identity_missing).status == "WARN"
     assert setup.check_git(tmp_path, unavailable).status == "FAIL"
 
 
@@ -148,11 +150,29 @@ def test_external_flag_process_and_dotenv_values(tmp_path):
     assert setup.check_external_eval_flag(repo, {}).status == "PASS"
     (repo / ".env").write_text(f"{setup.EXTERNAL_EVAL_FLAG}=yes\n", encoding="utf-8")
     assert setup.check_external_eval_flag(repo, {}).status == "FAIL"
+    (repo / ".env").write_text(
+        f"export {setup.EXTERNAL_EVAL_FLAG}=0\n", encoding="utf-8"
+    )
+    assert setup.check_external_eval_flag(repo, {}).status == "PASS"
+    (repo / ".env").write_text(
+        f"{setup.EXTERNAL_EVAL_FLAG}=0\n{setup.EXTERNAL_EVAL_FLAG}=1\n",
+        encoding="utf-8",
+    )
+    assert setup.check_external_eval_flag(repo, {}).status == "FAIL"
+    (repo / ".env").write_text(
+        f"{setup.EXTERNAL_EVAL_FLAG}=1\n{setup.EXTERNAL_EVAL_FLAG}=0\n",
+        encoding="utf-8",
+    )
+    assert setup.check_external_eval_flag(repo, {}).status == "FAIL"
 
 
 def test_wsl_info_and_warn(tmp_path):
-    assert setup.check_wsl(tmp_path, "Linux version 6.0").status == "INFO"
-    assert setup.check_wsl(Path("/home/user/repo"), "Microsoft WSL2").status == "INFO"
+    assert setup.check_wsl(tmp_path, "Linux version 6.0").message == "not WSL"
+    assert (
+        setup.check_wsl(Path("/home/user/repo"), "Microsoft kernel").message
+        == "WSL (version not determined)"
+    )
+    assert setup.check_wsl(Path("/home/user/repo"), "Microsoft WSL2").message == "WSL2"
     wsl_repo = Path(os.sep) / "mnt" / "c" / "repo"
     assert setup.check_wsl(wsl_repo, "Microsoft WSL2").status == "WARN"
 
