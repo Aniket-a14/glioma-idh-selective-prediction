@@ -1,0 +1,136 @@
+{
+  "schema": "phase09_stats_contracts.v1",
+  "convention": "numbers that must match exactly are fraction strings; interval and RNG fixtures use floats. Contract text: docs/research/protocols/PHASE09_STATS_CONTRACTS.md",
+  "bootstrap_indices": [
+    {"name": "seed0_n5_b2", "n": 5, "iterations": 2, "seed": 0, "indices": [[4, 3, 2, 1, 1], [0, 0, 0, 0, 4]]}
+  ],
+  "percentile_interval": [
+    {"name": "ten_values_80", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "level": 0.8, "interval": [1.9, 9.1]},
+    {"name": "hundred_one_95", "values": "range(0, 101)", "level": 0.95, "interval": [2.5, 97.5]},
+    {"name": "single_value", "values": [3.0], "level": 0.95, "interval": [3.0, 3.0]}
+  ],
+  "enrichment": [
+    {
+      "name": "two_of_three_errors_caught",
+      "rejected": [1, 1, 0, 0, 0, 0],
+      "errors": [1, 1, 1, 0, 0, 0],
+      "n_rejected": 2,
+      "observed_difference": "1/2",
+      "exact_p": "1/5"
+    },
+    {
+      "name": "three_rejected_two_errors",
+      "rejected": [1, 1, 1, 0, 0, 0],
+      "errors": [1, 1, 0, 1, 0, 0],
+      "n_rejected": 3,
+      "observed_difference": "1/6",
+      "exact_p": "1/2"
+    },
+    {
+      "name": "one_error_in_two_rejected",
+      "rejected": [1, 1, 0, 0, 0, 0],
+      "errors": [1, 0, 1, 1, 0, 0],
+      "n_rejected": 2,
+      "observed_difference": "0",
+      "exact_p": "4/5"
+    },
+    {
+      "name": "everything_rejected",
+      "rejected": [1, 1, 1, 1],
+      "errors": [1, 0, 0, 1],
+      "n_rejected": 4,
+      "observed_difference": "0",
+      "exact_p": "1"
+    },
+    {
+      "name": "nothing_rejected",
+      "rejected": [0, 0, 0],
+      "errors": [1, 0, 1],
+      "n_rejected": 0,
+      "observed_difference": null,
+      "exact_p": null
+    }
+  ],
+  "bh": [
+    {
+      "name": "four_tests",
+      "p": [0.01, 0.04, 0.03, 0.005],
+      "q": 0.05,
+      "adjusted": ["1/50", "1/25", "1/25", "1/50"],
+      "reject": [true, true, true, true]
+    },
+    {
+      "name": "cap_and_cummin",
+      "p": [0.5, 0.9],
+      "q": 0.05,
+      "adjusted": ["9/10", "9/10"],
+      "reject": [false, false]
+    },
+    {
+      "name": "boundary_equal_to_q",
+      "p": [0.01, 0.02, 0.03, 0.04, 0.05],
+      "q": 0.05,
+      "adjusted": ["1/20", "1/20", "1/20", "1/20", "1/20"],
+      "reject": [true, true, true, true, true]
+    },
+    {
+      "name": "partial_rejection",
+      "p": [0.001, 0.2, 0.012],
+      "q": 0.05,
+      "adjusted": ["3/1000", "1/5", "9/500"],
+      "reject": [true, false, true]
+    }
+  ],
+  "risk_difference": {
+    "scores": [0.9, 0.8, 0.7, 0.6, 0.5, 0.4],
+    "losses": [0, 0, 1, 0, 1, 1],
+    "grid": [0.9, 0.5],
+    "differences": [["1", "0"], ["1/2", "-1/6"]],
+    "note": "difference = selective risk at the attained coverage minus always-predict risk (mean loss, 1/2); the pair is (attained coverage, difference). phi = 0.9 attains coverage 1 because 5/6 < 0.9, so the difference is 0."
+  },
+  "status_risk_difference": [
+    {"name": "supported", "points": [-0.1, -0.1, -0.1, -0.1, -0.1], "uppers": [-0.01, -0.02, -0.01, -0.03, -0.01], "status": "supported"},
+    {"name": "refuted_point_at_zero", "points": [-0.1, -0.1, 0.0, -0.1, -0.1], "uppers": [-0.01, -0.02, 0.05, -0.03, -0.01], "status": "refuted"},
+    {"name": "inconclusive_upper_crosses", "points": [-0.1, -0.1, -0.05, -0.1, -0.1], "uppers": [-0.01, 0.02, 0.01, -0.03, -0.01], "status": "inconclusive"},
+    {"name": "refuted_wins_over_wide", "points": [-0.2, 0.03, -0.05, -0.1, -0.1], "uppers": [0.01, 0.09, 0.02, -0.03, -0.01], "status": "refuted"}
+  ],
+  "status_c5": [
+    {"name": "supported_no_increase", "points": [-0.02, 0.0, -0.01, 0.0], "lowers": [-0.09, -0.05, -0.06, -0.04], "status": "supported"},
+    {"name": "refuted_significant_increase", "points": [-0.02, 0.08, -0.01, 0.0], "lowers": [-0.09, 0.01, -0.06, -0.04], "status": "refuted"},
+    {"name": "inconclusive_small_increase", "points": [-0.02, 0.04, -0.01, 0.0], "lowers": [-0.09, -0.03, -0.06, -0.04], "status": "inconclusive"},
+    {"name": "lower_exactly_zero_is_not_refuting", "points": [0.03, 0.0, 0.0, 0.0], "lowers": [0.0, -0.05, -0.05, -0.05], "status": "inconclusive"}
+  ],
+  "status_c6": [
+    {"name": "supported", "observed": [0.2, 0.15, 0.1, 0.1, 0.08], "adjusted_p": [0.001, 0.01, 0.02, 0.04, 0.049], "status": "supported"},
+    {"name": "refuted_zero_enrichment", "observed": [0.2, 0.15, 0.0, 0.1, 0.08], "adjusted_p": [0.001, 0.01, 0.9, 0.04, 0.049], "status": "refuted"},
+    {"name": "refuted_negative_enrichment", "observed": [0.2, -0.01, 0.1, 0.1, 0.08], "adjusted_p": [0.001, 0.8, 0.02, 0.04, 0.049], "status": "refuted"},
+    {"name": "inconclusive_one_p_at_boundary", "observed": [0.2, 0.15, 0.1, 0.1, 0.08], "adjusted_p": [0.001, 0.01, 0.02, 0.04, 0.05], "status": "inconclusive"}
+  ],
+  "c4": [
+    {"name": "preserved", "lo": -0.04, "hi": 0.05, "band": 0.07, "half_width": 0.045, "label": "preserved", "characterized": true},
+    {"name": "degraded_below", "lo": -0.15, "hi": -0.08, "band": 0.07, "half_width": 0.035, "label": "degraded", "characterized": true},
+    {"name": "degraded_above", "lo": 0.08, "hi": 0.12, "band": 0.07, "half_width": 0.02, "label": "degraded", "characterized": true},
+    {"name": "indeterminate_straddles_edge", "lo": -0.02, "hi": 0.09, "band": 0.07, "half_width": 0.055, "label": "indeterminate", "characterized": true},
+    {"name": "too_wide_to_characterize", "lo": -0.09, "hi": 0.08, "band": 0.07, "half_width": 0.085, "label": "indeterminate", "characterized": false},
+    {"name": "wide_and_outside_the_band", "lo": 0.01, "hi": 0.17, "band": 0.07, "half_width": 0.08, "label": "indeterminate", "characterized": false}
+  ],
+  "worst_status": [
+    {"statuses": ["supported", "supported"], "worst": "supported"},
+    {"statuses": ["supported", "inconclusive"], "worst": "inconclusive"},
+    {"statuses": ["inconclusive", "refuted", "supported"], "worst": "refuted"}
+  ],
+  "coverage_deviation": [
+    {
+      "name": "degenerate_all_confident_correct",
+      "cal_p": [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
+      "cal_labels": [1, 1, 1, 1, 1, 1, 1, 1, 1],
+      "test_p": [0.9, 0.9, 0.9, 0.9],
+      "test_labels": [1, 1, 1, 1],
+      "alpha": 0.2,
+      "iterations": 50,
+      "seed": 3,
+      "deviation_every_draw": "1/5",
+      "note": "every calibration score is 1 - 0.9; the quantile is 0.1 under any resample; the set {1} always covers the label, so empirical coverage is 1 and the deviation is 1 - (1 - 0.2) = 1/5 in every draw."
+    }
+  ]
+}
