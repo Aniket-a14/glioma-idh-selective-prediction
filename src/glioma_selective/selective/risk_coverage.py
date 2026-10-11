@@ -13,7 +13,10 @@ import math
 from collections.abc import Sequence
 from fractions import Fraction
 
-__all__ = ["monotonicity_violations", "rc_points"]
+import numpy as np
+from numpy.typing import NDArray
+
+__all__ = ["monotonicity_total_bootstrap", "monotonicity_violations", "rc_points"]
 
 
 def _exact(value: float, what: str) -> Fraction:
@@ -86,3 +89,33 @@ def monotonicity_violations(
                 count += 1
                 total += risk[i] - risk[j]
     return count, float(total)
+
+
+def monotonicity_total_bootstrap(
+    scores: Sequence[float], losses: Sequence[float], iterations: int, seed: int
+) -> NDArray[np.float64]:
+    """Patient-level bootstrap of the S4 violation magnitude (D6, T09.6).
+
+    Per iteration draw ``idx = rng.integers(0, n, n)`` from
+    ``numpy.random.default_rng(seed)``, build the S1 points of the resampled
+    ``scores`` and ``losses``, and take the S4 magnitude sum. Returns the array
+    of ``iterations`` totals. A small total that the interval puts near zero is
+    finite-sample noise; a total whose interval stays above zero is a
+    systematic reversal.
+    """
+    if iterations < 1:
+        raise ValueError("iterations must be at least 1")
+    if len(scores) == 0 or len(scores) != len(losses):
+        raise ValueError("scores and losses must be non-empty and of equal length")
+    score_arr = np.asarray(scores, dtype=np.float64)
+    loss_arr = np.asarray(losses, dtype=np.float64)
+    n = len(score_arr)
+    rng = np.random.default_rng(seed)
+    totals = np.empty(iterations, dtype=np.float64)
+    for b in range(iterations):
+        idx = rng.integers(0, n, n)
+        _, magnitude = monotonicity_violations(
+            rc_points(score_arr[idx].tolist(), loss_arr[idx].tolist())
+        )
+        totals[b] = magnitude
+    return totals
