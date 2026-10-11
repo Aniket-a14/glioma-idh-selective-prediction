@@ -11,14 +11,14 @@ test splits. The remainder is 103 mutant and 265 wildtype patients in training, 
 categories are reported for each split but are not used for stratification. UCSF-PDGM and EGD
 are evaluated as whole cohorts and are never split.
 
-The power check supported this design as a practical compromise among the candidate proportions.
-Its simulation table uses the rounded 60/20/20 sizes of 370 training, 123 calibration, and 123
-test patients, with 35 mutant patients in the test set. At this simulated test size, the
+D-034 records the Research Lead's choice of 60/20/20 after a power check compared four candidate
+allocations. Its simulation table uses the rounded 60/20/20 sizes of 370 training, 123 calibration,
+and 123 test patients, with 35 mutant patients in the test set. At this simulated test size, the
 bootstrap 95% AUROC half-width ranges from 0.094 at true AUROC 0.75 to 0.059 at 0.90; the
-corresponding Hanley--McNeil values are wider. The check also found that no feasible calibration
-size on 616 patients produces a 95% half-width below five percentage points, while the five-point
-coverage grid from 0.5 to 0.9 remains usable. These results motivate retaining the frozen
-60/20/20 allocation rather than selecting a split after seeing model results.
+corresponding Hanley--McNeil values are wider. For the coverage-deviation calculation under
+exchangeability (alpha = 0.10, combining calibration-draw noise with an external test set of 202--450
+patients), no feasible calibration size on 616 patients brings the 95% half-width below five
+percentage points, while the five-point coverage grid from 0.5 to 0.9 remains usable.
 
 Normalization is fitted on the UTSW training split only. Each volume is first divided by its own
 positive brain-voxel median. This rescaling is necessary because raw scanner intensity scales
@@ -34,7 +34,7 @@ uses no other patient's data, so external-cohort statistics are not needed.
 
 The UTSW range check found no sign of an intensity shift between the held-out UTSW splits and
 training: median z-score means were near zero and median standard deviations were approximately
-0.86–0.96. Seven of 124 calibration patients and eight of 124 internal-test patients were flagged
+0.86–0.96. Eight of 124 calibration patients and seven of 124 internal-test patients were flagged
 by the training min--max review rule, a rate described as compatible with the expected multiple
 comparisons from 12 quantities per patient; the flags do not alter downstream processing. No
 non-finite values were found. The split manifest and normalization-statistics artifact are both
@@ -59,7 +59,7 @@ downstream results.
 | Why rescaling was needed | T1 mean range 123–271,321; median about 565; 25 patients (7%) above 5,000; 11 extreme in all four modalities | `docs/research/DECISION_LOG.md:980-985` |
 | Frozen pooled statistic | Per-modality pooled brain-voxel mean and population SD, ddof 0, from 368 UTSW-training patients | `docs/research/DECISION_LOG.md:973-978`; `docs/research/protocols/PHASE_04_ZSCORE_CHECK.md:9-19` |
 | Application and clipping | Brain voxels only; background 0; no clipping; applied unchanged to every cohort and split | `docs/research/DECISION_LOG.md:973-978`; `docs/research/protocols/PHASE_04_ZSCORE_CHECK.md:9-12` |
-| UTSW range check | Median z means near 0; median SD 0.86–0.96; 7 calibration and 8 internal-test flags; no non-finite values | `docs/research/protocols/PHASE_04_ZSCORE_CHECK.md:31-42,48-56` |
+| UTSW range check | Median z means near 0; median SD 0.86–0.96; 8 calibration and 7 internal-test flags; no non-finite values | `docs/research/protocols/PHASE_04_ZSCORE_CHECK.md:31-42,48-56` |
 | Split artifact | SHA-256 `b8696d4474ce0328eb3ffd53bfb3727f85b1977ed22d0a78212111e800ec9a87` for `splits.json` | `docs/research/manifests/splits.sha256:1` |
 | Normalization artifact | SHA-256 `f6b7cc70d6ca2b23fc9e706d1ee78b30cbb1d0e845fc63ee894e3894dc36bbb9` for `normalization_stats.json` | `docs/research/manifests/normalization_stats.sha256:1`; `docs/research/protocols/PHASE_04_ZSCORE_CHECK.md:21-23` |
 
