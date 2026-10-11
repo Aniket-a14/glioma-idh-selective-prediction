@@ -86,7 +86,10 @@ class IDHNet(nn.Module):
             bottleneck, config.head_hidden, config.head_dropout
         )
 
-    def forward(self, image: torch.Tensor) -> ModelOutput:
+    def pooled_features(
+        self, image: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """Pooled encoder features ``[B, C]`` and the segmentation logits (or None)."""
         weighted = image * self.modality_weights.view(1, -1, 1, 1, 1)
         features, skips = self.backbone.encode(weighted)
         seg_logits: torch.Tensor | None = None
@@ -102,6 +105,10 @@ class IDHNet(nn.Module):
             )
         else:
             pooled = features.mean(dim=(2, 3, 4))
+        return pooled, seg_logits
+
+    def forward(self, image: torch.Tensor) -> ModelOutput:
+        pooled, seg_logits = self.pooled_features(image)
         return ModelOutput(logit=self.head(pooled), seg_logits=seg_logits)
 
 
