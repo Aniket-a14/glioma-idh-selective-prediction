@@ -19,7 +19,9 @@ makes the comparisons paired (SAP section 4). Fixture: `n=5, iterations=2, seed=
 
 ### R2. `percentile_interval(values, level=0.95) -> (lo, hi)` (`statistics/resampling.py`)
 `numpy.percentile(values, [100(1-level)/2, 100(1+level)/2], method="linear")`. Returns Python floats. A single value gives
-`(v, v)`.
+`(v, v)`. The two percentile positions are computed in exact arithmetic from the decimal text of `level`
+(`50 (1 - level)` and `50 (1 + level)` as `Fraction(repr(level))` expressions) and only then converted to float; plain float
+evaluation gives `2.500000000000002` at `level = 0.95`, not `2.5`. (Found by Codex while implementing; recorded here.)
 
 ### R3. `enrichment_permutation_test(rejected, errors, permutations, seed) -> EnrichmentResult` (`statistics/permutation.py`)
 `rejected` and `errors` are 0/1 per patient (1 = rejected / 1 = misclassified). Let `n` patients, `m = sum(rejected)`,
