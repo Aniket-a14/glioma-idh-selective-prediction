@@ -1228,7 +1228,7 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 ---
 
 ## D-050 — Phase 09 statistics layer is built early; four readings of the frozen claim rules
-**Status:** OPEN (proposed 2026-10-11; implementation proceeds under the readings below, none of which changes a pre-registered number) · **Resolve by:** before Phase 09 results are read · **Blocking:** no
+**Status:** RESOLVED 2026-10-11 (Research Lead accepted readings (a) to (d) as written; "Accept all four" in session) · **Resolve by:** before Phase 09 results are read · **Blocking:** no
 
 **Conflict.** (1) Phase 09's entry criteria require Phase 08 complete, but the resampling, permutation, multiplicity and claim-rule code needs only arrays and is checkable by hand; the same reasoning as D-047 and D-045. (2) `STATISTICAL_ANALYSIS_PLAN.md` section 5 states the C5 "supported" cell as "no increase in risk between adjacent grid coverages" without saying whether that means point estimates or an interval, and states the C4 label "wholly outside" without saying which side. Section 5 also gives the C6 p-value rule without the permutation p-value formula.
 
@@ -1238,7 +1238,7 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 **Recommendation.** Keep (a), (b), (c). Each is the narrowest reading of text that is already frozen, so none needs an amendment under PREREGISTRATION.md section 12; if you read the C5 text as (a'), say so before Phase 09 results exist.
 
-**Owner.** Research Lead.
+**Owner.** Research Lead. Resolution: all four readings accepted; the C5 interval version (a') is rejected.
 
 ---
 
