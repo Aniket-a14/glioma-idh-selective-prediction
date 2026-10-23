@@ -53,19 +53,17 @@ rather than acting on someone else's row or inventing a new task.
 
 ### Status, week of 2026-10-23
 
-- 16 contributor PRs opened since #1: 11 merged (#1, #2, #4, #5, #8, #9, #10, #11, #12, #13, #16), 1 closed unmerged (#3), and the four below still open. PRs #6 and #7 were the Research Lead's own.
-- Open PRs: #14 approved and waiting for merge; #15 waiting on the author; #17 and #18 revised on 2026-10-11 and waiting for re-review. Nothing has moved on GitHub since 2026-10-11.
+- 16 contributor PRs opened since #1: 14 merged (#1, #2, #4, #5, #8, #9, #10, #11, #12, #13, #14, #16, #17, #18), 1 closed unmerged (#3), and #15 still open. PRs #6 and #7 were the Research Lead's own.
+- Merged on 2026-10-23: #14 (C-013, approved 2026-10-09), #17 (C-020) and #18 (C-023), after a re-check of the authors' 2026-10-11 revisions. Left over from #17: the real-machine output has no `/proc/version` line (Windows host, no WSL) and per-status test coverage was not measured. Left over from #18: one table row says "a half-width" without naming the quantity.
+- #15 (C-006) stays open: the cross-label rejection and test requested on 2026-09-30 are not in it, and the author has not pushed since 2026-09-25.
 - Nine Open rows have no branch pushed: C-009, C-015, C-021, C-024 (udaypratapchauhan), C-012, C-019, C-025 (ShantanuTripathi2745), C-014, C-018 (solankisuryansh). The draft-PR dates in C-018, C-019 and C-021 (Wed 2026-09-23) have passed.
-- Merged this round: C-016, C-017 (2026-10-01) and C-022 (2026-10-11).
+- Merged since the last report (2026-09-18): C-008, C-010 (2026-09-19), C-007, C-011 (2026-09-30), C-016, C-017 (2026-10-01), C-022 (2026-10-11), and the three above.
 
 ## In progress
 
 | ID | Task | Assigned to | Branch | PR |
 |---|---|---|---|---|
 | C-006 | TCGA barcode normalizer fix (`leakage/`): cohort-free barcode form adopted; author to make the GBM/LGG normalizers reject cross-labelled input and add a test | solankisuryansh | `contrib/solankisuryansh/tcga-id-normalizer-fix` | [#15](../../../pull/15), changes requested 2026-09-30; waiting on the author, no commit since 2026-09-25 |
-| C-013 | Phase 04 numbers audit: numbers are correct; audit-trail references and a few MATCH/NOT VERIFIABLE classifications fixed in `e84aeb7` | priyaagrawal2 | `contrib/priyaagrawal2/phase04-numbers-audit` | [#14](../../../pull/14), approved 2026-10-09, not merged yet |
-| C-020 | `scripts/check_setup.py`: contributor setup checker (Long row) | priyaagrawal2 | `contrib/priyaagrawal2/setup-check-script` | [#17](../../../pull/17), changes requested 2026-10-09; author pushed `3cf4b4d` on 2026-10-11, re-review pending |
-| C-023 | Methods draft on data splitting and intensity normalization (`paper/METHODS_SPLITS_NORMALIZATION_DRAFT.md`) | priyaagrawal2 | `contrib/priyaagrawal2/methods-splits-normalization-draft` | [#18](../../../pull/18), changes requested 2026-10-09; author pushed `750fea8` on 2026-10-11, re-review pending |
 
 ## Done
 
@@ -83,6 +81,9 @@ rather than acting on someone else's row or inventing a new task.
 | C-016 | Phase 04 runbook: stale D-023 note and missing overwrite warnings fixed | Akshita1395 | [#11](../../../pull/11) | 2026-10-01 |
 | C-017 | Independent calibration metric reference: four behaviours no test pinned before | Akshita1395 | [#12](../../../pull/12) | 2026-10-01 |
 | C-022 | Benjamini-Hochberg reference implementation (11 cases; Codex's `statistics/multiplicity.py` matches it on all 11) | Akshita1395 | [#16](../../../pull/16) | 2026-10-11 |
+| C-013 | Phase 04 numbers audit (`protocols/PHASE_04_NUMBERS_AUDIT.md`); numbers correct, audit-trail references fixed | priyaagrawal2 | [#14](../../../pull/14) | 2026-10-23 |
+| C-020 | `scripts/check_setup.py` contributor setup checker (the Gate E flag check verified against `export` and repeated assignments) | priyaagrawal2 | [#17](../../../pull/17) | 2026-10-23 |
+| C-023 | Methods draft on data splitting and intensity normalization (`paper/METHODS_SPLITS_NORMALIZATION_DRAFT.md`) | priyaagrawal2 | [#18](../../../pull/18) | 2026-10-23 |
 
 ---
 
