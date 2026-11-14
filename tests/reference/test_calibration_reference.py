@@ -215,20 +215,24 @@ def test_brier_wrong_variants_are_caught() -> None:
     case = _fixture("brier_four_points")
     probs, labels = case["probs"], case["labels"]
     wrong = [
-        lambda: sum(
-            probability - label
-            for probability, label in zip(probs, labels, strict=False)
-        )
-        / len(labels),
+        lambda: (
+            sum(
+                probability - label
+                for probability, label in zip(probs, labels, strict=False)
+            )
+            / len(labels)
+        ),
         lambda: sum(
             (probability - label) ** 2
             for probability, label in zip(probs, labels, strict=False)
         ),
-        lambda: sum(
-            (probability - (1 - label)) ** 2
-            for probability, label in zip(probs, labels, strict=False)
-        )
-        / len(labels),
+        lambda: (
+            sum(
+                (probability - (1 - label)) ** 2
+                for probability, label in zip(probs, labels, strict=False)
+            )
+            / len(labels)
+        ),
     ]
     assert all(function() != case["expected"] for function in wrong)
 
