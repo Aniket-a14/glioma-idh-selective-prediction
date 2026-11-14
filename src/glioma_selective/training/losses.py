@@ -78,8 +78,14 @@ def joint_loss(
     pos_weight: float,
     seg_weight: float,
     dice_smooth: float,
+    cls_weight: float = 1.0,
 ) -> JointLoss:
-    """Classification loss plus ``seg_weight`` times the Dice loss (0 without aux)."""
+    """``cls_weight`` times the classification loss plus ``seg_weight`` times Dice.
+
+    Both weights are 1.0 and 1.0 for R1 to R7 (joint training). The two-stage
+    ablation R8 (D-051) trains stage 1 with ``cls_weight = 0`` and stage 2 with
+    ``seg_weight = 0``, so each network sees one loss only.
+    """
     classification = class_balanced_bce(logit, label, pos_weight=pos_weight)
     if seg_logits is None:
         segmentation = torch.zeros_like(classification)
@@ -88,7 +94,7 @@ def joint_loss(
             seg_logits, seg_target, has_seg, smooth=dice_smooth
         )
     return JointLoss(
-        total=classification + seg_weight * segmentation,
+        total=cls_weight * classification + seg_weight * segmentation,
         classification=classification,
         segmentation=segmentation,
     )

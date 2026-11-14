@@ -19,6 +19,7 @@ from typing import Any
 import torch
 
 from glioma_selective.models.segresnet import build_model
+from glioma_selective.models.two_stage import TwoStageNet
 from glioma_selective.tracking.run_record import (
     assert_launch_ready,
     build_run_record,
@@ -29,10 +30,10 @@ from glioma_selective.training.authorization import (
     assert_authorized,
     base_config_sha256,
 )
-from glioma_selective.training.checkpoint import file_sha256
+from glioma_selective.training.checkpoint import file_sha256, load_model_weights
 from glioma_selective.training.loop import FitResult, TrainConfig, fit
 from glioma_selective.training.losses import pos_weight_from_counts
-from glioma_selective.training.variants import model_config_for
+from glioma_selective.training.variants import model_config_for, train_overrides
 from glioma_selective.utils import paths
 
 __all__ = ["RunSpec", "training_config_for", "train_run"]
@@ -54,12 +55,16 @@ class RunSpec:
     num_workers: int = 4
     resume_run_id: str | None = None
     variant: str = "base"
+    stage1_run_id: str | None = None  # stage2_cls only: the completed stage1_seg run
 
 
 def training_config_for(spec: RunSpec) -> TrainConfig:
     """The base training config with this run's seed, dropout and epoch cap."""
     config = replace(
-        TrainConfig(), seed=spec.seed, modality_dropout=spec.modality_dropout
+        TrainConfig(),
+        seed=spec.seed,
+        modality_dropout=spec.modality_dropout,
+        **train_overrides(spec.variant),
     )
     if spec.max_epochs is not None:
         config = replace(config, max_epochs=spec.max_epochs)
@@ -84,7 +89,11 @@ def _record_failure(run_id: str, error: BaseException) -> None:
 
 
 def _record_completion(
-    run_id: str, result: FitResult, run_dir: Path, log_path: Path
+    run_id: str,
+    result: FitResult,
+    run_dir: Path,
+    log_path: Path,
+    selection: str = "classification",
 ) -> None:
     best = result.state.history[result.state.best_epoch]
     update_run_record(
@@ -100,10 +109,24 @@ def _record_completion(
             "best_epoch": result.state.best_epoch,
             "stopped_early": result.stopped_early,
             "calibration_classification_loss": result.state.best_value,
+            "selection_loss": selection,
             "calibration_auroc_at_best_epoch": best["calibration_auroc"],
         },
         log_path=str(log_path),
     )
+
+
+def _stage1_weights(stage1_run_id: str) -> Path:
+    """Best weights of a completed ``stage1_seg`` run; anything else is an error."""
+    run_dir = paths.experiments_dir() / stage1_run_id
+    record = json.loads((run_dir / "record.json").read_text("utf-8"))
+    run = record.get("config", {}).get("run", {})
+    if record.get("status") != "completed" or run.get("variant") != "stage1_seg":
+        raise ValueError(
+            f"{stage1_run_id} is not a completed stage1_seg run "
+            f"(status {record.get('status')!r}, variant {run.get('variant')!r})"
+        )
+    return run_dir / "checkpoints" / "best.pt"
 
 
 def _git_head() -> str:
@@ -161,6 +184,17 @@ def train_run(
     )
     model_config = model_config_for(spec.variant)
     train_config = training_config_for(spec)
+    stage1_weights: Path | None = None
+    stage1_sha = ""
+    if spec.variant == "stage2_cls":
+        if spec.stage1_run_id is None:
+            raise ValueError(
+                "stage2_cls needs --stage1-run (a completed stage1_seg run)"
+            )
+        stage1_weights = _stage1_weights(spec.stage1_run_id)
+        stage1_sha = file_sha256(stage1_weights)
+    elif spec.stage1_run_id is not None:
+        raise ValueError("--stage1-run applies only to the stage2_cls variant")
     train_dataset, calibration_dataset, stats_path = _build_datasets(spec.seed)
     labels = train_dataset.labels
     n_positive = int(sum(labels))
@@ -174,6 +208,8 @@ def train_run(
             "label": spec.label,
             "pos_weight": pos_weight,
             "variant": spec.variant,
+            "stage1_run_id": spec.stage1_run_id,
+            "stage1_checkpoint_sha256": stage1_sha or None,
         },
     }
     if spec.resume_run_id is None:
@@ -209,6 +245,10 @@ def train_run(
     logging.getLogger().setLevel(logging.INFO)
     try:
         model = build_model(model_config)
+        if stage1_weights is not None and spec.resume_run_id is None:
+            if not isinstance(model, TwoStageNet):
+                raise TypeError("stage2_cls must build a TwoStageNet")
+            load_model_weights(stage1_weights, model.stage1)
         train_loader = make_loader(
             train_dataset,
             batch_size=train_config.batch_size,
@@ -240,5 +280,5 @@ def train_run(
         logging.getLogger().removeHandler(handler)
         handler.close()
 
-    _record_completion(run_id, result, run_dir, log_path)
+    _record_completion(run_id, result, run_dir, log_path, train_config.selection)
     return run_id, result

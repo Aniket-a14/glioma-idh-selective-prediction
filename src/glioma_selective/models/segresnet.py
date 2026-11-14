@@ -36,6 +36,7 @@ class ModelConfig:
     pooling_min_mass: float = 1.0
     head_hidden: int = 64
     head_dropout: float = 0.2
+    two_stage: bool = False  # R8 stage 2 (D-051): pooled with a frozen stage-1 mask
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]) -> ModelConfig:
@@ -116,6 +117,10 @@ def build_model(config: ModelConfig | Mapping[str, Any]) -> IDHNet:
     """Construct the network from a ``ModelConfig`` or a config mapping."""
     if not isinstance(config, ModelConfig):
         config = ModelConfig.from_mapping(config)
+    if config.two_stage:
+        from glioma_selective.models.two_stage import TwoStageNet
+
+        return TwoStageNet(config)
     return IDHNet(config)
 
 

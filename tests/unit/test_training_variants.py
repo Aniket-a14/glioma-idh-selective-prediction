@@ -32,7 +32,7 @@ def test_whole_brain_differs_from_base_only_in_pooling() -> None:
 def test_unknown_variant_is_rejected() -> None:
     with pytest.raises(ValueError, match="unknown model variant"):
         model_config_for("two_stage_typo")
-    assert set(VARIANTS) == {"base", "whole_brain"}
+    assert set(VARIANTS) == {"base", "whole_brain", "stage1_seg", "stage2_cls"}
 
 
 def test_authorization_digest_depends_on_the_variant() -> None:

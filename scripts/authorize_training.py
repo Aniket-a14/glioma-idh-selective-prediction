@@ -34,13 +34,20 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     parser.add_argument("--max-steps", type=int, default=150)
-    parser.add_argument("--overfit-threshold", type=float, default=0.05)
+    parser.add_argument(
+        "--overfit-threshold",
+        type=float,
+        default=None,
+        help="loss the 4-patient probe must go below; default 0.05 (class-balanced "
+        "BCE), or 0.5 for stage1_seg (Dice loss, a wiring check not a result)",
+    )
     parser.add_argument("--synthetic", action="store_true")
     parser.add_argument(
         "--variant",
-        choices=("base", "whole_brain"),
+        choices=("base", "whole_brain", "stage1_seg", "stage2_cls"),
         default="base",
-        help="model variant the report authorizes (R7 uses whole_brain, D-051)",
+        help="model variant the report authorizes: R7 whole_brain, "
+        "R8 stage1_seg or stage2_cls (D-051)",
     )
     parser.add_argument("--dry-run", action="store_true")
     return parser
@@ -51,6 +58,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.max_steps < 1:
         parser.error("--max-steps must be at least one")
+    if args.overfit_threshold is None:
+        args.overfit_threshold = 0.5 if args.variant == "stage1_seg" else 0.05
     if args.overfit_threshold <= 0:
         parser.error("--overfit-threshold must be positive")
     if args.dry_run:
