@@ -520,6 +520,47 @@ def _align_condition(
     }
 
 
+def _single_model_scores(
+    raw_p: np.ndarray, scaled_p: np.ndarray, labels: np.ndarray
+) -> tuple[dict[str, list[float]], dict[str, np.ndarray]]:
+    """Shared Phase 09 score/error construction for M1, M2 and M5 (D-047)."""
+    raw_loss = ((raw_p >= 0.5) != (labels == 1)).astype(np.int64)
+    scores = {
+        "M1": confidence_scores(raw_p.tolist()),
+        "M2": confidence_scores(scaled_p.tolist()),
+        "M5": confidence_scores(scaled_p.tolist()),
+    }
+    return scores, {key: raw_loss for key in scores}
+
+
+def _condition_scores(
+    condition: str,
+    arrays: dict[str, Any],
+    run_id: str,
+    ids: list[str],
+    ensemble_run_ids: Sequence[str] | None,
+    checkpoint_hashes: dict[str, str],
+) -> tuple[dict[str, list[float]], dict[str, np.ndarray]]:
+    """Build patient-aligned mechanism inputs without measuring any statistics."""
+    scores, losses = _single_model_scores(
+        arrays["raw_p"], arrays["scaled_full"], arrays["labels"]
+    )
+    scores["M3"] = mc_dropout_scores(arrays["samples"])
+    losses["M3"] = losses["M1"]
+    if ensemble_run_ids is not None:
+        _add_ensemble_scores(
+            condition,
+            ids,
+            run_id,
+            ensemble_run_ids,
+            checkpoint_hashes,
+            scores,
+            losses,
+            arrays["labels"],
+        )
+    return scores, losses
+
+
 def _condition_cells(
     condition: str,
     arrays: dict[str, Any],
@@ -532,26 +573,9 @@ def _condition_cells(
     permutations: int,
     seed: int,
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
-    raw_p, labels = arrays["raw_p"], arrays["labels"]
-    raw_loss = ((raw_p >= 0.5) != (labels == 1)).astype(np.int64)
-    scores = {
-        "M1": confidence_scores(raw_p.tolist()),
-        "M2": confidence_scores(arrays["scaled_full"].tolist()),
-        "M3": mc_dropout_scores(arrays["samples"]),
-        "M5": confidence_scores(arrays["scaled_full"].tolist()),
-    }
-    losses = {key: raw_loss for key in ("M1", "M2", "M3", "M5")}
-    if ensemble_run_ids is not None:
-        _add_ensemble_scores(
-            condition,
-            ids,
-            run_id,
-            ensemble_run_ids,
-            checkpoint_hashes,
-            scores,
-            losses,
-            labels,
-        )
+    scores, losses = _condition_scores(
+        condition, arrays, run_id, ids, ensemble_run_ids, checkpoint_hashes
+    )
     cells: dict[str, Any] = {}
     absent: list[dict[str, str]] = []
     for mechanism in MECHANISMS:
@@ -572,8 +596,10 @@ def _condition_cells(
                 permutations,
                 seed,
             )
-    control_scores = np.random.default_rng(seed).uniform(size=len(raw_loss)).tolist()
-    cells["random_confidence_control"] = _random_control(control_scores, raw_loss)
+    control_scores = (
+        np.random.default_rng(seed).uniform(size=len(losses["M1"])).tolist()
+    )
+    cells["random_confidence_control"] = _random_control(control_scores, losses["M1"])
     return cells, absent
 
 
