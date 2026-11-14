@@ -190,11 +190,9 @@ def freeze_mc_dropout(
         raise ValueError("passes must be positive")
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
-    from omegaconf import OmegaConf
-    from scripts.freeze_predictions import REPOSITORY_ROOT
-
     from glioma_selective.data.dataset import IDHDataset, load_split_patient_ids
-    from glioma_selective.models.segresnet import ModelConfig, build_model
+    from glioma_selective.evaluation.freeze import model_config_from_record
+    from glioma_selective.models.segresnet import build_model
     from glioma_selective.tracking.predictions import write_prediction_artifact
     from glioma_selective.training.checkpoint import load_model_weights
     from glioma_selective.training.run import _build_datasets
@@ -217,13 +215,7 @@ def freeze_mc_dropout(
         record, checkpoint_path, allow_sha_mismatch=allow_sha_mismatch
     )
     resolved_device = _resolve_device(device)
-    config_path = REPOSITORY_ROOT / "configs" / "model" / "base.yaml"
-    config_values = OmegaConf.to_container(OmegaConf.load(config_path), resolve=True)
-    if not isinstance(config_values, Mapping):
-        raise ValueError("base model configuration must be a mapping")
-    model = build_model(
-        ModelConfig.from_mapping(cast(Mapping[str, Any], config_values))
-    )
+    model = build_model(model_config_from_record(record))
     load_model_weights(checkpoint_path, model)
     model.to(resolved_device)
 

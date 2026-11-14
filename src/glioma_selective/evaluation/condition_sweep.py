@@ -131,18 +131,16 @@ def freeze_conditions(
     allow_sha_mismatch: bool = False,
 ) -> Path:
     """Freeze six conditions over UTSW calibration and internal-test splits."""
-    from omegaconf import OmegaConf
-    from scripts.freeze_predictions import REPOSITORY_ROOT
-
     from glioma_selective.data.dataset import IDHDataset, load_split_patient_ids
     from glioma_selective.evaluation.conditions import load_condition_grid
+    from glioma_selective.evaluation.freeze import model_config_from_record
     from glioma_selective.evaluation.freeze_mc_dropout import (
         _check_run,
         _load_record,
         _resolve_device,
         _write_exclusive,
     )
-    from glioma_selective.models.segresnet import ModelConfig, build_model
+    from glioma_selective.models.segresnet import build_model
     from glioma_selective.tracking.predictions import (
         read_prediction_artifact,
         write_prediction_artifact,
@@ -160,13 +158,7 @@ def freeze_conditions(
         record, checkpoint_path, allow_sha_mismatch=allow_sha_mismatch
     )
     resolved_device = _resolve_device(device)
-    model_config = OmegaConf.to_container(
-        OmegaConf.load(REPOSITORY_ROOT / "configs" / "model" / "base.yaml"),
-        resolve=True,
-    )
-    if not isinstance(model_config, Mapping):
-        raise ValueError("base model configuration must be a mapping")
-    model = build_model(ModelConfig.from_mapping(cast(Mapping[str, Any], model_config)))
+    model = build_model(model_config_from_record(record))
     load_model_weights(checkpoint_path, model)
     model.to(resolved_device)
 
