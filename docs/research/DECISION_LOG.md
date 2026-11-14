@@ -1274,6 +1274,19 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 **Owner.** Research Lead. Resolution: (a) with (c) accepted. Phase 10 reports raw p-values and paired intervals for the UTSW members of the family; the single Benjamini-Hochberg pass over the full pre-registered family runs once, at the Phase 13 results freeze, after Phase 12; the internal-only table is labelled supplementary. `evaluation/phase10_analysis.py` implements exactly this.
 
+## D-053 — HD95 for the auxiliary segmentation: definition, empty-mask handling, splits
+**Status:** RESOLVED 2026-11-14 (Research Lead answered the two questions in session: report both empty-mask tables, labelled; both splits) · **Blocking:** no
+
+**Conflict.** Phase 10 acceptance criterion 8 asks for segmentation HD95 and the plan fixes neither the HD95 formula, nor what happens when the truth mask or the predicted mask of a region is empty (HD95 is undefined), nor the splits.
+
+**Adopted.** (1) HD95 is the larger of the two directed 95th percentiles of surface-voxel distances (BraTS and MONAI convention), on the 2 mm preprocessing grid with the hard mask `sigmoid > 0.5` used for Dice; three channels as for Dice. (2) Two tables, both always reported and labelled: `primary` over the patients where both masks are non-empty, with the counts of missed regions (truth present, prediction empty), false regions (truth empty, prediction present) and both-empty cases, and no invented distance; `brats_penalty` with both-empty = 0 mm and one-sided empty = the 96-voxel grid diagonal at 2 mm (332.55 mm), labelled as an arbitrary constant. (3) Calibration and internal-test splits, like Dice (D-046).
+
+**Alternatives.** Report only one of the two empty-mask conventions; internal test only. Not chosen: the Research Lead asked for both tables and both splits.
+
+**Consequences.** Contract S5 in `protocols/PHASE10_STATS_CONTRACTS.md`, fixtures `tests/fixtures/phase10_hd95.json`. HD95 on a 2 mm grid is quantized to the voxel size; the paper states that. One forward pass per split per run (R2 now, R7 and R8 when trained).
+
+**Owner.** Research Lead (resolved).
+
 ---
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.

@@ -119,3 +119,57 @@ negates `z`. `paired_bootstrap` is reproducible under a fixed seed, enforces `mi
 interval covers a known difference at close to the nominal rate on simulated data (100 simulations, `iterations = 1000`,
 coverage between 0.90 and 1.00). `paired_bootstrap_p` matches `paired_p_value` exactly. Property: the p-value never exceeds 1
 and is monotone in how far the differences sit from zero.
+
+## S5. Segmentation HD95 (T10.10; `evaluation/hd95.py`, `scripts/freeze_segmentation_hd95.py`)
+
+Fixtures: `tests/fixtures/phase10_hd95.json` (expected values from a brute-force pairwise implementation, not from a distance
+transform). Conventions chosen under D-053 and the Research Lead's answers of 2026-11-14.
+
+**S5.1 `surface_voxels(mask) -> ndarray[bool]`.** `mask` is a 3-D boolean array. A surface voxel is a foreground voxel with at
+least one of its six face neighbours in the background; voxels outside the array count as background (`binary_erosion` with
+`generate_binary_structure(3, 1)` and `border_value = 0`; `surface = mask & ~eroded`).
+
+**S5.2 `hd95(pred, truth, spacing=(2.0, 2.0, 2.0)) -> float | None`.** Both masks are boolean arrays of one shape; `spacing` is
+the voxel size in mm along each axis. If either mask is empty the result is `None` (undefined). Otherwise, with `A` the surface
+voxels of `pred` and `B` those of `truth`: the directed distances of `A` to `B` are, for each voxel of `A`, the Euclidean
+distance in mm (spacing applied per axis) to the nearest voxel of `B` (a Euclidean distance transform of the complement of `B`
+with `sampling = spacing`); `d95(A -> B)` is their 95th percentile with linear interpolation (`numpy.percentile(..., 95,
+method="linear")`); `HD95 = max(d95(A -> B), d95(B -> A))`. This is the BraTS and MONAI convention (the larger of the two directed
+95th percentiles, not the 95th percentile of the pooled distances). Symmetric in `pred` and `truth`; 0 for identical masks.
+Tolerance against the fixtures: absolute `1e-9` mm.
+
+**S5.3 `classify_case(pred, truth) -> str`.** `"evaluable"` (both non-empty), `"missed"` (truth non-empty, prediction empty),
+`"false"` (truth empty, prediction non-empty), `"both_empty"`.
+
+**S5.4 `grid_diagonal_penalty(shape, spacing) -> float`.** `sqrt(sum((n_i s_i)^2))` over axes: 332.5537... mm for `(96, 96, 96)`
+at 2 mm (`penalty_mm_96_cube_2mm` in the fixture).
+
+**S5.5 `summarize_hd95(outcomes, penalty) -> dict`.** `outcomes` is a list of `(case, value)` per patient for one channel, with
+`case` from S5.3 and `value` the S5.2 result (a float for `evaluable`, `None` otherwise). Two tables, always both, labelled:
+- `primary`: over the evaluable cases only: `n_evaluable`, `mean`, `median`, `q25`, `q75` (linear percentiles); `mean` and the
+  others are `None` when `n_evaluable = 0`. Beside it the counts `missed`, `false`, `both_empty`, `n_patients`. No distance is
+  invented for a non-evaluable case.
+- `brats_penalty`: over all patients, `both_empty` = 0 mm, `missed` and `false` = `penalty`; `n`, `mean`, `median`, `q25`, `q75`,
+  the `penalty` used, and the label `"BraTS-style penalty convention; the penalty is an arbitrary constant"`.
+Fixture `aggregation`: values 10, 20, 30, 40 plus one missed, one false, one both-empty case give `primary` mean 25, median 25,
+q25 17.5, q75 32.5 and `brats_penalty` mean `(100 + 2 penalty) / 7` (n = 7).
+
+**S5.6 `scripts/freeze_segmentation_hd95.py --run-id RUN --device {cpu,cuda,auto} [--allow-sha-mismatch]`.** Same provenance
+checks, model rebuild (from the run record, `model_config_from_record`), checkpoint load, deterministic mode and dataset
+construction as `scripts/freeze_predictions.py` (reuse its helpers). For each of the UTSW calibration and internal-test splits
+and each channel (`enhancing`, `necrotic_core`, `oedema`, the order of `freeze.py`): predicted mask = `sigmoid(seg_logit) > 0.5`
+(the rule of `training/metrics.hard_dice`), truth = `seg > 0.5`, patients with `has_seg` False excluded and counted, spacing
+`(2.0, 2.0, 2.0)` (the preprocessing grid) and the penalty of S5.4. Writes `segmentation_hd95.json` and its `.sha256` sidecar
+into the run directory with exclusive creation (an existing file is a `FileExistsError`): per split and channel the S5.5 result,
+`n_without_segmentation`, and the per-patient outcomes (`patient_id`, `case`, `value`) so a second person can recompute; plus
+`run_id`, `git_sha`, `checkpoint_hash`. A model without a segmentation head is an error. No external cohort is read.
+
+**S5.7 Phase 10 assembler.** `evaluation/phase10_analysis.py` replaces the `hd95` absent marker of a run with the
+`internal_test` S5.5 result of that run's `segmentation_hd95.json` when the file exists (sidecar verified), and leaves the
+marker when it does not. R7 and R8 are handled the same way.
+
+**Tests.** Every fixture of `phase10_hd95.json`; `surface_voxels` on a single voxel, a 3x3x3 cube (26 surface voxels), a mask
+touching the array border; symmetry and identity; a random-mask comparison against a brute-force implementation inside the
+test (small grids, 50 random cases, tolerance `1e-9`); `summarize_hd95` on the fixture and on an all-non-evaluable channel
+(`None` statistics, counts correct); the penalty value; the script's refusal to overwrite; the assembler picking the file up
+and leaving the marker when absent.
