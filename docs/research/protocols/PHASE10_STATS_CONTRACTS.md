@@ -91,6 +91,20 @@ and the 2000-draw percentile interval from the shared matrix, plus the Hanley-Mc
 one, and the wider is flagged `quoted`. Segmentation Dice is copied from each run's `segmentation_dice.json` (internal test
 split, per channel); HD95 is written as `{"status": "absent", "reason": "needs a segmentation freeze (T10.10)"}`.
 
+**Resolved 2026-11-14 (Codex questions on S4).**
+1. Per-run block. ECE and Brier are reported twice per run and labelled: from the raw probability (M1) and from the
+   temperature-scaled probability (M2, each run's own `T` fitted on its full-input UTSW calibration split). The always-predict
+   AUROC and AUPRC use the raw probability (the ranking does not depend on `T`). Per-run AURC and selective risk use the M5
+   confidence ranking (the M2 ranking, D-047) with each run's own `T`; the ranking and so the AURC do not depend on `T`, which
+   is why E2 and E4 (AURC of R7 or R8 against R2) use the same M5 scores and the Phase 09 error vectors for each run. Sets and
+   thresholds are not needed in this assembler.
+2. Single-class draws. The shared matrix is not changed and nothing is redrawn or stratified. For every statistic that needs
+   both classes (AUROC, AUPRC, and the paired AUROC-difference interval of E1 and E3 if one is reported beside the DeLong p) a
+   draw with only one label class is skipped, using one validity mask common to those statistics, and the output records
+   `valid_draws` and `skipped_single_class_draws` next to the interval. Statistics that do not need both classes (AURC,
+   selective risk, ECE, Brier, and every paired AURC, ECE or Brier difference) keep all draws. The analysis fails with a
+   `ValueError` if no valid draw remains. The percentile interval is over the valid draws, whatever their number.
+
 **Tests.** Synthetic frozen artifacts with a known planted difference: the planted comparison has `point` near the planted
 value and an interval that covers it, a null comparison has `p` above 0.05 in most seeds, the family listing has 29 rows
 (44 with EGD) with exactly 14 `computed` when R7 and R8 exist and 10 when they do not, no row of `bh_family` carries an
