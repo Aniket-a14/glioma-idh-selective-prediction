@@ -51,6 +51,11 @@ difference of two mechanisms is paired by construction and a patient is always r
   `p_value: Fraction`, `iterations: int`.
 Fixture `paired_bootstrap`: `n = 5`, two iterations, seed 0, index matrix `[[4,3,2,1,1],[0,0,0,0,4]]`, statistic
 `mean(a) - mean(b)` on `a = [1,2,3,4,5]`, `b = [0,1,1,2,5]`: `point = 6/5`, `values = [6/5, 4/5]` (exact).
+Tolerance (resolved 2026-11-14 after Codex's question `CODEX_P10_QUESTIONS.md`): the statistic is evaluated in floating point
+(`np.mean(a[row]) - np.mean(b[row])` gives `1.2000000000000002` for the first row), so `point`, `values`, `lower` and `upper`
+are compared with the fixture's exact fractions at an absolute tolerance of `1e-12`, relative `0`. The statistic callback is
+not changed to chase bit-exactness. `paired_bootstrap_p` stays exact (it takes the `values` as given and compares them with
+zero as `Fraction(repr(d))`).
 
 ## S4. Phase 10 internal results assembler (`evaluation/phase10_analysis.py`, `scripts/analyze_phase10.py`; T10.9)
 
