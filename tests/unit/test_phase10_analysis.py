@@ -507,3 +507,75 @@ def test_null_aurc_comparison_over_seeds() -> None:
         assert row["point"] == 0
         above += float(Fraction(row["p_value"])) > 0.05
     assert above >= 8
+
+
+def test_hd95_present_for_r2_r7_r8_and_ignores_calibration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from glioma_selective.evaluation.hd95 import summarize_hd95
+
+    _all_runs(tmp_path, ablations=True)
+    monkeypatch.setenv("GLIOMA_ARTIFACT_ROOT", str(tmp_path))
+    expected = {}
+    for i, run_id in enumerate(("R2", "R7", "R8"), 1):
+        summary = summarize_hd95([("evaluable", float(i)), ("missed", None)], 332.55)
+        internal = {
+            "per_channel": {
+                channel: {
+                    **summary,
+                    "outcomes": [
+                        {"patient_id": "p0", "case": "evaluable", "value": float(i)},
+                        {"patient_id": "p1", "case": "missed", "value": None},
+                    ],
+                }
+                for channel in ("enhancing", "necrotic_core", "oedema")
+            },
+            "n_without_segmentation": 1,
+        }
+        expected[run_id] = internal
+        _json_artifact(
+            tmp_path / "experiments" / run_id / "segmentation_hd95.json",
+            {
+                "run_id": run_id,
+                "git_sha": "synthetic",
+                "checkpoint_hash": CHECKPOINT,
+                "splits": {
+                    "internal_test": internal,
+                    "calibration": {"not": "internal"},
+                },
+            },
+        )
+    report = _read(
+        analysis.analyze_phase10(
+            "R2",
+            ensemble_run_ids=MEMBERS,
+            r7_run_id="R7",
+            r8_run_id="R8",
+            iterations=1000,
+        )
+    )
+    for name in ("R2", "R7", "R8"):
+        assert report["runs"][name]["hd95"] == expected[name]
+
+
+@pytest.mark.parametrize(
+    "broken", ["sidecar", "hash", "run_id", "checkpoint_hash", "internal_test"]
+)
+def test_hd95_rejects_invalid_present_artifact(tmp_path: Path, broken: str) -> None:
+    document = {
+        "run_id": "R2",
+        "checkpoint_hash": CHECKPOINT,
+        "splits": {"internal_test": {"per_channel": {"enhancing": {"primary": {}}}}},
+    }
+    if broken in ("run_id", "checkpoint_hash"):
+        document[broken] = "different"
+    if broken == "internal_test":
+        document["splits"] = {}
+    path = tmp_path / "segmentation_hd95.json"
+    _json_artifact(path, document)
+    if broken == "sidecar":
+        path.with_name(path.name + ".sha256").unlink()
+    elif broken == "hash":
+        path.write_bytes(path.read_bytes() + b" ")
+    with pytest.raises(ValueError, match="sidecar|provenance|internal-test"):
+        analysis._internal_hd95(tmp_path, "R2", CHECKPOINT)
