@@ -52,6 +52,46 @@ difference of two mechanisms is paired by construction and a patient is always r
 Fixture `paired_bootstrap`: `n = 5`, two iterations, seed 0, index matrix `[[4,3,2,1,1],[0,0,0,0,4]]`, statistic
 `mean(a) - mean(b)` on `a = [1,2,3,4,5]`, `b = [0,1,1,2,5]`: `point = 6/5`, `values = [6/5, 4/5]` (exact).
 
+## S4. Phase 10 internal results assembler (`evaluation/phase10_analysis.py`, `scripts/analyze_phase10.py`; T10.9)
+
+Reads frozen artifacts only (no model run) and writes `phase10_analysis.json` with a SHA-256 sidecar into the primary run's
+directory, schema `phase10_analysis.v1`. Reuses the patient-aligned per-mechanism scores and 0/1 error vectors that
+`evaluation/phase09_analysis.py` already builds for each (condition, mechanism) cell (M1 and M2 raw and temperature-scaled
+probability, M3 MC-dropout entropy, M4 ensemble, M5 confidence ranking, which is the M2 ranking by D-047); it does not
+re-derive them. Primary run R2; ensemble members R2 to R6, as in Phase 09. Internal data only: UTSW calibration fits, UTSW
+internal test (124 patients) scores.
+
+**One resample matrix.** `bootstrap_indices(124, 2000, 0)` is built once and reused by every comparison and every metric
+below (SAP section 4, paired by construction). Statistic for every AURC is `aurc_mean_over_cutoffs` (the Phase 09
+definition, on the whole cutoff grid), ECE is the 10-bin ECE, Brier is the mean squared error of the probability.
+
+**Confirmatory comparisons that fall inside the pre-registered family and can be computed on UTSW (14 of the 29).** Each
+entry gives `point` (difference, first minus second), the 95% percentile interval, the raw two-sided p (`paired_bootstrap_p`,
+or the DeLong p where stated), `n = 124`, and the family member id:
+- A1 `AURC(M5) - AURC(M3)`, A2 `AURC(M5) - AURC(M4)`, A3 `AURC(M3) - AURC(M4)`, all `full`.
+- B1 to B5 `AURC(M5, c) - AURC(M5, full)` for `c` in `drop_t1, drop_t1ce, drop_t2, drop_flair, t1ce_flair_only`.
+- D1 `ECE(M1) - ECE(M2)`, D2 `Brier(M1) - Brier(M2)`, `full`. M1 is the raw probability, M2 the temperature-scaled one with
+  `T` fitted on the UTSW calibration split (the full-input `T`, as in Phase 09).
+- E1 `AUROC(R7) - AUROC(R2)` by `delong_paired_auroc` on the raw logits; E2 `AURC(R7) - AURC(R2)` by paired bootstrap;
+  E3 and E4 the same for R8. Raw logits order patients the same as probabilities. When R7 or R8 has no frozen predictions,
+  its two entries are written as `{"status": "absent", "reason": "..."}` and nothing else changes.
+The family listing `bh_family` has one row per member of the 29 (and the 44 with EGD): id, block, comparison text, cohort,
+and `status` in `computed` (the 14 above), `pending_external` (the 15 that need UCSF-PDGM) or `absent`. No adjusted p-value
+is written into the confirmatory rows. A separate block `supplementary_bh_internal_only` holds `benjamini_hochberg(p, 0.05)`
+over the computed members, with the label `"supplementary; not the pre-registered family (D-052)"`.
+
+**Per-run metric intervals (acceptance criterion 3).** For each of R2, R7, R8 (when present) on the `full` internal test:
+AUROC and AUPRC, AURC, selective risk at each grid coverage (the Phase 09 definition), ECE and Brier, each with the point value
+and the 2000-draw percentile interval from the shared matrix, plus the Hanley-McNeil 95% AUROC interval beside the bootstrap
+one, and the wider is flagged `quoted`. Segmentation Dice is copied from each run's `segmentation_dice.json` (internal test
+split, per channel); HD95 is written as `{"status": "absent", "reason": "needs a segmentation freeze (T10.10)"}`.
+
+**Tests.** Synthetic frozen artifacts with a known planted difference: the planted comparison has `point` near the planted
+value and an interval that covers it, a null comparison has `p` above 0.05 in most seeds, the family listing has 29 rows
+(44 with EGD) with exactly 14 `computed` when R7 and R8 exist and 10 when they do not, no row of `bh_family` carries an
+adjusted p, the shared-matrix property (two comparisons that use the same two arrays in swapped order give exactly negated
+differences and equal p), and a missing-artifact case that fails loudly. The result file's SHA-256 sidecar verifies.
+
 ## Tests required
 
 DeLong matches the fixtures and a brute-force O(m n) reference; identical predictors give `p = 1`; swapping the two models
