@@ -1,8 +1,8 @@
 # Phase 10 internal results (PRELIMINARY: R7 and R8 not yet trained; UTSW internal test only)
 
-Generated 2026-11-14 from `phase10_analysis_preliminary_20261114.json` (SHA-256 `cacaee84e5b2e89646fe498dac5bc74843c392419a9e7e5314426a7a38b1414e`) and `probe_1p19q.json` (SHA-256 `0e5f2a18b6751a614b1dd00122576a95a5a63ea70a216bb1c694bbdf50a5c652`); every number is read from those files by a script. Analysis code at `9b76a91` (`scripts/analyze_phase10.py`), probe code at `9e501d4`. Internal data only: 124 UTSW internal-test patients; no UCSF-PDGM or EGD label was read. One shared resample matrix (2000 draws, seed 0); the primary run is R2 `01M46999FB083AX4WW0067YM13`, the ensemble is R2 to R6.
+Generated 2026-11-14 from `phase10_analysis_preliminary_20261114b.json` (SHA-256 `09dd37a07e023c61721495a43193f97c086ab12b624f6935afdde9e8b72ae33a`) and `probe_1p19q.json` (SHA-256 `0e5f2a18b6751a614b1dd00122576a95a5a63ea70a216bb1c694bbdf50a5c652`); every number is read from those files by a script. Analysis code at `88fbff0` (`scripts/analyze_phase10.py`), probe code at `9e501d4`. Internal data only: 124 UTSW internal-test patients; no UCSF-PDGM or EGD label was read. One shared resample matrix (2000 draws, seed 0); the primary run is R2 `01M46999FB083AX4WW0067YM13`, the ensemble is R2 to R6.
 
-**Status.** Preliminary. The final run of `analyze_phase10.py` writes `phase10_analysis.json` once R7 and R8 have frozen predictions; the confirmatory entries E1 to E4 (R7 and R8 against R2) and the R7 and R8 per-run metrics are absent here. Nothing in this file is a Gate D claim: independent recomputation by Person C and the independent review are still open, and T10.10 (HD95) needs a segmentation freeze.
+**Status.** Preliminary. The final run of `analyze_phase10.py` writes `phase10_analysis.json` once R7 and R8 have frozen predictions; the confirmatory entries E1 to E4 (R7 and R8 against R2) and the R7 and R8 per-run metrics are absent here. Nothing in this file is a Gate D claim: independent recomputation by Person C and the independent review are still open,
 
 ## R2 on the internal test: metrics with 95% intervals (acceptance criterion 3)
 
@@ -26,7 +26,19 @@ Selective risk at each target coverage (M5):
 | 0.8 | 0.806 | 0.160 | (0.080, 0.240) |
 | 0.9 | 0.903 | 0.170 | (0.107, 0.259) |
 
-Auxiliary segmentation Dice (internal test, 124 patients with a mask): mean 0.473; enhancing 0.431, necrotic core 0.390, oedema 0.597. HD95: absent (needs a segmentation freeze (T10.10)).
+Auxiliary segmentation Dice (internal test, 124 patients with a mask): mean 0.473; enhancing 0.431, necrotic core 0.390, oedema 0.597.
+
+### Auxiliary segmentation HD95 (R2, internal test; T10.10, D-053)
+
+HD95 in mm on the 2 mm preprocessing grid (values are quantized to the voxel size), larger of the two directed 95th percentiles of surface distances, mask `sigmoid > 0.5`. HD95 is undefined when either mask is empty, so two tables are given (D-053). **Primary**: only patients where both masks are non-empty, with the counts that are left out. **BraTS-style penalty**: both empty = 0 mm, exactly one empty = the grid-diagonal penalty (an arbitrary constant, shown).
+
+| Channel | Patients | Evaluable | Missed (truth, no prediction) | False (prediction, no truth) | Both empty | Primary mean | Primary median (IQR) | Penalty-convention mean | Penalty-convention median |
+|---|---|---|---|---|---|---|---|---|---|
+| enhancing | 124 | 95 | 0 | 29 | 0 | 16.620 | 7.483 (5.657, 18.209) | 90.508 | 12.884 |
+| necrotic_core | 124 | 117 | 4 | 3 | 0 | 12.926 | 9.165 (7.169, 14.560) | 30.970 | 9.165 |
+| oedema | 124 | 124 | 0 | 0 | 0 | 19.453 | 8.485 (7.211, 13.598) | 19.453 | 8.485 |
+
+Penalty used: 332.554 mm. The enhancing channel has many patients with no enhancing region in the ground truth but a predicted one (false), which is why the primary table matters: it leaves them out and says how many, instead of charging a constant. Dice scores those patients 0.
 
 The `skipped_single_class_draws` count is 0 for AUROC and AUPRC (every draw has both classes at 35 mutant of 124).
 
@@ -86,6 +98,6 @@ Co-deletion occurs only in IDH-mutant patients in this test set (all 14 co-delet
 ## Open for Phase 10
 
 - R7 (whole-brain pooling) and R8 (two-stage) are training or queued on the home GPU (D-051); E1 to E4 and their per-run metrics follow in the final `phase10_analysis.json`. The preliminary file is kept beside it as a record.
-- T10.10: HD95 needs a segmentation freeze (CPU or GPU forward passes) for R2, R7 and R8.
+- T10.10: HD95 for R2 is done above; R7 and R8 follow when trained (`scripts/freeze_segmentation_hd95.py`).
 - T10.8: DeLong cross-check passed (1000 random cases against an independent midrank implementation); bootstrap and BH cross-checks agree on the Phase 09 fixtures; the paired-bootstrap p-value (S2, S3) was checked against an independent loop on 50 random cases.
 - Independent recomputation of every headline number by Person C, Gate D review, and the single Benjamini-Hochberg pass at Phase 13.
