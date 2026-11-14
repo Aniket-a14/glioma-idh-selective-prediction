@@ -1,8 +1,9 @@
 """Training loop: AMP, gradient accumulation, checkpointing, early stopping (T06.6).
 
 Model selection reads the UTSW calibration split only (SI-08). The stopping signal is
-the class-balanced classification loss on that split (D-039). The loop never sees a
-test or external cohort.
+the class-balanced classification loss on that split (D-039); for the stage-1
+segmentation network of the two-stage ablation (D-051) it is the Dice loss on that
+split. The loop never sees a test or external cohort.
 """
 
 from __future__ import annotations
@@ -59,6 +60,8 @@ class TrainConfig:
     grad_clip_norm: float = 1.0
     amp: AmpMode = "bf16"
     seg_weight: float = 1.0
+    cls_weight: float = 1.0
+    selection: Literal["classification", "segmentation"] = "classification"
     dice_smooth: float = 1.0
     early_stopping_patience: int = 30
     early_stopping_min_delta: float = 0.0
@@ -72,6 +75,10 @@ class TrainConfig:
             raise ValueError("accumulation_steps and max_epochs must be at least 1")
         if self.amp not in ("off", "bf16", "fp16"):
             raise ValueError(f"unknown amp mode: {self.amp}")
+        if self.selection not in ("classification", "segmentation"):
+            raise ValueError(f"unknown selection loss: {self.selection}")
+        if self.cls_weight < 0 or self.seg_weight < 0:
+            raise ValueError("loss weights must not be negative")
 
 
 @dataclass(frozen=True)
@@ -161,6 +168,7 @@ def _batch_loss(
         pos_weight=pos_weight,
         seg_weight=config.seg_weight,
         dice_smooth=config.dice_smooth,
+        cls_weight=config.cls_weight,
     )
     return losses, output
 
@@ -399,11 +407,14 @@ def _fit(
         if interrupted:
             return FitResult(state=state, stopped_early=False, interrupted=True)
         calibration = evaluate(model, calibration_loader, config, pos_weight, device)
-        improved = calibration.classification_loss < (
-            state.best_value - config.early_stopping_min_delta
+        selected = (
+            calibration.segmentation_loss
+            if config.selection == "segmentation"
+            else calibration.classification_loss
         )
+        improved = selected < (state.best_value - config.early_stopping_min_delta)
         if improved:
-            state.best_value = calibration.classification_loss
+            state.best_value = selected
             state.best_epoch = state.epoch
             state.epochs_without_improvement = 0
             save_model_weights(best_path, model, epoch=state.epoch)
@@ -425,7 +436,7 @@ def _fit(
             "epoch %d train %.4f calibration %.4f auroc %.3f%s",
             state.epoch,
             train_means["loss"],
-            calibration.classification_loss,
+            selected,
             calibration.auroc,
             " *" if improved else "",
         )

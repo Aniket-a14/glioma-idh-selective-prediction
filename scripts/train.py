@@ -30,9 +30,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--variant",
-        choices=("base", "whole_brain"),
+        choices=("base", "whole_brain", "stage1_seg", "stage2_cls"),
         default="base",
-        help="model variant: base (R1-R6) or whole_brain pooling ablation (R7, D-051)",
+        help="model variant: base (R1-R6), whole_brain (R7), "
+        "stage1_seg or stage2_cls (R8); D-051",
+    )
+    parser.add_argument(
+        "--stage1-run",
+        default=None,
+        help="completed stage1_seg run id; required for --variant stage2_cls",
     )
     parser.add_argument("--max-epochs", type=int, default=None)
     parser.add_argument("--num-workers", type=int, default=4)
@@ -66,6 +72,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         num_workers=args.num_workers,
         resume_run_id=args.resume,
         variant=args.variant,
+        stage1_run_id=args.stage1_run,
     )
     run_id, result = train_run(
         spec, authorization_report=args.authorization_report, device=device

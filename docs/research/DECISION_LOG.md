@@ -1241,7 +1241,7 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 **Owner.** Research Lead. Resolution: all four readings accepted; the C5 interval version (a') is rejected.
 
 ## D-051 — Phase 10 ablation runs: what R7 and R8 are
-**Status:** R7 ADOPTED 2026-11-14 (implemented, narrowest reading of SPEC §4.9); R8 OPEN, recommendation (a) below · **Resolve by:** before R8 starts · **Blocking:** no (R7 does not wait for it)
+**Status:** RESOLVED 2026-11-14 (R7 adopted by Claude, implemented; R8 option (a) adopted on the Research Lead's go, "merge and then r8", in answer to the recommendation) · **Blocking:** no
 
 **Conflict.** SPEC §4.9 and D-005 name R7 "whole-brain pooling" and R8 "two-stage independent seg+classify" without saying what is held fixed. Phase 10 says only that R7 and R8 are "the only two permitted" ablations (R-C08), so each definition has to stay a single change from R2 (the primary single model, seed 0, modality dropout on).
 
@@ -1253,7 +1253,11 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 **Recommendation.** R7 as adopted. R8 option (a).
 
-**Owner.** R7: Claude (training design). R8: Research Lead to confirm or choose another reading before any R8 code is written.
+**Implementation of R8 (a).** `stage1_seg`: `ModelConfig` equal to `whole_brain`; training config `cls_weight = 0` (Dice loss only) and checkpoint selection on the calibration-split Dice loss, same patience 30 and modality-dropout schedule as R2. `stage2_cls`: `models/two_stage.py` `TwoStageNet`, a second SegResNet encoder and head trained with the IDH loss only (`seg_weight = 0`), pooled with the whole-tumour probability that the frozen stage-1 network predicts for the same input; its checkpoint holds both stages, and the run record stores the stage-1 run id and checkpoint SHA-256. Stage-1 Dice is what the R8 prediction artifact reports as segmentation Dice. Each stage has its own authorization report (`--variant stage1_seg`, `--variant stage2_cls`). The stage-1 authorization overfit probe watches the Dice loss with a threshold of 0.5 (a wiring check, recorded in the report), the others watch class-balanced BCE at 0.05. New `TrainConfig` fields (`cls_weight`, `selection`) and `ModelConfig.two_stage` change the config digest, so authorization reports from before this commit do not cover the new code; R1 to R7 are unaffected (they run from pinned checkouts).
+
+**Time.** Corrected estimate: R7 about 13 h. R8 is two sequential trainings: stage 1 about 13 h, stage 2 about the same plus the extra frozen stage-1 forward pass each step (my estimate is 14 to 17 h; not measured). R8 therefore takes roughly 27 to 30 h of GPU after R7, run on the home GPU only. Total training runs stay at 8 of 9.
+
+**Owner.** R7 and R8: Claude (training design); Research Lead confirmed R8 (a).
 
 ---
 

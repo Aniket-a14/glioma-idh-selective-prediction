@@ -27,7 +27,7 @@ from glioma_selective.training.checkpoint import (
 from glioma_selective.training.determinism import deterministic_mode
 from glioma_selective.training.loop import TrainConfig, fit, make_optimizer
 from glioma_selective.training.losses import joint_loss
-from glioma_selective.training.variants import model_config_for
+from glioma_selective.training.variants import model_config_for, train_overrides
 from glioma_selective.utils import paths
 
 __all__ = [
@@ -235,18 +235,20 @@ def _small_model_config() -> ModelConfig:
 
 
 def _model_config(synthetic: bool, variant: str = "base") -> ModelConfig:
+    chosen = model_config_for(variant)
     if synthetic:
-        small = _small_model_config()
         return replace(
-            small, tumour_aware_pooling=model_config_for(variant).tumour_aware_pooling
+            _small_model_config(),
+            tumour_aware_pooling=chosen.tumour_aware_pooling,
+            two_stage=chosen.two_stage,
         )
-    return model_config_for(variant)
+    return chosen
 
 
 def _inputs(synthetic: bool, *, seed: int = 0, variant: str = "base") -> _Inputs:
     model_config = _model_config(synthetic, variant)
     model_mapping = asdict(model_config)
-    training_config = TrainConfig(seed=seed)
+    training_config = replace(TrainConfig(seed=seed), **train_overrides(variant))
     training_mapping = asdict(training_config)
     return _Inputs(model_config, training_config, model_mapping, training_mapping)
 
@@ -437,20 +439,24 @@ def _overfit(
     max_steps: int,
     threshold: float,
     learning_rate: float,
+    variant: str = "base",
 ) -> tuple[StepStatus, int, float, list[float]]:
     torch.manual_seed(0)
     model = build_model(model_config).to(device)
     model.train()
-    config = TrainConfig(
-        seed=0,
-        max_epochs=1,
-        batch_size=2,
-        accumulation_steps=1,
-        learning_rate=learning_rate,
-        weight_decay=0.0,
-        grad_clip_norm=1.0,
-        amp="off",
-        seg_weight=1.0,
+    config = replace(
+        TrainConfig(
+            seed=0,
+            max_epochs=1,
+            batch_size=2,
+            accumulation_steps=1,
+            learning_rate=learning_rate,
+            weight_decay=0.0,
+            grad_clip_norm=1.0,
+            amp="off",
+            seg_weight=1.0,
+        ),
+        **train_overrides(variant),
     )
     optimizer = make_optimizer(model, config)
     tensors = {key: value.to(device) for key, value in batch.items()}
@@ -470,6 +476,7 @@ def _overfit(
                 pos_weight=1.0,
                 seg_weight=config.seg_weight,
                 dice_smooth=config.dice_smooth,
+                cls_weight=config.cls_weight,
             )
             (losses.total / 2).backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_clip_norm)
@@ -487,7 +494,11 @@ def _overfit(
                 seg_weight=0.0,
                 dice_smooth=config.dice_smooth,
             )
-        loss = float(losses.classification)
+        # The probe watches the loss the variant actually trains on: Dice for the
+        # stage-1 segmentation network, class-balanced BCE otherwise.
+        loss = float(
+            losses.segmentation if variant == "stage1_seg" else losses.classification
+        )
         history.append(loss)
         used = step
         if loss < threshold:
@@ -533,6 +544,7 @@ def step_tiny_overfit(
             max_steps=max_steps,
             threshold=overfit_threshold,
             learning_rate=learning_rate,
+            variant=variant,
         )
         summary = (
             f"steps={steps}; final_loss={loss:.8g}; "
