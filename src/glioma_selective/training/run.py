@@ -18,7 +18,7 @@ from typing import Any
 
 import torch
 
-from glioma_selective.models.segresnet import ModelConfig, build_model
+from glioma_selective.models.segresnet import build_model
 from glioma_selective.tracking.run_record import (
     assert_launch_ready,
     build_run_record,
@@ -32,6 +32,7 @@ from glioma_selective.training.authorization import (
 from glioma_selective.training.checkpoint import file_sha256
 from glioma_selective.training.loop import FitResult, TrainConfig, fit
 from glioma_selective.training.losses import pos_weight_from_counts
+from glioma_selective.training.variants import model_config_for
 from glioma_selective.utils import paths
 
 __all__ = ["RunSpec", "training_config_for", "train_run"]
@@ -52,6 +53,7 @@ class RunSpec:
     max_epochs: int | None = None
     num_workers: int = 4
     resume_run_id: str | None = None
+    variant: str = "base"
 
 
 def training_config_for(spec: RunSpec) -> TrainConfig:
@@ -153,9 +155,11 @@ def train_run(
 
     git_sha = _git_head()
     assert_authorized(
-        authorization_report, git_sha=git_sha, config_sha256=base_config_sha256()
+        authorization_report,
+        git_sha=git_sha,
+        config_sha256=base_config_sha256(spec.variant),
     )
-    model_config = ModelConfig()
+    model_config = model_config_for(spec.variant)
     train_config = training_config_for(spec)
     train_dataset, calibration_dataset, stats_path = _build_datasets(spec.seed)
     labels = train_dataset.labels
@@ -166,7 +170,11 @@ def train_run(
     config = {
         "model": asdict(model_config),
         "training": asdict(train_config),
-        "run": {"label": spec.label, "pos_weight": pos_weight},
+        "run": {
+            "label": spec.label,
+            "pos_weight": pos_weight,
+            "variant": spec.variant,
+        },
     }
     if spec.resume_run_id is None:
         record = build_run_record(

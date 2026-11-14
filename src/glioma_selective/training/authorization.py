@@ -27,6 +27,7 @@ from glioma_selective.training.checkpoint import (
 from glioma_selective.training.determinism import deterministic_mode
 from glioma_selective.training.loop import TrainConfig, fit, make_optimizer
 from glioma_selective.training.losses import joint_loss
+from glioma_selective.training.variants import model_config_for
 from glioma_selective.utils import paths
 
 __all__ = [
@@ -233,8 +234,17 @@ def _small_model_config() -> ModelConfig:
     )
 
 
-def _inputs(synthetic: bool, *, seed: int = 0) -> _Inputs:
-    model_config = _small_model_config() if synthetic else ModelConfig()
+def _model_config(synthetic: bool, variant: str = "base") -> ModelConfig:
+    if synthetic:
+        small = _small_model_config()
+        return replace(
+            small, tumour_aware_pooling=model_config_for(variant).tumour_aware_pooling
+        )
+    return model_config_for(variant)
+
+
+def _inputs(synthetic: bool, *, seed: int = 0, variant: str = "base") -> _Inputs:
+    model_config = _model_config(synthetic, variant)
     model_mapping = asdict(model_config)
     training_config = TrainConfig(seed=seed)
     training_mapping = asdict(training_config)
@@ -248,9 +258,9 @@ def _config_sha256(inputs: _Inputs) -> str:
     ).hexdigest()
 
 
-def base_config_sha256() -> str:
-    """Digest of the base model and training configs an authorization report covers."""
-    return _config_sha256(_inputs(False))
+def base_config_sha256(variant: str = "base") -> str:
+    """Digest of the model and training configs an authorization report covers."""
+    return _config_sha256(_inputs(False, variant=variant))
 
 
 def _result(name: str, status: StepStatus, detail: str, started: float) -> StepResult:
@@ -385,15 +395,13 @@ def _forward_batch(
 
 
 def step_tiny_forward(
-    device: str | torch.device, *, synthetic: bool = False
+    device: str | torch.device, *, synthetic: bool = False, variant: str = "base"
 ) -> StepResult:
     started = time.monotonic()
     try:
         selected_device = _device(device)
         batch = _forward_batch(synthetic, count=2)
-        model = build_model(_small_model_config() if synthetic else ModelConfig()).to(
-            selected_device
-        )
+        model = build_model(_model_config(synthetic, variant)).to(selected_device)
         model.eval()
         image = batch["image"].to(selected_device)
         with torch.no_grad():
@@ -495,6 +503,7 @@ def step_tiny_overfit(
     overfit_threshold: float = 0.05,
     synthetic: bool = False,
     learning_rate: float = 3.0e-4,
+    variant: str = "base",
 ) -> StepResult:
     started = time.monotonic()
     if not synthetic:
@@ -516,7 +525,7 @@ def step_tiny_overfit(
             if synthetic
             else _forward_batch(False, count=4, balanced=True)
         )
-        model_config = _small_model_config() if synthetic else ModelConfig()
+        model_config = _model_config(synthetic, variant)
         status, steps, loss, curve = _overfit(
             batch,
             model_config=model_config,
@@ -535,7 +544,7 @@ def step_tiny_overfit(
         return _failed(STEP_NAMES[3], started, exc)
 
 
-def step_gpu_memory(*, synthetic: bool = False) -> StepResult:
+def step_gpu_memory(*, synthetic: bool = False, variant: str = "base") -> StepResult:
     started = time.monotonic()
     if synthetic:
         return _result(
@@ -554,9 +563,7 @@ def step_gpu_memory(*, synthetic: bool = False) -> StepResult:
             if synthetic
             else _forward_batch(False, count=config.batch_size)
         )
-        model = build_model(_small_model_config() if synthetic else ModelConfig()).to(
-            device
-        )
+        model = build_model(_model_config(synthetic, variant)).to(device)
         tensors = {key: value.to(device) for key, value in batch.items()}
         torch.cuda.reset_peak_memory_stats(device)
         amp_context: AbstractContextManager[Any] = nullcontext()
@@ -633,16 +640,18 @@ def _parameter_difference(left: IDHNet, right: IDHNet) -> float:
 
 
 def step_checkpoint_equivalence(
-    device: str | torch.device, *, synthetic: bool = False
+    device: str | torch.device, *, synthetic: bool = False, variant: str = "base"
 ) -> StepResult:
     """Resume must reproduce an uninterrupted run exactly, on CPU and on CUDA."""
     started = time.monotonic()
     with deterministic_mode():
-        return _checkpoint_equivalence(device, synthetic=synthetic, started=started)
+        return _checkpoint_equivalence(
+            device, synthetic=synthetic, started=started, variant=variant
+        )
 
 
 def _checkpoint_equivalence(
-    device: str | torch.device, *, synthetic: bool, started: float
+    device: str | torch.device, *, synthetic: bool, started: float, variant: str
 ) -> StepResult:
     try:
         selected = _device(device)
@@ -651,7 +660,7 @@ def _checkpoint_equivalence(
             if synthetic
             else _forward_batch(False, count=4, balanced=True)
         )
-        config_model = _small_model_config() if synthetic else ModelConfig()
+        config_model = _model_config(synthetic, variant)
         config_train = TrainConfig(
             max_epochs=4,
             batch_size=2,
@@ -859,12 +868,13 @@ def run_harness(
     overfit_threshold: float = 0.05,
     synthetic: bool = False,
     run_cpu_tests: bool = True,
+    variant: str = "base",
 ) -> HarnessReport:
     """Run all seven steps in order; failed steps stop later checks."""
     if max_steps < 1:
         raise ValueError("max_steps must be at least one")
     selected = _device(device)
-    inputs = _inputs(synthetic)
+    inputs = _inputs(synthetic, variant=variant)
     config_sha = _config_sha256(inputs)
     try:
         git_sha = _git("rev-parse", "HEAD")
@@ -918,7 +928,7 @@ def run_harness(
                 synthetic,
             )
 
-    results.append(step_tiny_forward(selected, synthetic=synthetic))
+    results.append(step_tiny_forward(selected, synthetic=synthetic, variant=variant))
     if results[-1].status == "failed":
         return _make_report(
             results, selected, git_sha, git_dirty, config_sha, frozen, run_id, synthetic
@@ -929,18 +939,21 @@ def run_harness(
             max_steps=max_steps,
             overfit_threshold=overfit_threshold,
             synthetic=synthetic,
+            variant=variant,
         )
     )
     if results[-1].status == "failed":
         return _make_report(
             results, selected, git_sha, git_dirty, config_sha, frozen, run_id, synthetic
         )
-    results.append(step_gpu_memory(synthetic=synthetic))
+    results.append(step_gpu_memory(synthetic=synthetic, variant=variant))
     if results[-1].status == "failed":
         return _make_report(
             results, selected, git_sha, git_dirty, config_sha, frozen, run_id, synthetic
         )
-    results.append(step_checkpoint_equivalence(selected, synthetic=synthetic))
+    results.append(
+        step_checkpoint_equivalence(selected, synthetic=synthetic, variant=variant)
+    )
     if results[-1].status == "failed":
         return _make_report(
             results, selected, git_sha, git_dirty, config_sha, frozen, run_id, synthetic

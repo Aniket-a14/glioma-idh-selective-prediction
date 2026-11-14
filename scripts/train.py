@@ -28,6 +28,12 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="train with the D-041 modality-dropout schedule (R2 and later)",
     )
+    parser.add_argument(
+        "--variant",
+        choices=("base", "whole_brain"),
+        default="base",
+        help="model variant: base (R1-R6) or whole_brain pooling ablation (R7, D-051)",
+    )
     parser.add_argument("--max-epochs", type=int, default=None)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
@@ -59,6 +65,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         max_epochs=args.max_epochs,
         num_workers=args.num_workers,
         resume_run_id=args.resume,
+        variant=args.variant,
     )
     run_id, result = train_run(
         spec, authorization_report=args.authorization_report, device=device
