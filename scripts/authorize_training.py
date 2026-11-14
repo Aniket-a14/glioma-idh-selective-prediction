@@ -36,6 +36,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-steps", type=int, default=150)
     parser.add_argument("--overfit-threshold", type=float, default=0.05)
     parser.add_argument("--synthetic", action="store_true")
+    parser.add_argument(
+        "--variant",
+        choices=("base", "whole_brain"),
+        default="base",
+        help="model variant the report authorizes (R7 uses whole_brain, D-051)",
+    )
     parser.add_argument("--dry-run", action="store_true")
     return parser
 
@@ -63,6 +69,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         max_steps=args.max_steps,
         overfit_threshold=args.overfit_threshold,
         synthetic=args.synthetic,
+        variant=args.variant,
     )
     report_path = (
         paths.experiments_dir()

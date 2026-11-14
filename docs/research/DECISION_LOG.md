@@ -1240,6 +1240,21 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 **Owner.** Research Lead. Resolution: all four readings accepted; the C5 interval version (a') is rejected.
 
+## D-051 — Phase 10 ablation runs: what R7 and R8 are
+**Status:** R7 ADOPTED 2026-11-14 (implemented, narrowest reading of SPEC §4.9); R8 OPEN, recommendation (a) below · **Resolve by:** before R8 starts · **Blocking:** no (R7 does not wait for it)
+
+**Conflict.** SPEC §4.9 and D-005 name R7 "whole-brain pooling" and R8 "two-stage independent seg+classify" without saying what is held fixed. Phase 10 says only that R7 and R8 are "the only two permitted" ablations (R-C08), so each definition has to stay a single change from R2 (the primary single model, seed 0, modality dropout on).
+
+**R7 (adopted).** Same network, data, seed (0), modality-dropout schedule, loss and stopping rule as R2. One change: `tumour_aware_pooling = false`, so the classifier sees the global mean of the bottleneck features. The auxiliary segmentation head and its loss stay on, so R7 differs from R2 in the pooling and nothing else (the H1 contrast: tumour-aware vs whole-brain). Implemented as the `whole_brain` variant in `training/variants.py`; `scripts/authorize_training.py --variant whole_brain` produces its own authorization report because the config digest differs. No new training code path.
+
+**R8 alternatives.** (a) Two networks, trained independently: stage 1 is the same SegResNet trained with the segmentation loss only; stage 2 is a second SegResNet classifier trained with the IDH loss only (no segmentation head, no segmentation loss) and pooled with the frozen stage-1 whole-tumour probability. No gradient crosses between the stages. This is the "independent" in H2: same backbone, same pooling rule, same data and seed as R2, but no shared training signal. (b) Stage 2 takes the image masked or cropped to the stage-1 tumour region: adds a preprocessing choice that has to be tuned (margin, resampling), which is architecture search by the back door. (c) A frozen R2 segmentation head as stage 1: not independent, because R2's encoder was trained jointly with the classifier.
+
+**Consequences.** R7 costs one training run (about 13 h on the home RTX 2060 SUPER at the R2 recipe; no larger batch or patch). (a) costs two shorter trainings (stage 1 has no classification head), run as one budget item R8, so the total stays at 8 of 9 runs and R9 stays in reserve. Both run on the home GPU only. Predictions are frozen by the same T06.11 path and analysed on the same 124 internal-test patients as R2.
+
+**Recommendation.** R7 as adopted. R8 option (a).
+
+**Owner.** R7: Claude (training design). R8: Research Lead to confirm or choose another reading before any R8 code is written.
+
 ---
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
