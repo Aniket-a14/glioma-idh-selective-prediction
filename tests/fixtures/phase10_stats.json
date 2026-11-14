@@ -1,0 +1,301 @@
+{
+ "description": "Phase 10 statistics fixtures (D-052). Fractions are exact; floats are the double nearest the exact value except z and p (tolerance 1e-12).",
+ "delong": [
+  {
+   "name": "no_ties_9_patients",
+   "labels": [
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "scores_a": [
+    0.9,
+    0.8,
+    0.7,
+    0.4,
+    0.6,
+    0.3,
+    0.2,
+    0.1,
+    0.5
+   ],
+   "scores_b": [
+    0.8,
+    0.4,
+    0.6,
+    0.5,
+    0.7,
+    0.45,
+    0.2,
+    0.3,
+    0.55
+   ],
+   "auc_a": "9/10",
+   "auc_b": "7/10",
+   "difference": "1/5",
+   "variance": "23/800",
+   "z": 1.179535649239177,
+   "p_value": 0.2381849499920225,
+   "n_positive": 4,
+   "n_negative": 5
+  },
+  {
+   "name": "with_ties_8_patients",
+   "labels": [
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1
+   ],
+   "scores_a": [
+    0.9,
+    0.5,
+    0.5,
+    0.5,
+    0.2,
+    0.2,
+    0.7,
+    0.6
+   ],
+   "scores_b": [
+    0.8,
+    0.8,
+    0.3,
+    0.4,
+    0.4,
+    0.1,
+    0.8,
+    0.5
+   ],
+   "auc_a": "3/4",
+   "auc_b": "11/16",
+   "difference": "1/16",
+   "variance": "1/48",
+   "z": 0.43301270189221935,
+   "p_value": 0.6650055421020291,
+   "n_positive": 4,
+   "n_negative": 4
+  },
+  {
+   "name": "identical_predictors",
+   "labels": [
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "scores_a": [
+    0.9,
+    0.8,
+    0.7,
+    0.4,
+    0.6,
+    0.3,
+    0.2,
+    0.1,
+    0.5
+   ],
+   "scores_b": [
+    0.9,
+    0.8,
+    0.7,
+    0.4,
+    0.6,
+    0.3,
+    0.2,
+    0.1,
+    0.5
+   ],
+   "auc_a": "9/10",
+   "auc_b": "9/10",
+   "difference": "0",
+   "variance": "0",
+   "z": 0.0,
+   "p_value": 1.0,
+   "n_positive": 4,
+   "n_negative": 5
+  },
+  {
+   "name": "perfect_vs_inverted_zero_variance",
+   "labels": [
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "scores_a": [
+    0.9,
+    0.8,
+    0.7,
+    0.6,
+    0.4,
+    0.3,
+    0.2,
+    0.1,
+    0.05
+   ],
+   "scores_b": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    0.95
+   ],
+   "auc_a": "1",
+   "auc_b": "0",
+   "difference": "1",
+   "variance": "0",
+   "z": "inf",
+   "p_value": 0.0,
+   "n_positive": 4,
+   "n_negative": 5
+  }
+ ],
+ "delong_swap_check": {
+  "case": "no_ties_9_patients",
+  "swapped_difference": "-1/5",
+  "swapped_p_value": 0.2381849499920225
+ },
+ "paired_p_value": [
+  {
+   "differences": [
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1
+   ],
+   "p_value": "2/11"
+  },
+  {
+   "differences": [
+    -0.1,
+    -0.1,
+    -0.1,
+    -0.1,
+    0.2,
+    0.2,
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "p_value": "10/11"
+  },
+  {
+   "differences": [
+    0.0,
+    0.0,
+    0.0,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1
+   ],
+   "p_value": "8/11"
+  },
+  {
+   "differences": [
+    -1,
+    1,
+    -1,
+    1,
+    -1,
+    1,
+    -1,
+    1,
+    -1,
+    1
+   ],
+   "p_value": "1"
+  },
+  {
+   "differences": [
+    0.5,
+    0.4,
+    0.3,
+    0.2,
+    0.1,
+    -0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5
+   ],
+   "p_value": "4/11"
+  }
+ ],
+ "paired_bootstrap": {
+  "n": 5,
+  "iterations": 2,
+  "seed": 0,
+  "bootstrap_indices": [
+   [
+    4,
+    3,
+    2,
+    1,
+    1
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    4
+   ]
+  ],
+  "array_a": [
+   1.0,
+   2.0,
+   3.0,
+   4.0,
+   5.0
+  ],
+  "array_b": [
+   0.0,
+   1.0,
+   1.0,
+   2.0,
+   5.0
+  ],
+  "statistic": "mean(a) - mean(b)",
+  "point": "6/5",
+  "values": [
+   "6/5",
+   "4/5"
+  ]
+ }
+}

@@ -1259,6 +1259,21 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 **Owner.** R7 and R8: Claude (training design); Research Lead confirmed R8 (a).
 
+## D-052 — Phase 10 statistics: the paired-bootstrap p-value and when the Benjamini-Hochberg family can be completed
+**Status:** OPEN, recommendation below (the p-value formula is applied now; the BH staging needs the Research Lead before the Phase 10 results are written) · **Blocking:** no
+
+**Conflict.** (1) `STATISTICAL_ANALYSIS_PLAN.md` section 6 says p-values "come from the paired bootstrap (two-sided)" but gives no formula; a percentile bootstrap has no p-value until one is defined. (2) The pre-registered BH family is one family of 44 comparisons (29 without EGD) and most blocks are "per cohort", so 15 of the 29 members need UCSF-PDGM predictions (blocks A, B, D, E for UCSF-PDGM, and block C), which do not exist until Phase 12. Phase 10 may not touch external data, yet its acceptance criterion 6 asks for BH across the pre-registered family with membership matching Phase 05 exactly, and criterion 11 says nothing internal changes afterwards.
+
+**Adopted now (1).** Two-sided bootstrap p `= min(1, 2 (1 + min(#{d <= 0}, #{d >= 0})) / (B + 1))` over the `B` paired differences; exact fractions, same `+1` convention as the C6 permutation p. Contract `protocols/PHASE10_STATS_CONTRACTS.md` S2. Not a change to any frozen rule: the plan names the method and not the formula.
+
+**Alternatives for (2).** (a) Phase 10 computes the raw p-values of the 14 UTSW members (A: 3, B: 5, D: 2, E: 4; C has none) and reports them with the paired differences and intervals; the single BH pass over the full pre-registered family (29, or 44 with EGD) is run once, after Phase 12, in the Phase 13 results freeze. Raw p-values and intervals do not change at that point; only the adjusted values are added. (b) Run BH now over the 14 UTSW members as if they were the family: smaller family, so smaller adjusted p-values than the pre-registered family would give; it would count as a deviation from section 10 of `PREREGISTRATION.md` and would have to be listed as one. (c) Run (a) and also report (b), labelled supplementary and internal-only. The family itself never changes (membership stays fixed).
+
+**Consequences.** Under (a) Phase 10 acceptance criterion 6 is met in part (raw p-values for every internal member, BH code verified on the fixtures, family membership listed and checked against the plan) and completed at Phase 13; the Phase 10 exit criterion "all internal analysis final" holds for every quantity except the adjustment. Under (b) the criterion is met literally but with a family that is not the pre-registered one.
+
+**Recommendation.** (a), with (c) as a labelled supplementary table so the internal-only reader has adjusted values; state the staging in the methods.
+
+**Owner.** Research Lead.
+
 ---
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
