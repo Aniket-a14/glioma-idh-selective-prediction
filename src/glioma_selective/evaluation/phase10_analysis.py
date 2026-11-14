@@ -18,7 +18,10 @@ from glioma_selective.evaluation.calibration_metrics import (
     brier_score,
     expected_calibration_error,
 )
-from glioma_selective.evaluation.condition_analysis import _rows
+from glioma_selective.evaluation.condition_analysis import (
+    _read_json_with_sidecar,
+    _rows,
+)
 from glioma_selective.evaluation.phase06_report import _read_dice, average_precision
 from glioma_selective.evaluation.phase09_analysis import (
     CONDITIONS,
@@ -221,8 +224,30 @@ def _run_metrics(
         "selective_mechanism": "M5",
         "selective_risk_at_coverage": selective,
         "segmentation_dice": internal_dice,
-        "hd95": {"status": "absent", "reason": "needs a segmentation freeze (T10.10)"},
+        "hd95": _internal_hd95(run_dir, run_id, checkpoint),
     }, estimates
+
+
+def _internal_hd95(run_dir: Path, run_id: str, checkpoint: str) -> dict[str, Any]:
+    """Read optional S5.6 internal results after sidecar and provenance checks."""
+    path = run_dir / "segmentation_hd95.json"
+    if not path.exists():
+        return {"status": "absent", "reason": "needs a segmentation freeze (T10.10)"}
+    document = _read_json_with_sidecar(path)
+    if (
+        document.get("run_id") != run_id
+        or document.get("checkpoint_hash") != checkpoint
+    ):
+        raise ValueError("segmentation_hd95.json provenance does not match the run")
+    try:
+        internal = document["splits"]["internal_test"]
+        if not isinstance(internal, dict) or not internal["per_channel"]:
+            raise ValueError("internal-test per-channel segmentation HD95 is required")
+    except (KeyError, TypeError) as error:
+        raise ValueError(
+            "internal-test per-channel segmentation HD95 is required"
+        ) from error
+    return cast(dict[str, Any], internal)
 
 
 def _family(include_egd: bool) -> list[dict[str, str]]:
