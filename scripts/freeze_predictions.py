@@ -117,11 +117,12 @@ def freeze_run(
     run_id: str, *, device: str = "auto", allow_sha_mismatch: bool = False
 ) -> Path:
     """Validate run provenance, score the two fixed UTSW splits, and freeze parquet."""
-    from omegaconf import OmegaConf
-
     from glioma_selective.data.dataset import IDHDataset, load_split_patient_ids
-    from glioma_selective.evaluation.freeze import predict_split_with_dice
-    from glioma_selective.models.segresnet import ModelConfig, build_model
+    from glioma_selective.evaluation.freeze import (
+        model_config_from_record,
+        predict_split_with_dice,
+    )
+    from glioma_selective.models.segresnet import build_model
     from glioma_selective.tracking.predictions import write_prediction_artifact
     from glioma_selective.tracking.run_record import update_run_record
     from glioma_selective.training.checkpoint import load_model_weights
@@ -146,13 +147,7 @@ def freeze_run(
     )
     resolved_device = _resolve_device(device)
 
-    config_path = REPOSITORY_ROOT / "configs" / "model" / "base.yaml"
-    config_values = OmegaConf.to_container(OmegaConf.load(config_path), resolve=True)
-    if not isinstance(config_values, Mapping):
-        raise ValueError("base model configuration must be a mapping")
-    model = build_model(
-        ModelConfig.from_mapping(cast(Mapping[str, Any], config_values))
-    )
+    model = build_model(model_config_from_record(record))
     load_model_weights(checkpoint_path, model)
     model.to(resolved_device)
 

@@ -54,6 +54,7 @@ def _setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, seed: int = 0) ->
         "git_sha": "a" * 40,
         "checkpoint_hash": "c" * 64,
         "seed": seed,
+        "config": {"model": {"init_filters": 8, "head_hidden": 8}},
     }
     (run_dir / "record.json").write_text(json.dumps(record), encoding="utf-8")
     monkeypatch.setattr(freezer, "_load_record", lambda _run_id: (run_dir, record))

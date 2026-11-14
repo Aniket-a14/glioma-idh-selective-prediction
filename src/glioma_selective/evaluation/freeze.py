@@ -9,12 +9,28 @@ import numpy as np
 import torch
 from torch import nn
 
+from glioma_selective.models.segresnet import ModelConfig
 from glioma_selective.training.determinism import deterministic_mode
 from glioma_selective.training.metrics import hard_dice
 
-__all__ = ["predict_split", "predict_split_with_dice"]
+__all__ = ["model_config_from_record", "predict_split", "predict_split_with_dice"]
 
 _SEGMENTATION_CHANNELS = ("enhancing", "necrotic_core", "oedema")
+
+
+def model_config_from_record(record: Mapping[str, Any]) -> ModelConfig:
+    """The model config a run was trained with, read from its run record.
+
+    Freezing must rebuild exactly the trained network. The shipped
+    ``configs/model/base.yaml`` is the config of R1 to R6 only: R7 (global pooling)
+    and R8 (two-stage) have the same weight shapes or a superset, so building them
+    from the base file would load cleanly and score with the wrong forward pass.
+    """
+    config = record.get("config")
+    model = config.get("model") if isinstance(config, Mapping) else None
+    if not isinstance(model, Mapping):
+        raise ValueError("run record has no config.model; cannot rebuild the network")
+    return ModelConfig.from_mapping(cast(Mapping[str, Any], model))
 
 
 def _scalar_logit(output: Any) -> torch.Tensor:

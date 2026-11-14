@@ -106,6 +106,7 @@ def test_freeze_writes_all_six_artifacts_and_refuses_overwrite(
         "run_id": "synthetic",
         "seed": 4,
         "checkpoint_hash": hashlib.sha256(b"weights").hexdigest(),
+        "config": {"model": {"init_filters": 8, "head_hidden": 8}},
     }
     monkeypatch.setattr(
         freeze_mc_dropout, "_load_record", lambda _run_id: (run_dir, fake_record)
