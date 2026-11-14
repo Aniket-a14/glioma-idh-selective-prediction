@@ -1260,7 +1260,7 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 **Owner.** R7 and R8: Claude (training design); Research Lead confirmed R8 (a).
 
 ## D-052 — Phase 10 statistics: the paired-bootstrap p-value and when the Benjamini-Hochberg family can be completed
-**Status:** OPEN, recommendation below (the p-value formula is applied now; the BH staging needs the Research Lead before the Phase 10 results are written) · **Blocking:** no
+**Status:** RESOLVED 2026-11-14 (Research Lead: "accept d-052", recommendation (a) with (c) as a labelled supplementary table; the p-value formula was applied from the start) · **Blocking:** no
 
 **Conflict.** (1) `STATISTICAL_ANALYSIS_PLAN.md` section 6 says p-values "come from the paired bootstrap (two-sided)" but gives no formula; a percentile bootstrap has no p-value until one is defined. (2) The pre-registered BH family is one family of 44 comparisons (29 without EGD) and most blocks are "per cohort", so 15 of the 29 members need UCSF-PDGM predictions (blocks A, B, D, E for UCSF-PDGM, and block C), which do not exist until Phase 12. Phase 10 may not touch external data, yet its acceptance criterion 6 asks for BH across the pre-registered family with membership matching Phase 05 exactly, and criterion 11 says nothing internal changes afterwards.
 
@@ -1272,7 +1272,7 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 **Recommendation.** (a), with (c) as a labelled supplementary table so the internal-only reader has adjusted values; state the staging in the methods.
 
-**Owner.** Research Lead.
+**Owner.** Research Lead. Resolution: (a) with (c) accepted. Phase 10 reports raw p-values and paired intervals for the UTSW members of the family; the single Benjamini-Hochberg pass over the full pre-registered family runs once, at the Phase 13 results freeze, after Phase 12; the internal-only table is labelled supplementary. `evaluation/phase10_analysis.py` implements exactly this.
 
 ---
 
