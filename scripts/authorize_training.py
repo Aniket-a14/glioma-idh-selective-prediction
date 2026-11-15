@@ -30,10 +30,20 @@ _STEP_NAMES = (
 )
 
 
+STAGE1_PROBE_STEPS = 600
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
-    parser.add_argument("--max-steps", type=int, default=150)
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=None,
+        help="step budget of the 4-patient probe; default 150, or 600 for "
+        "stage1_seg (D-054: Dice loss on four patients needs about 410 steps to "
+        "pass 0.5)",
+    )
     parser.add_argument(
         "--overfit-threshold",
         type=float,
@@ -56,6 +66,8 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
+    if args.max_steps is None:
+        args.max_steps = STAGE1_PROBE_STEPS if args.variant == "stage1_seg" else 150
     if args.max_steps < 1:
         parser.error("--max-steps must be at least one")
     if args.overfit_threshold is None:

@@ -213,3 +213,34 @@ def test_report_contains_no_fixture_patient_ids(
 
     for patient_id in ("UTSW-BT0001", "UTSW-BT0002", "UTSW-BT0003", "UTSW-BT0004"):
         assert patient_id not in rendered
+
+
+@pytest.mark.parametrize(
+    ("argv", "steps", "threshold"),
+    [
+        ([], 150, 0.05),
+        (["--variant", "whole_brain"], 150, 0.05),
+        (["--variant", "stage2_cls"], 150, 0.05),
+        (["--variant", "stage1_seg"], 600, 0.5),
+        (["--variant", "stage1_seg", "--max-steps", "50"], 50, 0.5),
+    ],
+)
+def test_probe_budget_defaults_by_variant(
+    monkeypatch: pytest.MonkeyPatch,
+    argv: list[str],
+    steps: int,
+    threshold: float,
+) -> None:
+    from scripts import authorize_training
+
+    seen: dict[str, object] = {}
+
+    def stop(**kwargs):  # type: ignore[no-untyped-def]
+        seen.update(kwargs)
+        raise RuntimeError("stop before running")
+
+    monkeypatch.setattr(auth, "run_harness", stop)
+    with pytest.raises(RuntimeError, match="stop before running"):
+        authorize_training.main(argv)
+    assert seen["max_steps"] == steps
+    assert seen["overfit_threshold"] == threshold
