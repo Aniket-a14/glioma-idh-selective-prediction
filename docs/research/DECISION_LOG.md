@@ -1287,6 +1287,19 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 **Owner.** Research Lead (resolved).
 
+## D-054 — Step budget of the stage-1 overfit probe
+**Status:** RESOLVED 2026-11-15 (Claude, engineering, non-blocking; the probe is a wiring check, not a result) · **Blocking:** no
+
+**Conflict.** The first R8 stage-1 authorization (`01M7E4TMN0HR52BN2W21Y0Z5KV`, 2026-11-15) failed its tiny-overfit step: Dice loss 0.979 to 0.904 in the default 150 steps, threshold 0.5 (my untested guess in D-051). A diagnostic run of the same probe for 450 steps on the same four patients (scratch script, no training run, no run id) gave 0.979 (step 1), 0.907 (151), 0.804 (251), 0.627 (351), 0.525 (401), 0.430 (450): the loss accelerates and crosses 0.5 near step 410. The model learns; a Dice-only objective on three small-region channels with lr 3e-4 and clipped gradients needs about three times the steps that class-balanced BCE needs.
+
+**Adopted.** `scripts/authorize_training.py` defaults to 600 steps for `stage1_seg` (150 for every other variant), threshold unchanged at 0.5, `--max-steps` still overrides. The authorization report records `final_loss` and the curve, so the probe stays an observed pass, not an assumed one.
+
+**Alternatives.** Raise the learning rate for the probe only (changes what the probe checks versus real training, rejected); lower the threshold to 0.9 (would pass a model that barely learns, rejected).
+
+**Consequences.** No frozen number, config or scientific rule changes; the probe is not in the pre-registration. Authorization of `stage1_seg` takes about 25 minutes longer.
+
+**Owner.** Claude (engineering). Research Lead may overrule.
+
 ---
 
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
