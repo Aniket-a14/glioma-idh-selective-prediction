@@ -1,0 +1,68 @@
+{
+ "checkpoints": [
+  {
+   "path": "artifacts:experiments/RUNA/checkpoints/weights.fixture",
+   "role": "primary",
+   "run_id": "RUNA"
+  },
+  {
+   "path": "artifacts:experiments/RUNB/checkpoints/weights.fixture",
+   "role": "ensemble_member_1",
+   "run_id": "RUNB"
+  }
+ ],
+ "exclusion_manifest": "data:manifests/exclusion_manifest_post_qc.json",
+ "literal": {
+  "abstention_definition": {
+   "score_threshold": "risk-coverage sweep (D-003)",
+   "set_valued": "abstain on a non-singleton set; empty set counts as abstention"
+  },
+  "c4_tolerance_band": {
+   "primary_pp": 7,
+   "secondary_pp": 5
+  },
+  "calibration_parameters": {
+   "procedure": "temperature scaling on the calibration split",
+   "temperature": 1.125
+  },
+  "conformal": {
+   "alpha_grid": [
+    0.05,
+    0.1,
+    0.2
+   ],
+   "method": "split conformal (D-002)",
+   "nonconformity_score": "1 - p(true class)"
+  },
+  "missing_modality_conditions": {
+   "cells": 108,
+   "source": "configs/evaluation/conditions.yaml"
+  },
+  "operating_points": {
+   "coverage_grid": [
+    0.9,
+    0.8,
+    0.7,
+    0.6,
+    0.5
+   ]
+  },
+  "primary_metrics": [
+   "AUROC",
+   "ECE",
+   "Brier",
+   "AURC",
+   "coverage"
+  ]
+ },
+ "normalization_statistics": "data:manifests/normalization_stats.json",
+ "preprocessing": {
+  "config": "repo:configs/preprocessing/base.yaml",
+  "run_id": "RUNA"
+ },
+ "statistical_analysis_plan": {
+  "path": "repo:docs/STATISTICAL_ANALYSIS_PLAN.md",
+  "preregistration": "repo:docs/PREREGISTRATION.md"
+ },
+ "utsw_split_manifest": "data:manifests/splits.json"
+}

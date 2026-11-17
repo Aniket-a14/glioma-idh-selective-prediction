@@ -1,0 +1,1 @@
+{"fixture": "splits", "train": ["P1"], "calibration": ["P2"], "test": ["P3"]}
