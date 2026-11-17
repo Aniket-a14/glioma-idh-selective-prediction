@@ -86,3 +86,5 @@ Loss 1[confidence >= tau and wrong] (D-045); tau is the smallest threshold whose
 | Risk at coverage 0.5 | 0.0484 | 0.0645 |
 
 M3 minus M2 AURC = +0.0048: head-only MC-dropout ranks slightly worse than the temperature-scaled confidence on this split. The mean standard deviation of the 30 passes is 0.095, so the head perturbation is small next to the confidence signal. With 124 patients a difference of 0.005 is within sampling noise; it is reported as found (negative results are valid) and the paper states that M3 is head-only.
+
+Note added 2026-11-17: acceptance criteria 5 (coverage within +/-2 pp) and 6 (temperature scaling lowers ECE) are not met on R1 and R2 as written; see D-058 for the numbers, the exchangeability replication (`scripts/check_conformal_exchangeable.py`) and the decision the Research Lead owes.
