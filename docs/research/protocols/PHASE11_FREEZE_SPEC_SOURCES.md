@@ -24,16 +24,15 @@ what the Research Lead reads before T11.4.
 
 ## Points the Research Lead needs to decide or confirm before T11.4
 
-1. **M6 has no model assigned (D-056, open).** D-005 and D-006 say M6 needs no extra training run, so it is one of the
-   already-trained models evaluated always-predict. Candidates: R1 (no modality dropout) or R2 predictions. Until the
-   Research Lead picks one, the spec lists M6 under mechanisms and names no M6 checkpoint; if R1 is chosen its `best.pt`
-   is added to `checkpoints` and R1 needs a condition sweep (GPU inference, not run).
+1. **M6 is R1 (D-056, resolved 2026-11-17).** Always-predict, no modality dropout, evaluated on the same conditions. Its
+   `best.pt` is in `checkpoints` as `m6_comparator_r1`. R1 has full-input predictions only; the five missing-modality
+   conditions need a GPU inference sweep (about 2 to 2.5 h) that has not been run, and the manifest is not generated until it is.
 2. **Carried-over conformal quantile (settled, D-055: kept as pre-registered).** The frozen method applies the full-input calibration quantile to every condition
    and cohort (PREREGISTRATION section 3: quantiles come from UTSW calibration data only). Phase 09 found this degrades
    coverage for `drop_t1ce` at alpha 0.1 and 0.2 (0.589 at nominal 0.90 for alpha 0.1). The spec freezes the carried-over version and
    keeps the refit as a diagnostic, as written in Phase 09. The open question from Phase 09 stands: whether the C4
    half-width rule or the criterion text governs those cells.
-3. **R7 and R8 are not in the freeze.** They are internal ablations (D-051) and are not evaluated externally.
+3. **R7 and R8 are not in the freeze** (R1 is, as M6). They are internal ablations (D-051) and are not evaluated externally.
 4. **Ensemble includes the primary run.** M4 is R2 to R6, so R2 appears once as `primary_seed0`.
 5. **Operating points** are the two grids in PREREGISTRATION section 7. No threshold is frozen as a single number: the
    conformal quantiles above and the temperature are the only fitted values.
