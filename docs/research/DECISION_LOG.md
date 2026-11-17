@@ -1354,4 +1354,34 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 ---
 
+## D-058 — Phase 07 acceptance criteria 5 and 6 are not met as written (OPEN)
+**Status:** OPEN · **Blocking:** YES for Gate D of Phase 07 (and so for Gate E criterion 1) · **Found 2026-11-17** while preparing the Gate D evidence for Phases 07 to 10.
+
+**Conflict.** `PHASE_07_CALIBRATION_UNCERTAINTY.md` acceptance criteria say (5) conformal empirical coverage lands within +/-2 pp of nominal on exchangeable internal data for every alpha, and (6) temperature scaling reduces internal-test ECE against raw softmax. The scientific validation adds that if coverage does not hold under exchangeability "the implementation is wrong". On the frozen internal-test results (`PHASE07_INTERNAL_RESULTS.md`, n = 124):
+- Criterion 5: R2 coverage is 0.960, 0.871, 0.726 at nominal 0.95, 0.90, 0.80 (+1.0, -2.9, -7.4 pp); R1 is 0.968, 0.919, 0.758 (+1.8, +1.9, -4.2 pp). Three of six cells are outside +/-2 pp (R2 at 0.90 and 0.80, R1 at 0.80). Nothing in the docs addresses this; the results file only says that gaps of 3 to 6 points are sampling noise.
+- Criterion 6: raw to scaled 10-bin ECE goes 0.119 to 0.122 (R2) and 0.186 to 0.191 (R1), i.e. it does not fall; R7 is 0.108 to 0.109, R8 is 0.177 to 0.173. Brier falls slightly in every run (R2 0.140 to 0.139). The paired difference D1 on R2 is -0.0033 (ECE(M1) minus ECE(M2)), interval (-0.028, 0.022), raw p 0.67. T is 1.125 for R2, so scaling barely moves the probabilities.
+
+**Evidence added 2026-11-17** (`scripts/check_conformal_exchangeable.py`, internal data only, seed 0, 1000 replications each): the conformal code gives mean coverage within 0.5 pp of nominal with 124 calibration and 124 test patients, and a single split scatters widely.
+
+| Nominal | Synthetic exchangeable: mean, SD | R2 pooled calibration+test, random 124/124 re-splits: mean, SD |
+|---|---|---|
+| 0.95 | 0.953, 0.025 | 0.953, 0.027 |
+| 0.90 | 0.905, 0.036 | 0.905, 0.038 |
+| 0.80 | 0.801, 0.051 | 0.801, 0.050 |
+
+An SD of 2.5 to 5 pp means a correct implementation misses a +/-2 pp window on one n = 124 split most of the time at alpha 0.1 and 0.2. R2's single-split gaps are -0.8 and -1.4 SD at those two alphas. The re-split check reuses the calibration patients that also chose the checkpoint (D-039), so it is a check of the code, not a new test-set result.
+
+**Alternatives.**
+(a) Criterion 5: accept the replication check above as the evidence for "the implementation holds under exchangeability", report the single-split gaps as found, and record that the literal +/-2 pp window cannot be demonstrated on one 124-patient split. Criterion 6: record it as not met on R1 and R2 (a finding, reported in the paper's negative results; no refit, no re-tuning), with the Brier improvement and the interval for D1 next to it.
+(b) Record both as unmet on the literal reading and let Gate D for Phase 07 pass with a written exception for each.
+(c) Re-draw or re-fit to force the numbers: rejected, it contradicts the rule that no experiment is re-run or re-tuned because of its outcome.
+
+**Recommendation.** (a) for criterion 5 and "not met, reported" for criterion 6, both recorded as exceptions at Gate D with the evidence above. Neither changes a pre-registered rule or any frozen number.
+
+**Consequences.** Gate D for Phase 07 cannot close until the Research Lead accepts or rejects the exceptions. `PHASE07_INTERNAL_RESULTS.md` gets a pointer here. The ECE result belongs in `paper/NEGATIVE_RESULTS.md` (human-owned).
+
+**Owner.** Research Lead. **Resolve-by:** Gate D, Phase 07.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
