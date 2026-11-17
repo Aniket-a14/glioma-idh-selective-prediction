@@ -1,0 +1,151 @@
+{
+ "checkpoints": [
+  {
+   "path": "artifacts:experiments/01M46999FB083AX4WW0067YM13/checkpoints/best.pt",
+   "role": "primary_seed0",
+   "run_id": "01M46999FB083AX4WW0067YM13"
+  },
+  {
+   "path": "artifacts:experiments/01M4FPECM9DKAR7F6B7VFRQNC5/checkpoints/best.pt",
+   "role": "ensemble_seed1",
+   "run_id": "01M4FPECM9DKAR7F6B7VFRQNC5"
+  },
+  {
+   "path": "artifacts:experiments/01M60CYFD2AYA8DCPBTDSJS4DM/checkpoints/best.pt",
+   "role": "ensemble_seed2",
+   "run_id": "01M60CYFD2AYA8DCPBTDSJS4DM"
+  },
+  {
+   "path": "artifacts:experiments/01M66E2KR6ZV2YPBTNPF5FD53T/checkpoints/best.pt",
+   "role": "ensemble_seed3",
+   "run_id": "01M66E2KR6ZV2YPBTNPF5FD53T"
+  },
+  {
+   "path": "artifacts:experiments/01M776GTZC70FTB1ABD2DDMYHH/checkpoints/best.pt",
+   "role": "ensemble_seed4",
+   "run_id": "01M776GTZC70FTB1ABD2DDMYHH"
+  }
+ ],
+ "exclusion_manifest": "data:manifests/exclusion_manifest_post_qc.json",
+ "literal": {
+  "abstention_definition": {
+   "decision": "D-003, PREREGISTRATION.md section 5",
+   "empty_set": "counts as abstention; its rate is reported separately",
+   "score_threshold_view": "a threshold on the temperature-scaled confidence sweeps the risk-coverage curve; used for AURC and selective risk (RQ1, C1-C3, C5, C6)",
+   "set_valued_view": "split conformal prediction set at nominal 1 - alpha; abstain iff the set is not a singleton; used for empirical versus nominal coverage (RQ2, C4)"
+  },
+  "c4_tolerance_band": {
+   "decision": "D-004, PREREGISTRATION.md section 8",
+   "interval": "resamples calibration and test together",
+   "primary_percentage_points": 7,
+   "refutation_rule": "if the half-width of the interval on the coverage deviation exceeds the band, C4 is refuted (the deviation cannot be reliably characterized)",
+   "secondary_percentage_points": 5
+  },
+  "calibration_parameters": {
+   "applied_unchanged_to": "every condition and every cohort (never refitted)",
+   "fitted_on": "UTSW calibration split, full-input condition, run 01M46999FB083AX4WW0067YM13",
+   "procedure": "temperature scaling (M2): w = 1/T minimizing mean binary cross-entropy of sigmoid(w * logit) on the UTSW calibration split only; T searched in [0.05, 20]; sigmoid(logit / T)",
+   "temperature": 1.1247554245437905
+  },
+  "conformal": {
+   "alpha_grid": [
+    0.05,
+    0.1,
+    0.2
+   ],
+   "crc_secondary_loss": "1[confidence >= tau and wrong], bounded by B = 1, tau_hat the smallest candidate with (n/(n+1)) R(tau) + 1/(n+1) <= alpha (K4, D-045)",
+   "method": "split conformal prediction is primary (M5); conformal risk control is a named secondary (D-002, D-045)",
+   "nonconformity_score": "1 - p(true class) on the temperature-scaled probability (D-045, PHASE07_METRIC_CONTRACTS K1)",
+   "quantile_rule": "k = ceil((n + 1)(1 - alpha)); the k-th smallest calibration score, +inf if k > n; no interpolation (K2)",
+   "quantile_use": "carried over unchanged to every condition and cohort; the refitted-per-condition variant is a reported diagnostic, not the frozen method",
+   "quantiles_from_full_input_calibration": {
+    "0.05": 0.7772720380564715,
+    "0.1": 0.6621428463530682,
+    "0.2": 0.39233376398264225
+   }
+  },
+  "missing_modality_conditions": {
+   "cohorts": [
+    "utsw_internal_test",
+    "ucsf_pdgm",
+    "egd"
+   ],
+   "conditions": [
+    "full",
+    "drop_t1",
+    "drop_t1ce",
+    "drop_t2",
+    "drop_flair",
+    "t1ce_flair_only"
+   ],
+   "config": "configs/evaluation/conditions.yaml",
+   "config_sha256": "e74e253e31f9827c14cdf2db488afd59a6e3b1fec83d08991f8884a4d2d18283",
+   "dropped_channels": "zeroed, never imputed",
+   "m3_mc_dropout_passes": 30,
+   "m4_ensemble": "five runs, seeds 0 to 4: the checkpoints listed above",
+   "mechanisms": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6"
+   ],
+   "result_cells": 108,
+   "result_cells_without_egd": 72
+  },
+  "operating_points": {
+   "alpha_grid": [
+    0.05,
+    0.1,
+    0.2
+   ],
+   "coverage_grid": [
+    0.9,
+    0.8,
+    0.7,
+    0.6,
+    0.5
+   ],
+   "decision": "D-033, PREREGISTRATION.md sections 6 and 7",
+   "selective_risk_at_coverage": "the smallest attainable coverage at or above the target; the attained coverage is reported beside the risk"
+  },
+  "primary_metrics": {
+   "always_reported_with_auroc": [
+    "ECE",
+    "Brier",
+    "AURC",
+    "coverage"
+   ],
+   "decision": "D-033, PREREGISTRATION.md section 6",
+   "ece": "positive-class, equal-width, 10 bins, left-closed, 1.0 in the last bin",
+   "primary": [
+    "selective risk at matched coverage",
+    "AURC",
+    "risk-coverage curve shape",
+    "empirical versus nominal conformal coverage"
+   ],
+   "secondary": [
+    "AUROC",
+    "AUPRC",
+    "sensitivity",
+    "specificity",
+    "F1",
+    "balanced accuracy",
+    "Brier",
+    "ECE",
+    "reliability diagrams"
+   ]
+  }
+ },
+ "normalization_statistics": "data:manifests/normalization_stats.json",
+ "preprocessing": {
+  "config": "repo:configs/preprocessing/base.yaml",
+  "run_id": "01M46999FB083AX4WW0067YM13"
+ },
+ "statistical_analysis_plan": {
+  "path": "repo:docs/research/protocols/STATISTICAL_ANALYSIS_PLAN.md",
+  "preregistration": "repo:docs/research/protocols/PREREGISTRATION.md"
+ },
+ "utsw_split_manifest": "data:manifests/splits.json"
+}
