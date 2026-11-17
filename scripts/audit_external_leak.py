@@ -58,6 +58,8 @@ LABEL_READER_ALLOWLIST = (
     "leakage/",
     "preprocessing/",
     "evaluation/firewall.py",
+    # freeze_manifest.py resolves the external path only, to refuse spec files under it
+    "evaluation/freeze_manifest.py",
     "utils/paths.py",
 )
 LABEL_READER_PATTERN = re.compile(
