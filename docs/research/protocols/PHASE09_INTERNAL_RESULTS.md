@@ -6,7 +6,7 @@ Generated 2026-11-14 by `scripts/analyze_phase09.py` (analysis code at `989d049`
 - M4 deep ensemble, N = 5: R2 to R6 (seeds 0 to 4). Checkpoint hashes are in `provenance.ensemble_checkpoint_hashes`.
 - Bootstrap 2000 draws, permutation test 10000 permutations, MC-dropout 30 passes, seed 0.
 - M1, M2 and M5 rank patients identically (D-047), so they share one risk-coverage curve; every claim below is read on that curve (M5, the primary mechanism).
-- M6 is absent in every cell: it needs its own training run (D-006).
+- M6 is absent in every cell. Correction 2026-11-17: this line first said M6 needs its own training run (D-006). That was wrong: D-005 and D-006 say M6 needs no extra training run. Which trained model serves as M6 is open (D-056).
 - Calibration used the same 124-patient split that chose the checkpoint (D-039), so coverage results carry that selection effect.
 
 ## Claim adjudication (frozen rules, `PHASE09_STATS_CONTRACTS.md` D1 to D4)
@@ -130,7 +130,7 @@ Half-widths run from 0.065 to 0.222 against a band of 0.07; 1 of 18 condition-al
 - C4 is refuted under the frozen half-width rule: only one of 18 cells meets the 0.07 band, and `full` does not (half-width 0.077 at alpha 0.05). That is mostly interval width at n = 124, not a coverage failure. The one real coverage failure is `drop_t1ce` with full-input calibration carried over: empirical coverage 0.589 at nominal 0.90 and 0.347 at nominal 0.80, labelled degraded; refitting calibration under the dropped modality restores it (0.927, 0.823). Whether the half-width rule or the criterion text (cannot distinguish preserved from degraded) should govern a cell labelled degraded is a Research Lead question; no number is changed here.
 - C6 is refuted by the T1ce-dropped condition: abstained patients are not more error-prone than the rest (observed enrichment negative at every coverage level).
 - M4 (ensemble of 5) has a lower AURC than the single-model ranking in drop_t1, drop_t1ce and a higher one in full, drop_t2, drop_flair, t1ce_flair_only; every pair of intervals overlaps heavily. Descriptive only, not a pre-registered claim.
-- M6 is a separate always-predict comparator (PREREGISTRATION.md section 4) and is not run (D-006). The claim rules measure D(phi) against the always-predict risk of the same predictions, so its absence does not change any C1 to C6 status here.
+- M6 is a separate always-predict comparator (PREREGISTRATION.md section 4) and is not computed here; which already-trained model it is, is open (D-056). The claim rules measure D(phi) against the always-predict risk of the same predictions, so its absence does not change any C1 to C6 status here.
 - Not yet done for Phase 09 acceptance: independent recomputation by Person C (scientific validation 2), Gate D.
 
 ## Draft entries for `paper/NEGATIVE_RESULTS.md` (Research Lead to place; `paper/` is human-owned)
