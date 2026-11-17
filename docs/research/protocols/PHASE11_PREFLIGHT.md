@@ -63,7 +63,7 @@ Same status as run 1: preliminary, re-run on the final tree at the freeze. Evide
 | 1 | Phases 00 to 10 complete, prior gates passed | No | **No** | Gate D for Phase 06 still needs its independent review (`PHASE06_CLOSEOUT.md` line 61: "It has not happened"); Phase 10 acceptance still needs Person C's recomputation (pack ready, not run by them). Phase 10 computation is done: R7 and R8 frozen, E1 to E4 computed, HD95 frozen |
 | 2 | All internal results final | No | **Yes for computation; formally open** | `phase10_analysis.json` is final for the 14 UTSW members (SHA-256 `3d2a220c...`), HD95 for R2, R7, R8, M6 cells (`phase09_m6_analysis.json`). Still open by design: the single BH pass over the 29-member family (Phase 13, D-052). Person C's recomputation (criterion 1) |
 | 3 | Tree clean, everything merged to `main` | Yes | **Yes today, one item** | `main` equals `origin/main`, working tree clean. One agent branch not on `main`: `agent/claude/p08-naturally-missing` (a one-file T08.7 doc, from 2026-10-27); merged as part of this change. Re-check at the freeze |
-| 4 | Leakage regression test passes on the final manifests | Not run | **Not run** | Ran `tests/regression/test_leakage.py` on the home server: 1 passed, 7 skipped, because the governed raw data (`data/raw/utsw`) is only on the Research Lead's external SSD. The skips are honest "cannot check here", not a pass. Run it on the Mac with the SSD mounted (`/Volumes/Research_2` is not mounted today) |
+| 4 | Leakage regression test passes on the final manifests | Not run | **Met today (re-run at the freeze)** | With the SSD mounted and `GLIOMA_STORAGE_ROOT=/Volumes/Research_2`: `tests/regression/test_leakage.py` 7 passed, 1 skipped (the EGD test, EGD not downloaded, D-018). Earlier the same day it skipped on the home server and on the Mac without the SSD |
 | 5 | UCSF-PDGM and BraTS-2021 disjoint, hashed | Met | **Met** | Unchanged from run 1: 293 of 501 excluded as `overlap:brats2021`, 202 retained, roster hash `19d5a89e...` |
 | 6 | D-002, D-003, D-004 resolved and pre-registered | Yes | **Yes** | `PREREGISTRATION.md` sha256 sidecar matches (`e350d9fa...`); D-055 (2026-11-17) confirmed the pre-registered carried-over conformal quantile for drop_t1ce, so nothing in the frozen rules moved |
 | 7 | Statistical plan complete with exact BH family | Partly | **Partly** | SAP still says the 29-member composition is "proposed, to confirm at the freeze". The 14 UTSW members are computed; the 15 external ones are listed as `pending_external` in `bh_family`. Research Lead confirms the family before the manifest is signed |
@@ -88,15 +88,14 @@ home server's checkout. Both runs gave the same result.
   that mention the external cohorts; the count and the files are the same as run 1 (the power check, literature rows,
   the Phase 04 mask-alignment Dice for UCSF-PDGM, log lines). Not re-read line by line today; Person C re-reads them at the freeze.
 - **Server artifacts:** no number under an external-cohort key in the home server's artifact tree (now R1 to R8, internal only).
-- Still not covered, as in run 1: the external SSD (not mounted), notebooks and shell history on every machine, MLflow
-  if any, chat and email transcripts. Person C does these at the freeze.
+- **SSD artifacts scanned (SSD mounted later the same day):** `--artifact-root /Volumes/Research_2/artifacts` gave 0 blocking findings, 11 review items (the same 10 doc lines and the checksum-path hit). The SSD now also holds every run directory R1 to R8 (3.1 GB, copied from the home server; checkpoint hashes equal their records).
+- Still not covered, as in run 1: notebooks and shell history on every machine, MLflow if any, chat and email transcripts. (The external SSD itself was scanned for experiment artifacts only, not for stray files.) Person C does these at the freeze.
 
 ## What blocks Gate E today
 
 1. Gate D (Phase 06 independent review) and Person C's recomputation (criterion 1).
-2. The leakage regression test on the SSD (criterion 4).
-3. Confirming the BH family (criterion 7).
-4. EGD: arrived, or the single-cohort contingency recorded (criterion 9).
-5. The signature (criterion 10), which only the Research Lead can give.
+2. Confirming the BH family (criterion 7).
+3. EGD: arrived, or the single-cohort contingency recorded (criterion 9).
+4. The signature (criterion 10), which only the Research Lead can give.
 
-Nothing in 1 to 4 needs the GPU.
+Nothing in 1 to 3 needs the GPU. Criterion 4 is met today and is re-run on the final tree.
