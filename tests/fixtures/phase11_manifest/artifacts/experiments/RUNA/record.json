@@ -1,0 +1,11 @@
+{
+ "run_id": "RUNA",
+ "checkpoint_hash": "8dac02a749cb36a020192f88698106ed97d67a409721b20c759774229578d5f5",
+ "split_manifest_hash": "2f3198eb9b3ba03bdc8e4c158067ebbedca3c520f7fac208b05ea8f69358eeaf",
+ "exclusion_list_hash": "4546a02910799d9644416babe051fe6eed3668d155f53b898e5622e8d52a7555",
+ "preprocessing_version": {
+  "version": "fixture-preproc-v1",
+  "parameter_hash": "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+  "normalization_stats_sha256": "f234f1c41463da6a7fc9cf0dfe0af61a734f3ea42c09fb0bafc7732012bffafc"
+ }
+}

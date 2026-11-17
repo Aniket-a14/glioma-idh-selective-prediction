@@ -1,0 +1,93 @@
+{
+  "abstention_definition": {
+    "score_threshold": "risk-coverage sweep (D-003)",
+    "set_valued": "abstain on a non-singleton set; empty set counts as abstention"
+  },
+  "authorizing_signature": {
+    "date": null,
+    "name": null,
+    "status": "unsigned"
+  },
+  "c4_tolerance_band": {
+    "primary_pp": 7,
+    "secondary_pp": 5
+  },
+  "calibration_parameters": {
+    "procedure": "temperature scaling on the calibration split",
+    "temperature": 1.125
+  },
+  "code_commit_sha": "0123456789abcdef0123456789abcdef01234567",
+  "conformal": {
+    "alpha_grid": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "method": "split conformal (D-002)",
+    "nonconformity_score": "1 - p(true class)"
+  },
+  "created_utc": "2026-01-01T00:00:00Z",
+  "exclusion_manifest": {
+    "path": "data:manifests/exclusion_manifest_post_qc.json",
+    "sha256": "4546a02910799d9644416babe051fe6eed3668d155f53b898e5622e8d52a7555"
+  },
+  "git_tree_clean": true,
+  "missing_modality_conditions": {
+    "cells": 108,
+    "source": "configs/evaluation/conditions.yaml"
+  },
+  "model_checkpoints": [
+    {
+      "path": "artifacts:experiments/RUNA/checkpoints/weights.fixture",
+      "role": "primary",
+      "run_id": "RUNA",
+      "sha256": "8dac02a749cb36a020192f88698106ed97d67a409721b20c759774229578d5f5"
+    },
+    {
+      "path": "artifacts:experiments/RUNB/checkpoints/weights.fixture",
+      "role": "ensemble_member_1",
+      "run_id": "RUNB",
+      "sha256": "990f7f72ff7862c3347df27cf7a2904ac3fc0b5e44bb96d98ce0ab44601b43ff"
+    }
+  ],
+  "normalization_statistics": {
+    "path": "data:manifests/normalization_stats.json",
+    "sha256": "f234f1c41463da6a7fc9cf0dfe0af61a734f3ea42c09fb0bafc7732012bffafc"
+  },
+  "operating_points": {
+    "coverage_grid": [
+      0.9,
+      0.8,
+      0.7,
+      0.6,
+      0.5
+    ]
+  },
+  "preprocessing": {
+    "config_path": "repo:configs/preprocessing/base.yaml",
+    "config_sha256": "4f36e80bbd1a7c99df3448b797841f63ba7870cf0ccda56c456448695de6d0bf",
+    "parameter_hash": "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+    "version": "fixture-preproc-v1"
+  },
+  "primary_metrics": [
+    "AUROC",
+    "ECE",
+    "Brier",
+    "AURC",
+    "coverage"
+  ],
+  "schema": "freeze_manifest.v1",
+  "spec_sha256": "84c1543fdc10406f620d59a5e8987b0b9bd0a82cfb84c490483641c7b46625fd",
+  "statistical_analysis_plan": {
+    "path": "repo:docs/STATISTICAL_ANALYSIS_PLAN.md",
+    "preregistration": {
+      "path": "repo:docs/PREREGISTRATION.md",
+      "sha256": "8a3857ef1f18dce3faad26a827ed7500fe0b842006792df28ea22b07e2587e51"
+    },
+    "sha256": "1d9ed7a123b7ec1f330b2f56f674105fdf6fe94b850bfa5c7344ce10e6eb79f4"
+  },
+  "utsw_split_manifest": {
+    "path": "data:manifests/splits.json",
+    "sha256": "2f3198eb9b3ba03bdc8e4c158067ebbedca3c520f7fac208b05ea8f69358eeaf"
+  }
+}
