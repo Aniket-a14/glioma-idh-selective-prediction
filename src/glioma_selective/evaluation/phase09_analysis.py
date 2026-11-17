@@ -1014,6 +1014,79 @@ def analyze_phase09(
     return _write_report(report_path, document)
 
 
+def analyze_phase09_m6(
+    run_id: str,
+    m6_run_id: str,
+    *,
+    iterations: int = 2000,
+    permutations: int = 10000,
+    seed: int = 0,
+) -> Path:
+    """Write the M6 cells (D-056: R1, always-predict) beside run_id's Phase 09 file.
+
+    M6 is scored like M1: raw max-softmax confidence and the 0.5-threshold error of
+    the M6 model's own predictions, no temperature. Roster and labels must equal
+    run_id's; the bootstrap seed is the main analysis seed. The frozen
+    ``phase09_analysis.json`` is not touched.
+    """
+    if run_id == m6_run_id:
+        raise ValueError("m6_run_id must differ from run_id")
+    if iterations < 1 or permutations < 1:
+        raise ValueError("iterations and permutations must be positive")
+    run_dir, record = _load_run(run_id)
+    m6_dir, m6_record = _load_run(m6_run_id)
+    report_path = run_dir / "phase09_m6_analysis.json"
+    if (
+        report_path.exists()
+        or report_path.with_name(report_path.name + ".sha256").exists()
+    ):
+        raise FileExistsError(f"M6 analysis already exists: {report_path.name}")
+    frames, (predictions, _meta, mc_frame) = _load_condition_frames(
+        run_id, run_dir, str(record["checkpoint_hash"])
+    )
+    ids, labels = _patient_roster(frames, predictions, mc_frame)
+    m6_hash = str(m6_record["checkpoint_hash"])
+    m6_frames, (m6_predictions, _m6_meta, m6_mc) = _load_condition_frames(
+        m6_run_id, m6_dir, m6_hash
+    )
+    m6_ids, m6_labels = _patient_roster(m6_frames, m6_predictions, m6_mc)
+    if m6_ids != ids or not np.array_equal(m6_labels, labels):
+        raise ValueError("M6 internal-test patient set or labels differ from the run")
+    indices = bootstrap_indices(len(ids), iterations, seed)
+    cells: dict[str, Any] = {}
+    for condition in CONDITIONS:
+        test = _rows(m6_frames[condition], "utsw_internal_test", condition)
+        raw_p = _aligned_values(test, ids)[1]
+        loss = ((raw_p >= 0.5) != (labels == 1)).astype(np.int64)
+        cells[condition] = _measure_cell(
+            condition,
+            "M6",
+            confidence_scores(raw_p.tolist()),
+            loss,
+            indices,
+            iterations,
+            permutations,
+            seed,
+        )
+    document = {
+        "schema": "phase09_m6_analysis.v1",
+        "provenance": {
+            "run_id": run_id,
+            "m6_run_id": m6_run_id,
+            "m6_checkpoint_hash": m6_hash,
+            "git_sha": _git_sha(),
+            "decision": "D-056",
+            "scoring": "M1-style: raw max-softmax confidence, no temperature",
+            "iterations": iterations,
+            "permutations": permutations,
+            "seed": seed,
+            "internal_test_patient_count": len(ids),
+        },
+        "conditions": cells,
+    }
+    return _write_report(report_path, document)
+
+
 def _all_condition_cells(
     run_id: str,
     aligned: dict[str, dict[str, Any]],
