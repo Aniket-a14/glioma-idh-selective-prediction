@@ -15,6 +15,7 @@ from glioma_selective.evaluation.phase09_analysis import (
     CONDITIONS,
     _random_control,
     analyze_phase09,
+    analyze_phase09_m6,
 )
 from glioma_selective.selective.aurc import aurc_mean_over_cutoffs, oracle_aurc
 from glioma_selective.tracking.predictions import write_prediction_artifact
@@ -265,6 +266,43 @@ def test_analysis_adds_ensemble_cells_when_members_are_given(
     assert result["conditions"]["full"]["M4"]["n"] == 50
     assert len(result["provenance"]["ensemble_checkpoint_hashes"]) == 3
     assert main.exists()
+
+
+def test_m6_cells_are_written_beside_the_frozen_file_and_match_m1_scoring(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir = _prepare(tmp_path, monkeypatch, "phase09-m6-main")
+    _prepare(tmp_path, monkeypatch, "phase09-m6-model")
+    main_path = analyze_phase09(
+        "phase09-m6-main", iterations=50, permutations=200, passes=30
+    )
+    main_bytes = main_path.read_bytes()
+    path = analyze_phase09_m6(
+        "phase09-m6-main", "phase09-m6-model", iterations=50, permutations=200
+    )
+    result = _document(path)
+    assert path.parent == run_dir and path.name == "phase09_m6_analysis.json"
+    assert set(result["conditions"]) == set(CONDITIONS)
+    assert result["provenance"]["decision"] == "D-056"
+    main = _document(main_path)
+    for condition in CONDITIONS:
+        m6 = result["conditions"][condition]
+        m1 = main["conditions"][condition]["M1"]
+        assert m6["n"] == 50
+        assert (
+            m6["aurc_mean_over_cutoffs"] == m1["aurc_mean_over_cutoffs"]
+        )  # identical synthetic model, same scoring
+    assert main_path.read_bytes() == main_bytes
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert (
+        path.with_name(path.name + ".sha256").read_text() == f"{digest}  {path.name}\n"
+    )
+    with pytest.raises(FileExistsError):
+        analyze_phase09_m6(
+            "phase09-m6-main", "phase09-m6-model", iterations=50, permutations=200
+        )
+    with pytest.raises(ValueError, match="differ"):
+        analyze_phase09_m6("phase09-m6-main", "phase09-m6-main")
 
 
 def test_seed_reproducibility_and_different_seed_changes_bootstrap(
