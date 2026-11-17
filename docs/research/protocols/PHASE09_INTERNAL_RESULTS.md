@@ -6,7 +6,7 @@ Generated 2026-11-14 by `scripts/analyze_phase09.py` (analysis code at `989d049`
 - M4 deep ensemble, N = 5: R2 to R6 (seeds 0 to 4). Checkpoint hashes are in `provenance.ensemble_checkpoint_hashes`.
 - Bootstrap 2000 draws, permutation test 10000 permutations, MC-dropout 30 passes, seed 0.
 - M1, M2 and M5 rank patients identically (D-047), so they share one risk-coverage curve; every claim below is read on that curve (M5, the primary mechanism).
-- M6 is absent in every cell. Correction 2026-11-17: this line first said M6 needs its own training run (D-006). That was wrong: D-005 and D-006 say M6 needs no extra training run. Which trained model serves as M6 is open (D-056).
+- M6 (D-056, resolved 2026-11-17) is R1 `01M45268QDQ2CFBSPNH117MF41`, the no-modality-dropout model, always-predict. Its cells are in the separate file `phase09_m6_analysis.json` (SHA-256 `9fc919d4906d527b1dd52eaffafc44f413e5f8d03b1fcae4f707262d88f9d8dc`, written by `scripts/analyze_phase09_m6.py` at `c3e082a`, CPU, same seed and bootstrap draws); the frozen `phase09_analysis.json` still lists M6 as absent and its `results_summary` reason ("needs its own training run") is wrong, kept because the file is hashed. M6 is scored like M1 (raw max-softmax confidence, no temperature); see the M6 section below.
 - Calibration used the same 124-patient split that chose the checkpoint (D-039), so coverage results carry that selection effect.
 
 ## Claim adjudication (frozen rules, `PHASE09_STATS_CONTRACTS.md` D1 to D4)
@@ -130,8 +130,25 @@ Half-widths run from 0.065 to 0.222 against a band of 0.07; 1 of 18 condition-al
 - C4 is refuted under the frozen half-width rule: only one of 18 cells meets the 0.07 band, and `full` does not (half-width 0.077 at alpha 0.05). That is mostly interval width at n = 124, not a coverage failure. The one real coverage failure is `drop_t1ce` with full-input calibration carried over: empirical coverage 0.589 at nominal 0.90 and 0.347 at nominal 0.80, labelled degraded; refitting calibration under the dropped modality restores it (0.927, 0.823). Whether the half-width rule or the criterion text (cannot distinguish preserved from degraded) should govern a cell labelled degraded is a Research Lead question; no number is changed here.
 - C6 is refuted by the T1ce-dropped condition: abstained patients are not more error-prone than the rest (observed enrichment negative at every coverage level).
 - M4 (ensemble of 5) has a lower AURC than the single-model ranking in drop_t1, drop_t1ce and a higher one in full, drop_t2, drop_flair, t1ce_flair_only; every pair of intervals overlaps heavily. Descriptive only, not a pre-registered claim.
-- M6 is a separate always-predict comparator (PREREGISTRATION.md section 4) and is not computed here; which already-trained model it is, is open (D-056). The claim rules measure D(phi) against the always-predict risk of the same predictions, so its absence does not change any C1 to C6 status here.
+- M6 is a separate always-predict comparator (PREREGISTRATION.md section 4), computed after the main run; table below. It does not change any C1 to C6 status, which measure D(phi) against the always-predict risk of the same predictions.
 - Not yet done for Phase 09 acceptance: independent recomputation by Person C (scientific validation 2), Gate D.
+
+## M6 comparator (R1, no modality dropout) against M1 on R2 (internal test, 124 patients; added 2026-11-17)
+
+R1 `01M45268QDQ2CFBSPNH117MF41` is the always-predict joint comparator (D-056). Its condition sweep ran on the GPU on 2026-11-17 (about 32 minutes; GPU `full` probabilities match the stored R1 predictions to 9e-8). "Error" is the 0.5-threshold error rate over all 124 patients; AURC is the mean over cutoffs (lower is better), both read from `phase09_m6_analysis.json` and `phase09_analysis.json`.
+
+| Condition | Error M1 (R2) | Error M6 (R1) | AURC M1 (R2) [95%] | AURC M6 (R1) [95%] |
+|---|---|---|---|---|
+| full | 0.218 | 0.258 | 0.0755 [0.041, 0.123] | 0.1343 [0.078, 0.211] |
+| drop_t1 | 0.177 | 0.210 | 0.0759 [0.039, 0.128] | 0.0850 [0.041, 0.148] |
+| drop_t1ce | 0.532 | 0.677 | 0.4927 [0.379, 0.616] | 0.7231 [0.612, 0.827] |
+| drop_t2 | 0.185 | 0.218 | 0.0730 [0.036, 0.122] | 0.1409 [0.080, 0.220] |
+| drop_flair | 0.226 | 0.411 | 0.1082 [0.058, 0.177] | 0.3081 [0.214, 0.419] |
+| t1ce_flair_only | 0.218 | 0.250 | 0.1135 [0.064, 0.176] | 0.1330 [0.077, 0.203] |
+
+- R1 has the higher error and the higher AURC in every condition, most of all when an input is missing: drop_t1ce error 0.677 against 0.532, drop_flair 0.411 against 0.226. The AURC intervals are disjoint only in `drop_flair`; in `drop_t1ce` they overlap by 0.004 and in the other four conditions they overlap clearly.
+- This is the pre-registered direction (training with modality dropout helps under missing inputs) but it is one seed per model, so it is descriptive. No paired test was run and none is claimed.
+- The two models differ in modality-dropout training only; the manuscript must say so (D-056).
 
 ## Draft entries for `paper/NEGATIVE_RESULTS.md` (Research Lead to place; `paper/` is human-owned)
 
