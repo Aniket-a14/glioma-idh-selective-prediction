@@ -1336,4 +1336,22 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 ---
 
+## D-057 — Does Gate E wait for EGD? (OPEN)
+**Status:** OPEN · **Blocking:** YES (Phase 11: it fixes the BH family size, the freeze manifest contents and the Gate E criterion 9 wording)
+
+**Conflict.** The SAP lists the BH family as 44 tests with EGD and 29 without, and says its composition is to be confirmed at the freeze. `EXTERNAL_VALIDATION_PROTOCOL.md` section 5 says: if EGD is not granted by Phase 11, go with UCSF-PDGM alone, and treat a late EGD as a second, separately frozen evaluation that does not join the primary result. The Research Lead is now downloading EGD (2026-11-17). EGD then needs its own audit, preprocessing and manifests (Phase 02 to 04 steps for a cohort that arrives after the Phase 05 freeze) before it can be in a freeze manifest, while the other Gate E blockers (Gate D, Person C, family confirmation) are also open. The licence terms also start a three-month retention clock on the data.
+
+**Alternatives.**
+(a) Wait for EGD: audit and preprocess it first, put both external cohorts into one freeze manifest and one external run, family of 44. Cost: Gate E moves out by the EGD preparation time (not estimated here; the download size and filename convention are unknown). Benefit: the design in the SPEC (two external cohorts, one evaluation, C3 on both) is kept.
+(b) Go with UCSF-PDGM alone now: family of 29, one external run; EGD becomes a second separately frozen evaluation later with its own manifest, reported as an addendum (protocol section 5). Cost: C3 on EGD and the EGD rows of the family do not join the primary result; the Limitations paragraph must say so. Benefit: no waiting; the retention clock does not run down before use.
+(c) Wait for EGD only up to a date the Research Lead sets, then fall back to (b).
+
+**Recommendation.** (c). The other open blockers cannot be cleared this week anyway, so waiting costs little at first, and the SPEC's design stays reachable. Set the cut-off date from the EGD download size and the retention clause once both are known; if EGD is not audited and preprocessed by then, go with (b) and record the degradation as the protocol requires.
+
+**Consequences.** Nothing in `freeze_spec.json` changes until this is resolved. `PHASE11_PREFLIGHT.md` criterion 9 stays open. If (a) or (c) reaches EGD before the freeze, `bh_family` in `phase10_analysis.json` needs the 15 EGD rows listed (a code change in `phase10_analysis.py` plus a CPU re-run that writes a new file beside the frozen one, as with M6).
+
+**Owner.** Research Lead. **Resolve-by:** before T11.2 is run for real.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
