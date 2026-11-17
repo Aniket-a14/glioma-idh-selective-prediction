@@ -1302,4 +1302,34 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 ---
 
+## D-055 — C4 for the drop_t1ce cells: the pre-registered carried-over quantile stands
+**Status:** RESOLVED 2026-11-17 (Research Lead: keep as pre-registered) · **Blocking:** no
+
+**Conflict.** Phase 09 showed the full-input calibration quantile under-covers `drop_t1ce` (0.589 at nominal 0.90, alpha 0.1; 0.927 when refitted on that condition). The open question was whether the C4 half-width rule or the criterion text governs those cells, and whether the method should refit per condition.
+
+**Adopted.** The carried-over quantile stays the frozen method (PREREGISTRATION section 3: quantiles come from UTSW calibration data only). C4 is judged by its own refutation rule (half-width against the 7 pp band). The under-coverage is reported as a finding; the per-condition refit stays a labelled diagnostic.
+
+**Alternatives.** Freeze a per-condition refit (changes the method after seeing results; rejected). Wait for Person C's recomputation (not needed, the rule does not depend on it).
+
+**Consequences.** `freeze_spec.json` is unchanged. Nothing is re-run or re-tuned.
+
+**Owner.** Research Lead.
+
+---
+
+## D-056 — Which trained model is M6 (OPEN)
+**Status:** OPEN, recommendation below · **Resolve by:** before the Phase 11 freeze manifest is generated (T11.2 real run) · **Blocking:** YES for Gate E criterion "freeze manifest complete"
+
+**Conflict.** D-005 says M6 is "post-hoc or inference-time on already-trained weights" and D-006 says "no extra training run", with M6 defined as our SegResNet with the auxiliary segmentation head and tumour-aware pooling, always-predict. R2 already is that configuration, so read literally M6 equals M1 on R2 predictions. Phase 09 recorded M6 as absent and said it needed its own training run; that was a misreading and is corrected in `PHASE09_INTERNAL_RESULTS.md`.
+
+**Alternatives.** (a) R1, the no-modality-dropout model (same architecture, trained without modality dropout, the COM-Net-style joint model): a different comparator, no training cost; needs a condition sweep (GPU inference) and its `best.pt` in the manifest; differs from R2 in modality-dropout training, which the manuscript must state. (b) R2 predictions: no compute, literal reading; M6 is numerically identical to M1, so it adds no comparison. (c) A new model on the R9 reserve: contradicts D-006's "no extra training run", needs GPU.
+
+**Recommendation.** (a), with the stated caveat, and the sweep run only when the Research Lead releases the GPU. Fallback if no GPU time is wanted: (b), reported openly as identical to M1.
+
+**Consequences.** Pending the decision: `freeze_spec.json` names no M6 checkpoint; the 108-cell count is unchanged under (a) and (b).
+
+**Owner.** Research Lead.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.

@@ -24,11 +24,11 @@ what the Research Lead reads before T11.4.
 
 ## Points the Research Lead needs to decide or confirm before T11.4
 
-1. **M6 has no checkpoint.** The tumor-aware joint comparator (M6) needs its own training run (D-006) and has none; the
-   Phase 09 results list its cells as absent. The 108-cell grid in `conditions.yaml` includes it. Either the run is made
-   before Gate E, or the freeze names M6 as not evaluated (a change to the pre-registered cell count, which needs a
-   decision-log entry). The spec as written lists M6 under mechanisms and has no M6 checkpoint.
-2. **Carried-over conformal quantile.** The frozen method applies the full-input calibration quantile to every condition
+1. **M6 has no model assigned (D-056, open).** D-005 and D-006 say M6 needs no extra training run, so it is one of the
+   already-trained models evaluated always-predict. Candidates: R1 (no modality dropout) or R2 predictions. Until the
+   Research Lead picks one, the spec lists M6 under mechanisms and names no M6 checkpoint; if R1 is chosen its `best.pt`
+   is added to `checkpoints` and R1 needs a condition sweep (GPU inference, not run).
+2. **Carried-over conformal quantile (settled, D-055: kept as pre-registered).** The frozen method applies the full-input calibration quantile to every condition
    and cohort (PREREGISTRATION section 3: quantiles come from UTSW calibration data only). Phase 09 found this degrades
    coverage for `drop_t1ce` at alpha 0.1 and 0.2 (0.589 at nominal 0.90 for alpha 0.1). The spec freezes the carried-over version and
    keeps the refit as a diagnostic, as written in Phase 09. The open question from Phase 09 stands: whether the C4
