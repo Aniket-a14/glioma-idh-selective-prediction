@@ -1,8 +1,8 @@
-# Phase 10 internal results (PRELIMINARY: R7 and R8 not yet trained; UTSW internal test only)
+# Phase 10 internal results (UTSW internal test only; final run with R7 and R8)
 
-Generated 2026-11-14 from `phase10_analysis_preliminary_20261114b.json` (SHA-256 `09dd37a07e023c61721495a43193f97c086ab12b624f6935afdde9e8b72ae33a`) and `probe_1p19q.json` (SHA-256 `0e5f2a18b6751a614b1dd00122576a95a5a63ea70a216bb1c694bbdf50a5c652`); every number is read from those files by a script. Analysis code at `88fbff0` (`scripts/analyze_phase10.py`), probe code at `9e501d4`. Internal data only: 124 UTSW internal-test patients; no UCSF-PDGM or EGD label was read. One shared resample matrix (2000 draws, seed 0); the primary run is R2 `01M46999FB083AX4WW0067YM13`, the ensemble is R2 to R6.
+Generated 2026-11-17 from `phase10_analysis.json` (SHA-256 `3d2a220c49b558a543833057514ea65f733a80f5e49aa04411fd776ffd271f54`, analysis code at `5b6878c`) and, for the 1p/19q section written 2026-11-14, `probe_1p19q.json` (SHA-256 `0e5f2a18b6751a614b1dd00122576a95a5a63ea70a216bb1c694bbdf50a5c652`); every number is read from those files by a script. The R2 sections below are unchanged from the preliminary file `phase10_analysis_preliminary_20261114b.json` (SHA-256 `09dd37a07e023c61721495a43193f97c086ab12b624f6935afdde9e8b72ae33a`, kept beside the final file); probe code at `9e501d4`. Internal data only: 124 UTSW internal-test patients; no UCSF-PDGM or EGD label was read. One shared resample matrix (2000 draws, seed 0); the primary run is R2 `01M46999FB083AX4WW0067YM13`, the ensemble is R2 to R6, R7 is `01M7C0KRNY5M2SNH59PH97XZ8K` and R8 is stage 1 `01M7ETEEYVT8KXCVJSQS5R7KJC` plus stage 2 `01M7JZYEBFCJF8WY0W1WJ3RZX7`.
 
-**Status.** Preliminary. The final run of `analyze_phase10.py` writes `phase10_analysis.json` once R7 and R8 have frozen predictions; the confirmatory entries E1 to E4 (R7 and R8 against R2) and the R7 and R8 per-run metrics are absent here. Nothing in this file is a Gate D claim: independent recomputation by Person C and the independent review are still open,
+**Status.** Final for the UTSW members of the family: R7 and R8 now have frozen predictions and E1 to E4 are computed. Nothing in this file is a Gate D claim: independent recomputation by Person C and the independent review are still open.
 
 ## R2 on the internal test: metrics with 95% intervals (acceptance criterion 3)
 
@@ -58,29 +58,66 @@ Difference is first minus second; AURC and the calibration errors are lower-is-b
 | B5 | AURC(M5, t1ce_flair_only) - AURC(M5, full) | 0.0379 | (-0.0091, 0.0886) | 0.118 |
 | D1 | ECE(M1) - ECE(M2), full | -0.0033 | (-0.0276, 0.0223) | 0.668 |
 | D2 | Brier(M1) - Brier(M2), full | 0.0012 | (-0.0014, 0.0041) | 0.380 |
-| E1 | AUROC(R7) - AUROC(R2), full | absent | | R7 has no frozen predictions |
-| E2 | AURC(R7) - AURC(R2), full | absent | | R7 has no frozen predictions |
-| E3 | AUROC(R8) - AUROC(R2), full | absent | | R8 has no frozen predictions |
-| E4 | AURC(R8) - AURC(R2), full | absent | | R8 has no frozen predictions |
+| E1 | AUROC(R7) - AUROC(R2), full | 0.0096 | (-0.0261, 0.0468) | 0.597 (DeLong) |
+| E2 | AURC(R7) - AURC(R2), full | 0.0173 | (-0.0237, 0.0703) | 0.516 (344/667) |
+| E3 | AUROC(R8) - AUROC(R2), full | 0.0104 | (-0.0286, 0.0507) | 0.615 (DeLong) |
+| E4 | AURC(R8) - AURC(R2), full | 0.0219 | (-0.0038, 0.0523) | 0.106 (212/2001) |
 
-Family listing: 29 members, 10 computed, 4 absent (R7 and R8 predictions), 15 pending external (UCSF-PDGM, Phase 12). The Benjamini-Hochberg pass over the full family runs once, at the Phase 13 freeze (D-052, accepted 2026-11-14).
+Family listing: 29 members, 14 computed, 15 pending external (UCSF-PDGM, Phase 12). The Benjamini-Hochberg pass over the full family runs once, at the Phase 13 freeze (D-052, accepted 2026-11-14).
 
-### Supplementary: BH over the 10 computed UTSW members only (supplementary; not the pre-registered family (D-052)), q = 0.05
+### Supplementary: BH over the 14 computed UTSW members only (supplementary; not the pre-registered family (D-052)), q = 0.05
 
 | Id | Adjusted p | Reject |
 |---|---|---|
-| A1 | 0.322 | no |
-| A2 | 0.985 | no |
+| A1 | 0.361 | no |
+| A2 | 0.963 | no |
 | A3 | 0.985 | no |
 | B1 | 0.985 | no |
-| B2 | 0.010 | yes |
-| B3 | 0.985 | no |
-| B4 | 0.322 | no |
-| B5 | 0.322 | no |
-| D1 | 0.985 | no |
-| D2 | 0.760 | no |
+| B2 | 0.014 | yes |
+| B3 | 0.963 | no |
+| B4 | 0.361 | no |
+| B5 | 0.361 | no |
+| D1 | 0.935 | no |
+| D2 | 0.886 | no |
+| E1 | 0.935 | no |
+| E2 | 0.935 | no |
+| E3 | 0.935 | no |
+| E4 | 0.361 | no |
 
 Reading: dropping T1ce raises the AURC by about 0.42 (B2) and is the only comparison with a raw p below 0.05; it is also the only member that survives the supplementary adjustment. The uncertainty-method comparisons (A1 to A3) and raw against temperature-scaled calibration (D1, D2) show no detectable difference at n = 124, with all point differences under 0.005 in absolute value.
+
+**R7 and R8 against R2 (E1 to E4).** All four intervals include 0. AUROC differences are +0.010 (R7) and +0.010 (R8) with raw p 0.60 and 0.61. AURC differences are positive, +0.017 (R7) and +0.022 (R8), which is the worse direction (lower AURC is better), with raw p 0.52 and 0.11. At n = 124 (35 mutant) the data show no detectable AUROC or AURC difference between R2 and either ablation; the AURC point estimates lean against R7 and R8 but the intervals are wide (R8: -0.004 to 0.052). These are not claims of equivalence. The two ablations were fixed in D-051 before any result and are reported whichever way they came out.
+
+## R7 and R8 per-run metrics (internal test, 124 patients, 35 mutant)
+
+| Metric | R2 | R7 (whole-brain pooling) | R8 (two-stage) |
+|---|---|---|---|
+| AUROC (bootstrap 95%) | 0.878 (0.808, 0.939) | 0.888 (0.820, 0.941) | 0.889 (0.816, 0.948) |
+| AUPRC (bootstrap 95%) | 0.778 (0.647, 0.884) | 0.741 (0.585, 0.873) | 0.823 (0.708, 0.912) |
+| AURC, M5 ranking (bootstrap 95%) | 0.0755 (0.041, 0.123) | 0.0929 (0.039, 0.166) | 0.0974 (0.057, 0.153) |
+| ECE, M1 (raw) | 0.119 | 0.108 | 0.177 |
+| Brier, M1 (raw) | 0.140 | 0.129 | 0.162 |
+| Temperature T | 1.125 | 0.827 | 1.654 |
+| ECE, M2 (temperature-scaled) | 0.122 | 0.109 | 0.173 |
+| Brier, M2 (temperature-scaled) | 0.139 | 0.129 | 0.153 |
+| Segmentation Dice, mean (enhancing / necrotic core / oedema) | 0.473 (0.431 / 0.390 / 0.597) | 0.485 (0.481 / 0.409 / 0.566) | 0.741 (0.799 / 0.605 / 0.819) |
+
+R8 is the least calibrated of the three (raw ECE 0.177 against 0.119 and 0.108); temperature scaling moves it little. No interval or test is computed for the ECE and Brier columns across runs, so this is a point-estimate observation. R8 has much higher Dice because its stage 1 is trained on segmentation alone with a Dice loss (D-051); the comparison of segmentation quality is between a dedicated segmenter and a multitask head, not between equal designs. Calibration-set AUROC at the stopping epoch was near 0.92 for R7 and for R8 stage 2; the test-set values above are the numbers that count.
+
+### Auxiliary segmentation HD95 (R7 and R8, internal test; T10.10, D-053)
+
+Same definitions and caveats as the R2 table. Primary table (both masks non-empty):
+
+| Run | Channel | Evaluable | Missed | False | Both empty | Primary mean | Primary median (IQR) | Penalty-convention mean |
+|---|---|---|---|---|---|---|---|---|
+| R7 | enhancing | 95 | 0 | 29 | 0 | 16.778 | 6.000 (4.472, 15.678) | 90.629 |
+| R7 | necrotic_core | 121 | 0 | 3 | 0 | 15.869 | 10.954 (7.211, 15.620) | 23.531 |
+| R7 | oedema | 124 | 0 | 0 | 0 | 21.920 | 9.798 (7.483, 15.185) | 21.920 |
+| R8 | enhancing | 91 | 4 | 2 | 27 | 9.000 | 2.000 (2.000, 3.464) | 22.696 |
+| R8 | necrotic_core | 113 | 8 | 3 | 0 | 7.273 | 6.227 (4.472, 9.165) | 36.129 |
+| R8 | oedema | 124 | 0 | 0 | 0 | 7.800 | 3.464 (2.000, 6.081) | 7.800 |
+
+Penalty 332.554 mm for all runs. R7's HD95 is close to R2's. R8's median surface distances are small (2 mm is one voxel on this grid) and it predicts "no enhancing region" in 27 patients where the truth also has none, which R2 and R7 never do (they predict an enhancing region in all 29 patients with none in the truth). The enhancing primary mean is not comparable across runs: the sets of evaluable patients differ (95, 95, 91).
 
 ## RQ4: 1p/19q frozen-encoder probe (exploratory, D-007; no inferential claim)
 
@@ -97,7 +134,6 @@ Co-deletion occurs only in IDH-mutant patients in this test set (all 14 co-delet
 
 ## Open for Phase 10
 
-- R7 (whole-brain pooling) and R8 (two-stage) are training or queued on the home GPU (D-051); E1 to E4 and their per-run metrics follow in the final `phase10_analysis.json`. The preliminary file is kept beside it as a record.
-- T10.10: HD95 for R2 is done above; R7 and R8 follow when trained (`scripts/freeze_segmentation_hd95.py`).
+- Record of the runs: R7 trained to epoch 99 (best epoch 69) and had one unexplained stop after epoch 71 and resumed from epoch 72; whether that resume matches an uninterrupted run is not verified. R8 stage 1 trained about 39 h, stage 2 stopped after epoch 46. R7 HD95 was frozen with `--allow-sha-mismatch` (run git SHA `0ad683e`, current `5b6878c`), as R2's was; the model config is read from the run record.
 - T10.8: DeLong cross-check passed (1000 random cases against an independent midrank implementation); bootstrap and BH cross-checks agree on the Phase 09 fixtures; the paired-bootstrap p-value (S2, S3) was checked against an independent loop on 50 random cases.
 - Independent recomputation of every headline number by Person C, Gate D review, and the single Benjamini-Hochberg pass at Phase 13.
