@@ -19,15 +19,25 @@ pre-registration and decision log. It never signs, never reads an external cohor
 ```python
 class ManifestError(ValueError): ...
 
+
 def git_state(repo: Path) -> tuple[str, bool]:
     """(HEAD commit sha as 40 lowercase hex, tree_clean). Clean means `git status --porcelain` prints nothing
     (untracked files count as dirty; ignored files do not)."""
 
-def build_manifest(spec_path: Path, *, roots: Mapping[str, Path], code_commit_sha: str,
-                   created_utc: str, tree_clean: bool = True) -> dict[str, Any]: ...
+
+def build_manifest(
+    spec_path: Path,
+    *,
+    roots: Mapping[str, Path],
+    code_commit_sha: str,
+    created_utc: str,
+    tree_clean: bool = True,
+) -> dict[str, Any]: ...
+
 
 def write_manifest(manifest: Mapping[str, Any], output: Path) -> Path:
     """Write once, atomically, with the sidecar. FileExistsError if output or its sidecar exists."""
+
 
 def seal_manifest(path: Path) -> str:
     """Rewrite the sidecar of an existing manifest to match its current bytes; return the digest. Content untouched."""
@@ -142,3 +152,13 @@ Which runs are in the ensemble, the operating points, the conformal grid and the
 Research Lead into the real `freeze_spec.json` (T11.1 evidence, separate from this task) from `PREREGISTRATION.md` and the
 decision log. The generator checks that the files exist and agree with their run records; it does not check that the
 chosen values are right.
+
+## Revision 1 (2026-11-17): no-hard-link filesystems
+
+The artifact root is on an external drive whose filesystem can lack hard links (`os.link` raising `ENOTSUP`, `EOPNOTSUPP`
+or `EXDEV`); `training/authorization.py` (`_atomic_json_once`) already handles this. `write_manifest` must do the same:
+try `os.link` first, and on those three errors fall back to an exclusive-create lock file, an existence check under the lock,
+and `os.replace`, still refusing to overwrite the manifest or its sidecar, still publishing the manifest before the sidecar,
+and still removing the manifest if the sidecar cannot be published. Test: monkeypatch `os.link` to raise
+`OSError(errno.EOPNOTSUPP, ...)`; the write succeeds with the right sidecar, a second write raises `FileExistsError`, and
+no temporary or lock file is left behind.
