@@ -1318,7 +1318,7 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 ---
 
 ## D-056 — Which trained model is M6 (OPEN)
-**Status:** OPEN, recommendation below · **Resolve by:** before the Phase 11 freeze manifest is generated (T11.2 real run) · **Blocking:** YES for Gate E criterion "freeze manifest complete"
+**Status:** RESOLVED 2026-11-17 (Research Lead: option (a), R1) · **Blocking:** no
 
 **Conflict.** D-005 says M6 is "post-hoc or inference-time on already-trained weights" and D-006 says "no extra training run", with M6 defined as our SegResNet with the auxiliary segmentation head and tumour-aware pooling, always-predict. R2 already is that configuration, so read literally M6 equals M1 on R2 predictions. Phase 09 recorded M6 as absent and said it needed its own training run; that was a misreading and is corrected in `PHASE09_INTERNAL_RESULTS.md`.
 
@@ -1327,6 +1327,8 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 **Recommendation.** (a), with the stated caveat, and the sweep run only when the Research Lead releases the GPU. Fallback if no GPU time is wanted: (b), reported openly as identical to M1.
 
 **Consequences.** Pending the decision: `freeze_spec.json` names no M6 checkpoint; the 108-cell count is unchanged under (a) and (b).
+
+**Resolution 2026-11-17.** (a). M6 is R1 (`01M45268QDQ2CFBSPNH117MF41`), always-predict. The manuscript states that it differs from R2 in training without modality dropout. R1 needs a condition sweep (GPU inference, about 2 to 2.5 h on the clean R6 precedent); it is not run until the Research Lead releases the GPU. Its `best.pt` is added to `freeze_spec.json`. No training run, nothing re-tuned.
 
 **Owner.** Research Lead.
 

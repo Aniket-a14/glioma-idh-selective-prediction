@@ -24,6 +24,11 @@
    "path": "artifacts:experiments/01M776GTZC70FTB1ABD2DDMYHH/checkpoints/best.pt",
    "role": "ensemble_seed4",
    "run_id": "01M776GTZC70FTB1ABD2DDMYHH"
+  },
+  {
+   "path": "artifacts:experiments/01M45268QDQ2CFBSPNH117MF41/checkpoints/best.pt",
+   "role": "m6_comparator_r1",
+   "run_id": "01M45268QDQ2CFBSPNH117MF41"
   }
  ],
  "exclusion_manifest": "data:manifests/exclusion_manifest_post_qc.json",
@@ -83,6 +88,7 @@
    "dropped_channels": "zeroed, never imputed",
    "m3_mc_dropout_passes": 30,
    "m4_ensemble": "five runs, seeds 0 to 4: the checkpoints listed above",
+   "m6_comparator": "R1 (no modality dropout; same SegResNet, auxiliary segmentation head and tumour-aware pooling), evaluated always-predict, uncalibrated and unselected, D-006 and D-056; its condition sweep is run before the manifest is generated",
    "mechanisms": [
     "M1",
     "M2",
