@@ -4,13 +4,13 @@
 Do not hand-edit the status block during an agent run — let the agent own it.
 
 ```yaml
-current_phase: 06
-status: in-progress      # not-started | in-progress | blocked | awaiting-integration | complete
+current_phase: 11
+status: blocked          # not-started | in-progress | blocked | awaiting-integration | complete
 claude_tasks: done         # not-started | in-progress | done
-codex_tasks: in-progress   # not-started | in-progress | done | none-this-phase
+codex_tasks: done          # not-started | in-progress | done | none-this-phase
 integration_mode: research-lead   # research-lead | agent
-blocked_on: null
-last_updated: 2026-11-14
+blocked_on: "Research Lead: EGD status (granted, or single-cohort contingency); Gate D review for Phase 06; Person C recomputation; BH family confirmation; manifest signature (T11.4)"
+last_updated: 2026-11-17
 last_agent: claude
 ```
 
