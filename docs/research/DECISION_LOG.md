@@ -1328,7 +1328,9 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 **Consequences.** Pending the decision: `freeze_spec.json` names no M6 checkpoint; the 108-cell count is unchanged under (a) and (b).
 
-**Resolution 2026-11-17.** (a). M6 is R1 (`01M45268QDQ2CFBSPNH117MF41`), always-predict. The manuscript states that it differs from R2 in training without modality dropout. R1 needs a condition sweep (GPU inference, about 2 to 2.5 h on the clean R6 precedent); it is not run until the Research Lead releases the GPU. Its `best.pt` is added to `freeze_spec.json`. No training run, nothing re-tuned.
+**Resolution 2026-11-17.** (a). M6 is R1 (`01M45268QDQ2CFBSPNH117MF41`), always-predict. The manuscript states that it differs from R2 in training without modality dropout. R1 needs a condition sweep (GPU inference); it is not run until the Research Lead releases the GPU. Its `best.pt` is added to `freeze_spec.json`. No training run, nothing re-tuned.
+
+**Done 2026-11-17.** GPU sweep ran 32 minutes (the earlier 2 to 2.5 h figure was a CPU timing from R2 to R6 and did not apply). M6 cells are scored like M1 (raw confidence, no temperature) and written to `phase09_m6_analysis.json` beside R2's frozen Phase 09 file; results in `PHASE09_INTERNAL_RESULTS.md`.
 
 **Owner.** Research Lead.
 
