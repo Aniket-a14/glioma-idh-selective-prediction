@@ -65,7 +65,7 @@ without a person or later phase). "Doc" means I read it in the named file today;
 Scientific validation items of Phase 10:
 1. Person C recomputation: pack ready, not run by them (`PERSON_C_RECOMPUTATION_GUIDE.md`).
 2. Bootstrap CI widths against the power check (done today, author's reading): R2 AUROC bootstrap half-width 0.066 against 0.073 predicted at true AUROC 0.85 and 0.059 at 0.90; Hanley-McNeil 0.078 against 0.085 and 0.071. Selective-risk half-widths 0.063 to 0.080 across coverage 0.5 to 0.9, against 0.065 to 0.070 (true AUROC 0.85) and 0.047 to 0.063 (0.90) predicted: about 10 to 20% wider at high coverage than the binormal model. The power model held at the AUROC level; the selective-risk intervals are somewhat wider than predicted.
-3. R7 and R8 against the literature they reproduce: **not done**. It needs cited numbers (verify-before-cite, D-010). Research Lead decides who does it.
+3. R7 and R8 against the literature they reproduce: **drafted 2026-11-18 from search snippets only** (`PHASE10_LITERATURE_SANITY_CHECK.md`): no sign of an implementation error; the sources still need a full-text check under D-010 before any number is cited.
 
 ## What this means for Gate E criterion 1
 
