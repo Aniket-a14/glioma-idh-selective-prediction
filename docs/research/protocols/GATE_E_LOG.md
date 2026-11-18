@@ -11,4 +11,4 @@ access until both the flag and a signed manifest at `experiments/gate_e/freeze_m
 
 | Date (UTC) | Event | Freeze manifest SHA-256 | Signed by | Notes |
 |---|---|---|---|---|
-| — | — | — | — | No entry: Gate E has not been passed. The flag is 0. |
+| 2026-11-18, about 10:21 UTC (15:51 server time) | Freeze manifest signed and sealed; GLIOMA_EXTERNAL_EVAL_AUTHORIZED=1 set for one command to run the Phase 12 external evaluation (UCSF-PDGM, run id ucsf_pdgm_gate_e_20261118) on the home PC | 2af464b078c3229e2d2a5839fe42577fefd3c2b90d70c33f9d14d57c5086263d | Aniket Saha | Entry written after the flip, not before as this log requires. Manifest pins code commit 2fd951314439fcd216c7e95f87fd0316d8df3a5c. EGD is deferred (D-057). Gate D was not yet signed when the flag was set. |
