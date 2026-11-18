@@ -22,3 +22,11 @@ Written 2026-11-18 by Claude. Source: `GATE_D_REVIEW_SUMMARY_CODEX.md` and the f
 1. F03: the human step on `paper/NEGATIVE_RESULTS.md`.
 2. Confirm F02, F07 and F09 readings.
 3. Sign Gate D per phase (the review does not substitute for the signature); the reviewer is an agent, which is disclosed in Limitations (D-001).
+
+## Research Lead confirmations and sign-off (2026-11-18)
+
+Confirmed by the Research Lead: F02 (D-012 resolved as alternative (a)); F07 (C5 "inconclusive" is an allowed outcome under D-035 and D-050); F09 ("committed" means a hash pointer in git plus an immutable artifact on storage).
+
+Gate D signed, with the independent review being an agent (D-001 degraded fallback; disclose in Limitations), and the open items recorded above: Phase 06, Phase 07, Phase 08, Phase 09, Phase 10.
+
+Signed: Aniket Saha, 2026-11-18.
