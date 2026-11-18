@@ -15,7 +15,7 @@ Written 2026-11-18 by Claude. Source: `GATE_D_REVIEW_SUMMARY_CODEX.md` and the f
 | F09 | `phase09_analysis.json`, `phase09_m6_analysis.json`, `phase10_analysis.json` are not committed to git | By policy they are patient-level frozen artifacts on the storage root with sidecars; git holds their SHA-256 values in the results documents. "Committed" is read as hash pointer in git plus immutable artifact on storage. Research Lead to confirm that reading. | Reconciled, confirm |
 | F10 | Stale prose (108 and 18 cell counts, D-058 status line, "decision owed") | Fixed 2026-11-18: 36 internal cells stated, D-058 marked resolved. | Closed |
 | F11 | R7/R8 literature check unverified | Three sources checked against primary text (`PHASE10_LITERATURE_SANITY_CHECK.md`). Result: AUROC range consistent; no source is a controlled H1 or H2 comparison; GMMAS's "two-stage" is semi-supervised training stages. Full-text tables still unread; not needed for Gate D. | Closed for Gate D |
-| F12 | The review's test run excluded six files that touch the Gate E flag, so it is not a full Gate A/B pass | Full gate run by me on main after the Phase 12 and 13 merges: 1167 passed, 8 skipped (EGD test and storage-dependent tests), mypy 96 files clean, ruff clean, invariants pass; then 1171 with the isolation tests. | Closed |
+| F12 | The review's test run excluded six files that touch the Gate E flag, so it is not a full Gate A/B pass | Full gate run by me on main after the Phase 12 and 13 merges: 1167 passed, 8 skipped (storage not mounted at that point), mypy 96 files clean, ruff clean, invariants pass; then with the SSD mounted (no storage skips): 1180 passed, 1 skipped (the EGD test). | Closed |
 
 ## What Gate D still needs from the Research Lead
 
