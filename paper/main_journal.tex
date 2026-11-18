@@ -20,17 +20,25 @@
 
 \title{Calibrated Selective Prediction for MRI-Based Glioma IDH Classification under Missing Modalities and Cross-Institutional Domain Shift}
 
-% Author list and affiliations are not decided; placeholder only.
-\author{Aniket Saha\\
-Department of Computer Science and Engineering, Lovely Professional University, Phagwara, Punjab, India\\
-\textit{[author list, affiliations and contact to be decided]}}
+% Author block in the layout of the earlier paper. Only the Research Lead is listed;
+% co-authors, if any, are not decided and are not added here.
+\author{
+\begin{tabular}{c}
+\textbf{Aniket Saha}\\
+Department of Computer Science \\
+and Engineering\\
+\textit{Lovely Professional University}\\
+Phagwara, Punjab\\
+aniketsahaworkspace@gmail.com
+\end{tabular}
+}
 
 \maketitle
 
 \begin{abstract}
 % Anchored on the SPEC 8.3 sentence. The word "first" is deliberately absent:
 % it ships only after the dated novelty check (D-010, PUBLICATION_PLAN 2).
-\textbf{Background.} A glioma IDH classifier that can decline to answer is only useful if declining removes errors, and if its stated coverage can be trusted when the input changes. \textbf{Purpose.} We provide a systematic risk--coverage analysis and an empirical characterisation of conformal coverage for inference-time calibrated selective prediction in MRI-based glioma IDH classification, testing rather than assuming whether abstaining on low-confidence cases improves reliability, and whether conformal coverage stays close to nominal, under missing MRI sequences and cross-institutional shift. \textbf{Methods.} A segmentation-assisted 3D network was trained on UTSW-Glioma and evaluated on its held-out test split ($n=\numNInt$, $\numNIntPos$ mutant) and, once, on UCSF-PDGM ($n=\numNExt$, $\numNExtPos$ mutant). Temperature scaling, Monte Carlo dropout, a five-member ensemble and split conformal prediction served as abstention mechanisms. Six input conditions were examined, five with sequences removed at inference. Six claims and their decision rules were fixed before any external result was seen; $\numFamilySize$ confirmatory comparisons were adjusted once with the Benjamini--Hochberg procedure. \textbf{Results.} On complete input, abstaining lowered selective risk below the always-predict risk at every coverage level on both cohorts; on UCSF-PDGM the risk at coverage 0.5 was \numExtRiskZeroFive{} against \numExtAlwaysFull{} for always-predict. The advantage was lost when T1 contrast-enhanced (T1ce) was removed (claim C2 refuted internally). Conformal coverage could not be characterised within the pre-registered $\pm0.07$ tolerance, because intervals at these sample sizes are wider than the band (C4 refuted on both cohorts). Abstention was not enriched for errors under T1ce removal (C6 refuted internally). Temperature scaling did not lower expected calibration error on either cohort, and calibration did not degrade from the internal to the external cohort. \numFamilyRejected{} of $\numFamilySize$ family tests were rejected. \textbf{Conclusion.} Abstention helps where the input is complete and stops helping when the sequence carrying contrast enhancement is missing; the coverage guarantee cannot be verified at this sample size. We report four of six claims as not supported in at least one cohort. The external evaluation was run once under a signed freeze manifest, and every number in the text is generated from frozen result files.
+\textbf{Background.} A glioma IDH classifier that can decline to answer is useful only if declining removes errors and its stated coverage holds when the input changes. \textbf{Purpose.} We test, rather than assume, whether abstaining on low-confidence cases improves reliability, and whether conformal coverage stays near nominal, under missing MRI sequences and cross-institutional shift. \textbf{Methods.} A segmentation-assisted 3D network trained on UTSW-Glioma was evaluated on its held-out test split ($n=\numNInt$) and, once, on UCSF-PDGM ($n=\numNExt$). Temperature scaling, Monte Carlo dropout, a five-member ensemble and split conformal prediction served as abstention mechanisms, across six input conditions with sequences removed at inference. Six claims and decision rules were fixed before any external result was seen; $\numFamilySize$ comparisons were adjusted once (Benjamini--Hochberg). \textbf{Results.} On complete input, abstaining lowered selective risk below the always-predict risk at every coverage level on both cohorts; on UCSF-PDGM the risk at coverage 0.5 was \numExtRiskZeroFive{} against \numExtAlwaysFull{}. The advantage was lost when T1 contrast-enhanced (T1ce) was removed (C2 refuted internally). Conformal coverage could not be characterised within the pre-registered $\pm0.07$ tolerance because intervals were wider than the band (C4 refuted on both cohorts), and abstention was not enriched for errors under T1ce removal (C6 refuted internally). Temperature scaling did not lower calibration error, and calibration did not degrade externally. \numFamilyRejected{} of $\numFamilySize$ tests were rejected. \textbf{Conclusion.} Abstention helps on complete input and stops helping when T1ce is missing; the coverage guarantee cannot be verified at this sample size. Four of six claims were not supported in at least one cohort. Every number is generated from frozen result files.
 \end{abstract}
 
 \begin{IEEEkeywords}
