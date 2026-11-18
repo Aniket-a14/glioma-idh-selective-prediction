@@ -1,0 +1,35 @@
+\begin{tabular}{llrrrrl}
+\toprule
+ID & Comparison & Estimate & 95\% interval & Raw $p$ & BH adj. $p$ & Rej. \\
+\midrule
+UTSW:A1 & AURC(M5) - AURC(M3), full & -0.0048 & [-0.0120, +0.0006] & 0.0840 & 0.2435 & no \\
+UTSW:A2 & AURC(M5) - AURC(M4), full & -0.0040 & [-0.0367, +0.0292] & 0.8256 & 0.9577 & no \\
+UTSW:A3 & AURC(M3) - AURC(M4), full & +0.0008 & [-0.0321, +0.0368] & 0.9305 & 0.9638 & no \\
+UTSW:B1 & AURC(M5, drop\_t1) - AURC(M5, full) & +0.0003 & [-0.0194, +0.0182] & 0.9845 & 0.9845 & no \\
+UTSW:B2 & AURC(M5, drop\_t1ce) - AURC(M5, full) & +0.4172 & [+0.2954, +0.5434] & 0.0010 & 0.0048 & yes \\
+UTSW:B3 & AURC(M5, drop\_t2) - AURC(M5, full) & -0.0026 & [-0.0255, +0.0204] & 0.7786 & 0.9408 & no \\
+UTSW:B4 & AURC(M5, drop\_flair) - AURC(M5, full) & +0.0327 & [-0.0089, +0.0805] & 0.1289 & 0.2671 & no \\
+UTSW:B5 & AURC(M5, t1ce\_flair\_only) - AURC(M5, full) & +0.0379 & [-0.0091, +0.0886] & 0.1179 & 0.2631 & no \\
+UTSW:D1 & ECE(M1) - ECE(M2), full & -0.0033 & [-0.0276, +0.0223] & 0.6677 & 0.8418 & no \\
+UTSW:D2 & Brier(M1) - Brier(M2), full & +0.0012 & [-0.0014, +0.0041] & 0.3798 & 0.5797 & no \\
+UTSW:E1 & AUROC(R7) - AUROC(R2), full & +0.0096 & [-0.0261, +0.0468] & 0.5973 & 0.8106 & no \\
+UTSW:E2 & AURC(R7) - AURC(R2), full & +0.0173 & [-0.0237, +0.0703] & 0.5157 & 0.7478 & no \\
+UTSW:E3 & AUROC(R8) - AUROC(R2), full & +0.0104 & [-0.0286, +0.0507] & 0.6149 & 0.8106 & no \\
+UTSW:E4 & AURC(R8) - AURC(R2), full & +0.0219 & [-0.0038, +0.0523] & 0.1059 & 0.2585 & no \\
+UCSF:A1 & AURC(M5) - AURC(M3), full & -0.0002 & [-0.0052, +0.0058] & 0.8906 & 0.9603 & no \\
+UCSF:A2 & AURC(M5) - AURC(M4), full & -0.0693 & [-0.1137, -0.0292] & 0.0010 & 0.0048 & yes \\
+UCSF:A3 & AURC(M3) - AURC(M4), full & -0.0691 & [-0.1132, -0.0288] & 0.0010 & 0.0048 & yes \\
+UCSF:B1 & AURC(M5, drop\_t1) - AURC(M5, full) & +0.0070 & [-0.0012, +0.0164] & 0.1069 & 0.2585 & no \\
+UCSF:B2 & AURC(M5, drop\_t1ce) - AURC(M5, full) & +0.2599 & [+0.1898, +0.3370] & 0.0010 & 0.0048 & yes \\
+UCSF:B3 & AURC(M5, drop\_t2) - AURC(M5, full) & -0.0110 & [-0.0288, +0.0070] & 0.2179 & 0.4112 & no \\
+UCSF:B4 & AURC(M5, drop\_flair) - AURC(M5, full) & +0.0506 & [+0.0169, +0.0884] & 0.0030 & 0.0124 & yes \\
+UCSF:B5 & AURC(M5, t1ce\_flair\_only) - AURC(M5, full) & +0.0134 & [-0.0114, +0.0403] & 0.2839 & 0.4573 & no \\
+UCSF:C1 & AURC(M5, ucsf\_pdgm) - AURC(M5, utsw), full; unpaired & -0.0250 & [-0.0779, +0.0212] & 0.2769 & 0.4573 & no \\
+UCSF:D1 & ECE(M1) - ECE(M2), full & -0.0090 & [-0.0354, +0.0098] & 0.2269 & 0.4112 & no \\
+UCSF:D2 & Brier(M1) - Brier(M2), full & -0.0034 & [-0.0051, -0.0015] & 0.0010 & 0.0048 & yes \\
+UCSF:E1 & AUROC(R7) - AUROC(R2), full & -0.0242 & [-0.0497, -0.0004] & 0.0483 & 0.1558 & no \\
+UCSF:E2 & AURC(R7) - AURC(R2), full & +0.0397 & [+0.0160, +0.0678] & 0.0010 & 0.0048 & yes \\
+UCSF:E3 & AUROC(R8) - AUROC(R2), full & -0.0016 & [-0.0275, +0.0231] & 0.8941 & 0.9603 & no \\
+UCSF:E4 & AURC(R8) - AURC(R2), full & +0.0251 & [+0.0009, +0.0559] & 0.0420 & 0.1522 & no \\
+\bottomrule
+\end{tabular}

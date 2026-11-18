@@ -65,6 +65,8 @@ def build(experiments: Path) -> dict[str, str]:
     e09 = _load(experiments / EXT1 / "phase09_external_analysis.json")
     e10 = _load(experiments / EXT1 / "phase10_external_analysis.json")
     final = _load(experiments / "phase13" / "phase13_final_analysis.json")
+    m6 = _load(experiments / RUN / "phase09_m6_analysis.json")
+    probe = _load(experiments / RUN / "probe_1p19q" / "probe_1p19q.json")
     out: dict[str, str] = {}
 
     pos_i, n_i = _positives(
@@ -166,6 +168,59 @@ def build(experiments: Path) -> dict[str, str]:
     out["ExtCOneDiff"] = _fmt(e10["confirmatory"]["C1"]["point"], 3)
     out["ExtCOneLo"] = _fmt(e10["confirmatory"]["C1"]["lower"], 3)
     out["ExtCOneHi"] = _fmt(e10["confirmatory"]["C1"]["upper"], 3)
+
+    for prefix, d09 in (("Int", i09), ("Ext", e09)):
+        for name, cond in CONDITIONS.items():
+            cell = d09["conditions"][cond]
+            for mech in ("M1", "M2", "M3", "M4", "M5"):
+                out[f"{prefix}Aurc{mech}{name}"] = _fmt(
+                    cell[mech]["aurc_mean_over_cutoffs"], 3
+                )
+            six = cell.get("M6", {})
+            if "aurc_mean_over_cutoffs" not in six:
+                six = m6["conditions"][cond]
+            out[f"{prefix}AurcMSix{name}"] = _fmt(six["aurc_mean_over_cutoffs"], 3)
+        for label, key in ALPHAS.items():
+            carried = d09["conformal"]["full"]["carried_over"][key]
+            refit = d09["conformal"]["full"]["refit"][key]
+            out[f"{prefix}CalCov{label}"] = _fmt(
+                carried["calibration_empirical_coverage"], 3
+            )
+            out[f"{prefix}Quant{label}"] = _fmt(carried["quantile"], 3)
+            out[f"{prefix}RefitCov{label}"] = _fmt(refit["empirical_coverage"], 3)
+            out[f"{prefix}SingleTrue{label}"] = _fmt(
+                carried["singleton_true_label_fraction"], 3
+            )
+            out[f"{prefix}Full{label}"] = str(carried["full_count"])
+    for run in ("R2", "R7", "R8"):
+        info = i10["runs"][run]
+        out[f"Dice{run}"] = _fmt(info["segmentation_dice"]["mean"], 3)
+        for channel, tag in (
+            ("enhancing", "Enh"),
+            ("necrotic_core", "Core"),
+            ("oedema", "Oed"),
+        ):
+            out[f"Dice{tag}{run}"] = _fmt(
+                info["segmentation_dice"]["per_channel"][channel], 3
+            )
+            summary = info["hd95"]["per_channel"][channel]["primary"]
+            out[f"Hd{tag}{run}"] = _fmt(summary["median"], 1)
+            out[f"HdN{tag}{run}"] = str(summary["n_evaluable"])
+    test = probe["internal_test"]
+    out["ProbeTrainN"] = str(probe["train"]["n"])
+    out["ProbeTrainCodel"] = str(probe["train"]["n_codeleted"])
+    out["ProbeN"] = str(test["probe"]["n"])
+    out["ProbeCodel"] = str(test["probe"]["n_codeleted"])
+    out["ProbeAuroc"] = _fmt(test["probe"]["auroc"], 3)
+    out["ProbeAurocLo"] = _fmt(test["probe_bootstrap"]["auroc_95_interval"][0], 3)
+    out["ProbeAurocHi"] = _fmt(test["probe_bootstrap"]["auroc_95_interval"][1], 3)
+    out["ProbeIdhAuroc"] = _fmt(test["comparator_idh_probability"]["auroc"], 3)
+    mutant = test["idh_mutant_only"]
+    out["ProbeMutN"] = str(mutant["probe"]["n"])
+    out["ProbeMutAuroc"] = _fmt(mutant["probe"]["auroc"], 3)
+    out["ProbeMutAurocLo"] = _fmt(mutant["probe_bootstrap"]["auroc_95_interval"][0], 3)
+    out["ProbeMutAurocHi"] = _fmt(mutant["probe_bootstrap"]["auroc_95_interval"][1], 3)
+    out["ProbeMutIdhAuroc"] = _fmt(mutant["comparator_idh_probability"]["auroc"], 3)
     return out
 
 
