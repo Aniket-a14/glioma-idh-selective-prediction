@@ -183,8 +183,8 @@ counts, once available, disagree materially with the SPEC's claim.
 
 ---
 
-## D-012 — Naturally-missing sequences conflict with a completeness inclusion criterion
-**Status:** OPEN · **Resolve by:** Phase 03 · **Blocking:** yes
+## D-012 — Naturally-missing sequences conflict with a completeness inclusion criterion (RESOLVED 2026-11-18: alternative (a))
+**Status:** RESOLVED 2026-11-18 (see Resolution; was OPEN · Resolve by Phase 03 · Blocking yes)
 
 **Conflict.** SPEC §5.4 says: *"if any UTSW/UCSF/EGD case is naturally missing a sequence ... handle it identically to the simulated-missing pipeline and flag it as a naturally-occurring instance in reporting."* But the missing-modality design requires **complete** four-sequence studies as the baseline condition (you cannot drop T2 from a study that never had it), and §2.3 notes Elyassirad et al. imposed a complete-sequence inclusion criterion for exactly this reason.
 
@@ -195,6 +195,9 @@ counts, once available, disagree materially with the SPEC's claim.
 **Recommendation.** **(a).** It keeps the patient set identical across all 18 evaluation conditions — which is what makes matched-coverage comparison and paired statistics valid in the first place — and it turns the naturally-missing cases into a small bonus analysis that partly addresses D-008's construct-validity gap. Record the count and reason for every such exclusion in the exclusion manifest (`missing:sequence`).
 
 **Partial finding (T03.9, naturally-missing sequence inventory, 2026-09-18).** Ran the inventory this decision's policy depends on against the real UTSW and UCSF-PDGM downloads: **zero** naturally-incomplete cases in either cohort — UTSW 625/625 and UCSF-PDGM 501/501 have all four canonical sequences (T1, T1ce, T2, FLAIR). Policy (a) therefore has nothing to exclude for these two cohorts; the tension this decision describes doesn't materialize here. **Status stays OPEN** — EGD hasn't been downloaded yet and could still surface naturally-incomplete cases once it arrives, and the exclusion-manifest wiring (T03.10) that actually applies this policy hasn't run.
+
+
+**Resolution (2026-11-18, found open by the Gate D review, F02).** Alternative (a) is adopted, as recommended. For the current study it has nothing to apply: UTSW (625 of 625) and UCSF-PDGM (501 of 501) have all four sequences, so no case is excluded as `missing:sequence` and there is no natural-missingness subgroup to analyse (`PHASE08_NATURALLY_MISSING.md`). EGD is deferred to a later addendum (D-057); the same policy (a) applies to it: naturally incomplete EGD cases are excluded from that evaluation's primary analysis, counted in its exclusion manifest, and reported as an explicitly underpowered check. Resolved on the log's own recommendation without a Research Lead objection on record; the Research Lead is asked to confirm.
 
 ---
 
@@ -1357,7 +1360,7 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 ---
 
 ## D-058 — Phase 07 acceptance criteria 5 and 6 are not met as written (RESOLVED 2026-11-18: alternative (a))
-**Status:** OPEN · **Blocking:** YES for Gate D of Phase 07 (and so for Gate E criterion 1) · **Found 2026-11-17** while preparing the Gate D evidence for Phases 07 to 10.
+**Status:** RESOLVED 2026-11-18 (see Resolution below) · was OPEN, Blocking YES for Gate D of Phase 07 · **Found 2026-11-17** while preparing the Gate D evidence for Phases 07 to 10.
 
 **Conflict.** `PHASE_07_CALIBRATION_UNCERTAINTY.md` acceptance criteria say (5) conformal empirical coverage lands within +/-2 pp of nominal on exchangeable internal data for every alpha, and (6) temperature scaling reduces internal-test ECE against raw softmax. The scientific validation adds that if coverage does not hold under exchangeability "the implementation is wrong". On the frozen internal-test results (`PHASE07_INTERNAL_RESULTS.md`, n = 124):
 - Criterion 5: R2 coverage is 0.960, 0.871, 0.726 at nominal 0.95, 0.90, 0.80 (+1.0, -2.9, -7.4 pp); R1 is 0.968, 0.919, 0.758 (+1.8, +1.9, -4.2 pp). Three of six cells are outside +/-2 pp (R2 at 0.90 and 0.80, R1 at 0.80). Nothing in the docs addresses this; the results file only says that gaps of 3 to 6 points are sampling noise.
