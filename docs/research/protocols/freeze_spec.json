@@ -72,8 +72,7 @@
   "missing_modality_conditions": {
    "cohorts": [
     "utsw_internal_test",
-    "ucsf_pdgm",
-    "egd"
+    "ucsf_pdgm"
    ],
    "conditions": [
     "full",
@@ -86,6 +85,7 @@
    "config": "configs/evaluation/conditions.yaml",
    "config_sha256": "e74e253e31f9827c14cdf2db488afd59a6e3b1fec83d08991f8884a4d2d18283",
    "dropped_channels": "zeroed, never imputed",
+   "egd": "not in this manifest: a later, separately frozen addendum evaluation (D-057)",
    "m3_mc_dropout_passes": 30,
    "m4_ensemble": "five runs, seeds 0 to 4: the checkpoints listed above",
    "m6_comparator": "R1 (no modality dropout; same SegResNet, auxiliary segmentation head and tumour-aware pooling), evaluated always-predict, uncalibrated and unselected, D-006 and D-056; its condition sweep is run before the manifest is generated",
@@ -97,8 +97,7 @@
     "M5",
     "M6"
    ],
-   "result_cells": 108,
-   "result_cells_without_egd": 72
+   "result_cells": 72
   },
   "operating_points": {
    "alpha_grid": [

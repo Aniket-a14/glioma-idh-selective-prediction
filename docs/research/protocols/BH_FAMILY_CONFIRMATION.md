@@ -33,3 +33,5 @@ descriptive tables, and the M6 comparison (added 2026-11-17, descriptive, not a 
 The BH pass itself runs once, at Phase 13, over the family you confirm (D-052).
 
 **Update 2026-11-18.** D-057 is resolved as (b): the first external family is 29; the 15 EGD tests belong to a later addendum.
+
+**Confirmed 2026-11-18 by the Research Lead (chat): the family for the first external evaluation is the 29 tests listed above (14 UTSW + 15 UCSF-PDGM). M6 stays outside it. The 15 EGD tests belong to the later addendum. The BH pass runs once at Phase 13 (D-052).**
