@@ -31,3 +31,5 @@ descriptive tables, and the M6 comparison (added 2026-11-17, descriptive, not a 
    (`EXTERNAL_VALIDATION_PROTOCOL.md` section 5) the first family is 29 and the EGD tests belong to the addendum.
 
 The BH pass itself runs once, at Phase 13, over the family you confirm (D-052).
+
+**Update 2026-11-18.** D-057 is resolved as (b): the first external family is 29; the 15 EGD tests belong to a later addendum.

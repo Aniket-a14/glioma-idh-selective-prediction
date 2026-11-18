@@ -1,6 +1,6 @@
 # EGD download runbook (Research Lead performs the download)
 
-Written 2026-11-17. EGD is governed by the DUA/licence you signed (`DATA_ACCESS_LOG.md`, EGD section). An agent does not
+Written 2026-11-17. **Deferred 2026-11-18** (D-057: EGD is a later, separately frozen evaluation; the first external run is UCSF-PDGM alone). Use this when the download starts. EGD is governed by the DUA/licence you signed (`DATA_ACCESS_LOG.md`, EGD section). An agent does not
 download it: access is tied to your account and the terms name you as custodian. This file lists what to do before, during
 and after the download so nothing breaks the terms or the pre-registration. Read `DATA_GOVERNANCE_PROTOCOL.md` first.
 
