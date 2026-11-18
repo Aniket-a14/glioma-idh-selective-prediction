@@ -1388,4 +1388,17 @@ An SD of 2.5 to 5 pp means a correct implementation misses a +/-2 pp window on o
 
 ---
 
+## D-059 — Which classifier's errors define the M3 (MC-dropout) loss? (RESOLVED 2026-11-18: keep the frozen reading, report the sensitivity)
+**Status:** RESOLVED by Claude (metric design owner), no frozen number changes · **Blocking:** NO · **Found 2026-11-18** by the independent Person C recomputation (`PERSON_C_REPORT_CODEX.md`, 180 of 188 numbers agree).
+
+**Conflict.** `PHASE09_METRIC_CONTRACTS.md` S6 defines the M3 score (`-H(mean_t p_t)`) and M4 score (`-Var_m(p_m)`) but not which classifier's 0/1 error enters the selective risk. The frozen code (`phase09_analysis.py`, `_condition_scores` and `_add_ensemble_scores`) uses the raw single-model classifier's errors for M1, M2, M3 and M5, and the ensemble-mean classifier's errors for M4. An independent implementation read M3 as the MC-mean classifier (`mean_t p_t > 0.5`). They differ on one patient (sorted internal-test row 71: label 0, raw p 0.5122, MC mean 0.4982), the last accepted case at full coverage, so M3 mean-over-cutoffs AURC is 0.080367 (frozen) against 0.080302 (MC-mean), a difference of exactly 1/(124*124).
+
+**Effect.** Only A1 (AURC(M5) - AURC(M3)) and A3 (AURC(M3) - AURC(M4)) move: A1 raw p 56/667 (frozen) against 64/667 (MC-mean), A3 raw p 1862/2001 against 1870/2001. No claim status, interval inclusion of 0 or BH outcome in the family changes (none of the four p-values is below 0.05 before or after).
+
+**Decision.** Keep the frozen reading. Reasons: M1 to M3 and M5 are scored on the same deployed classifier so the mechanisms differ only in the confidence ranking, which is what the study compares; M4 is a different predictor by construction, so it carries its own errors. Report the MC-mean reading as a sensitivity (the two p-values above) next to A1 and A3 in the results. No re-run, no change to the frozen files. The contract text (`PHASE09_METRIC_CONTRACTS.md` S6) now states this reading.
+
+**Owner.** Claude; Research Lead informed. **Resolve-by:** done.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.

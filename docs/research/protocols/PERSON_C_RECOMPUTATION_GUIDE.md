@@ -70,3 +70,14 @@ interval uses z = 1.959964 (not 1.96), and the temperature objective is mean bin
 Send the Research Lead the full output, your Python and NumPy versions, and any number that differs by more than the
 tolerance with your reading of why. The Research Lead records it in `PROJECT_STATE.md` and in
 `PHASE10_INTERNAL_RESULTS.md` ("Open for Phase 10"). A mismatch is a finding, not something to adjust the reference to.
+
+## Choices the contracts left open (found by the independent Codex recomputation, 2026-11-18)
+
+Both implementations need these; the first reference script fixed them silently:
+- R2 metrics come from `conditions/full.parquet`, not `predictions.parquet` (max logit difference between them 4.4e-5). R7 and R8 use `predictions.parquet`.
+- Sort every cohort by `patient_id` before applying the bootstrap matrix; parquet row order is not sorted and the exact resample depends on it.
+- AUPRC is non-interpolated average precision.
+- Hanley-McNeil: `Q1 = A/(2-A)`, `Q2 = 2A^2/(1+A)`, variance `[A(1-A) + (m-1)(Q1-A^2) + (n-1)(Q2-A^2)]/(mn)`, z = 1.959964, limits clipped to [0, 1].
+- M3 loss is the raw classifier's error and M4 loss is the ensemble-mean classifier's error (D-059). Reading M3 as the MC-mean classifier gives 180 of 188, with A1 and A3 differing as in `PERSON_C_REPORT_CODEX.md`.
+
+Result of the independent check: `PERSON_C_REPORT_CODEX.md` (DEGRADED solo fallback, D-001: a second agent, not a second human).
