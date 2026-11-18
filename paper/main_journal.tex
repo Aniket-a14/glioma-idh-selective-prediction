@@ -408,76 +408,81 @@ Abstention helped where the input was complete and stopped helping when T1ce was
 \textbf{AI assistance.} [Disclosure wording to be decided by the authors.]\\
 \textbf{Funding and conflicts of interest.} [To be completed.]
 
+\clearpage
+\onecolumn
 \appendices
 
 \section{Full per-condition tables}
 \label{app:tables}
+This appendix gives the full per-condition results behind the summaries in Section~\ref{sec:results}, all generated from the frozen result files: $D(\phi)$ for every condition and cohort (Tables~\ref{tab:deltaint} and~\ref{tab:deltaext}), the monotonicity differences (Table~\ref{tab:mono}), the abstention enrichment tests (Tables~\ref{tab:enrichint} and~\ref{tab:enrichext}), conformal set coverage by condition and $\alpha$ (Tables~\ref{tab:confint} and~\ref{tab:confext}), and the full $\numFamilySize$-test family (Table~\ref{tab:family}). Missing-sequence conditions are simulated throughout.
 
-\begin{table*}[t]
+\begin{table}[!ht]
 \centering
 \caption{$D(\phi)$ point estimate and (upper 95\% limit) by condition on the UTSW internal test split. A positive value means worse than always-predict. Missing-sequence conditions are simulated.}
 \label{tab:deltaint}
 \footnotesize
 \input{generated/tbl_delta_int.tex}
-\end{table*}
+\end{table}
 
-\begin{table*}[t]
+\begin{table}[!ht]
 \centering
 \caption{$D(\phi)$ point estimate and (upper 95\% limit) by condition on UCSF-PDGM. Missing-sequence conditions are simulated.}
 \label{tab:deltaext}
 \footnotesize
 \input{generated/tbl_delta_ext.tex}
-\end{table*}
+\end{table}
 
-\begin{table*}[t]
+\begin{table}[!ht]
 \centering
 \caption{Adjacent-coverage risk differences (lower minus higher coverage), the largest lower 95\% limit, and the number of violating adjacent cutoff pairs, by condition. Top: UTSW internal; bottom: UCSF-PDGM.}
 \label{tab:mono}
 \footnotesize
 \input{generated/tbl_monotone_int.tex} \\[6pt]
 \input{generated/tbl_monotone_ext.tex}
-\end{table*}
+\end{table}
 
-\begin{table*}[t]
+\begin{table}[!ht]
 \centering
 \caption{Enrichment (error rate among abstained minus overall) with BH-adjusted one-sided permutation $p$ in parentheses, by condition and coverage. UTSW internal.}
 \label{tab:enrichint}
 \footnotesize
 \input{generated/tbl_enrich_int.tex}
-\end{table*}
+\end{table}
 
-\begin{table*}[t]
+\begin{table}[!ht]
 \centering
 \caption{Enrichment with BH-adjusted one-sided permutation $p$ in parentheses, by condition and coverage. UCSF-PDGM.}
 \label{tab:enrichext}
 \footnotesize
 \input{generated/tbl_enrich_ext.tex}
-\end{table*}
+\end{table}
 
-\begin{table*}[t]
+\begin{table}[!ht]
 \centering
 \caption{Conformal set coverage by condition and $\alpha$ on the UTSW internal test split (carried-over quantiles from the calibration split; refit variant for comparison). Label is relative to the $\pm0.07$ band. Missing-sequence conditions are simulated.}
 \label{tab:confint}
 \footnotesize
 \input{generated/tbl_conformal_int.tex}
-\end{table*}
+\end{table}
 
-\begin{table*}[t]
+\begin{table}[!ht]
 \centering
 \caption{Conformal set coverage by condition and $\alpha$ on UCSF-PDGM (carried-over quantiles from the UTSW calibration split; refit variant for comparison). Missing-sequence conditions are simulated.}
 \label{tab:confext}
 \footnotesize
 \input{generated/tbl_conformal_ext.tex}
-\end{table*}
+\end{table}
 
-\begin{table*}[t]
+\begin{table}[!ht]
 \centering
 \caption{The $\numFamilySize$-test confirmatory family: estimate, 95\% interval, raw permutation or DeLong $p$, and the single Benjamini--Hochberg adjusted $p$ at $q=0.05$.}
 \label{tab:family}
 \footnotesize
 \input{generated/tbl_family.tex}
-\end{table*}
+\end{table}
+\twocolumn
 
+\clearpage
 \section{Protocol deviations and decisions}
 \label{app:deviations}
 The study's decision log records every deviation and judgement call with its alternatives. The ones that affect interpretation are:
