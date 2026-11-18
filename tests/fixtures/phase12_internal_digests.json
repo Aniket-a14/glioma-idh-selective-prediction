@@ -1,0 +1,11 @@
+{
+  "conditions/conditions_meta.json": "23cbe7f4a20f9678a86a991896420760f177388fcb580b6d4d3a530dce223eec",
+  "conditions/drop_flair.parquet": "e8c541e1f8db90a5f81e7036aebbc2a613347a3d28f2b728f41696650c066422",
+  "conditions/drop_t1.parquet": "e1d76a9d792bef490706119325f08998dc2f0268eef6bdb18d23c123d24bf4b5",
+  "conditions/drop_t1ce.parquet": "a2dbabc4b10a04b1a36abab79192f56d20905c0ba62c63446aa26f88fffce299",
+  "conditions/drop_t2.parquet": "87bbf4d866a4042fef3dfefc53b002b0010006bdfec1cd8061fdaabb7caf9271",
+  "conditions/full.parquet": "f52de3b9fee100e494793a2af180d8b825dd3e297992fa661dc889e69acc0641",
+  "conditions/t1ce_flair_only.parquet": "6824015bc7115f803e2d432eac7cc05e5da456487ce9d1ce53fe62efa0fd817a",
+  "predictions.parquet": "3dca48c708326c5e873374702b6aa6f89b53f6991cb23a70072680c514c86c43",
+  "segmentation_dice.json": "489ca11d6127d3fd37825f353b5685a414a52ba0a89917f88fd1239bb0235edc"
+}
