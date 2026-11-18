@@ -63,18 +63,27 @@ class FrozenInput:
     path: Path
     payload: bytes
     digest: str
+    sealed: bool = True
 
     @classmethod
-    def read(cls, path: Path) -> FrozenInput:
+    def read(cls, path: Path, *, require_sidecar: bool = True) -> FrozenInput:
+        """Read a file and check it against its sidecar.
+
+        ``require_sidecar=False`` is for the two cohort manifests, which the
+        project never sealed with a sidecar. A sidecar that exists must still
+        match; a missing one is recorded as unsealed in the registry rows.
+        """
         payload = path.read_bytes()
         sidecar = path.with_name(path.name + ".sha256")
+        actual = hashlib.sha256(payload).hexdigest()
+        if not require_sidecar and not sidecar.exists():
+            return cls(path, payload, actual, sealed=False)
         try:
             expected = sidecar.read_text(encoding="ascii").split()[0]
         except (OSError, UnicodeError, IndexError) as error:
             raise ValueError(
                 f"missing or invalid SHA-256 sidecar: {path.name}"
             ) from error
-        actual = hashlib.sha256(payload).hexdigest()
         if expected.lower() != actual:
             raise ValueError(f"SHA-256 mismatch: {path.name}")
         return cls(path, payload, actual)
@@ -88,7 +97,17 @@ class FrozenInput:
         return value
 
     def registry_source(self) -> str:
-        return f"{self.path.name} sha256:{self.digest[:DIGEST_PREFIX_LENGTH]}"
+        label = f"{self.path.name} sha256:{self.digest[:DIGEST_PREFIX_LENGTH]}"
+        return label if self.sealed else f"{label} (no sidecar)"
+
+
+def _manifest_path(name: str) -> Path:
+    """Storage manifests first, then the copy committed under docs/research."""
+    stored = paths.manifests_dir() / name
+    if stored.exists():
+        return stored
+    committed = Path(__file__).resolve().parents[3] / "docs/research/manifests" / name
+    return committed if committed.exists() else stored
 
 
 def load_external_analysis(cohort: str, analysis_path: Path) -> FrozenInput:
@@ -214,10 +233,10 @@ def build_paper_artifacts(
         _merge_m6(phase09, m6, m6_run_id)
         selective_sources.append(m6_source)
     cohort_source = FrozenInput.read(
-        paths.manifests_dir() / "cohort_manifest_post_qc.json"
+        _manifest_path("cohort_manifest_post_qc.json"), require_sidecar=False
     )
     exclusion_source = FrozenInput.read(
-        paths.manifests_dir() / "exclusion_manifest_post_qc.json"
+        _manifest_path("exclusion_manifest_post_qc.json"), require_sidecar=False
     )
     cohort, exclusions = cohort_source.document(), exclusion_source.document()
     frames, predictions = _prediction_frames(directory, phase09, run_id)
