@@ -1404,4 +1404,22 @@ An SD of 2.5 to 5 pp means a correct implementation misses a +/-2 pp window on o
 
 ---
 
+## D-060 — R7 and R8 are not in the signed freeze manifest, so block E of the BH family has no external data (OPEN)
+**Status:** OPEN · **Blocking:** YES for Phase 13 (the BH family) · **Found 2026-11-18**, after the Phase 12 run and before any external metric was computed or looked at.
+
+**Conflict.** `STATISTICAL_ANALYSIS_PLAN.md` section 6 puts block E (AUROC and AURC of R7 and of R8 against R2, `full` input, four tests) in the BH family per cohort, and the Research Lead confirmed the 29-member family on 2026-11-18, which counts four such UCSF-PDGM tests. The freeze spec I drafted (`protocols/freeze_spec.json`) and the signed manifest (SHA-256 `2af464b0...`) list six checkpoints: R2 to R6 (primary and ensemble) and R1 (M6). R7 and R8 stage 2 are not listed, so the Phase 12 harness never scored them on UCSF-PDGM, and E1 to E4 cannot be computed on UCSF from the existing run. The omission is mine (the drafting of the freeze spec); nothing about R7 or R8 changed since they were frozen on 2026-11-17, before Gate E.
+
+**Alternatives.**
+(a) A second, separately signed freeze manifest listing R7 and R8 stage 2, and a second harness run on UCSF-PDGM for those two checkpoints, done before any analysis of the first run's results. The family stays 29. Cost: a second signature, a second external run (about two checkpoints, hours of GPU), and an honest deviation note: the freeze spec omitted R7 and R8, corrected by a second manifest dated before any external analysis, with no method change. The manifest path is fixed in the firewall, so the signed first manifest is moved aside and the second put in its place (the first stays on disk, its hash recorded in the Gate E log).
+(b) No second run. Block E is not computed externally; the family becomes 25 (14 UTSW plus 11 UCSF-PDGM) and the deviation from the confirmed 29 is stated in the paper and in `BH_FAMILY_CONFIRMATION.md`. Cost: the confirmatory ablation question (R7, R8) is answered internally only; the family size the Research Lead confirmed changes.
+(c) Compute E1 to E4 on UCSF from a run made outside Gate E: rejected, it reads external labels without a signed manifest.
+
+**Recommendation.** (a). The ablations are confirmatory and were pre-registered per cohort; both models are frozen and cannot be tuned; running them before any external metric is looked at keeps the test honest. The cost is one more signature and a few GPU hours.
+
+**Consequences.** Until resolved, I write the external analysis code for everything the existing run supports (Phase 09 claims C3 to C6, blocks A to D) and leave block E and the BH pass pending. `PHASE12_EXTERNAL_RUN_CONTRACT.md` already supports an arbitrary checkpoint list; whether the harness scores R8's two-stage network correctly (`TwoStageNet` in `models/two_stage.py`) needs a synthetic test first.
+
+**Owner.** Research Lead. **Resolve-by:** before Phase 13.
+
+---
+
 New decisions append here using the same structure: conflict → alternatives → consequences → recommendation → owner → resolve-by phase. Any deviation from the SPEC's scientific content — as opposed to its engineering — requires an entry and Research Lead approval before it takes effect.
