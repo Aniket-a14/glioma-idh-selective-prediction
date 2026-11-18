@@ -57,6 +57,9 @@ def _prepare(
     monkeypatch: pytest.MonkeyPatch,
     *,
     mismatched_condition: str | None = None,
+    test_labels: list[int] | None = None,
+    test_logits: list[float] | None = None,
+    calibration_logits: list[float] | None = None,
 ) -> Path:
     artifact_root = tmp_path / "artifacts"
     run_dir = artifact_root / "experiments" / RUN_ID
@@ -69,9 +72,18 @@ def _prepare(
         )
     )
     calibration_labels = [0, 1, 0, 1, 0, 1, 0, 1]
-    calibration_logits = [-3.0, 3.0, -2.0, 2.0, -1.0, 1.0, -0.5, 0.5]
-    test_labels = [0, 1, 0, 1, 1, 0, 1, 0]
-    test_logits = [-2.0, 2.0, -1.3, 1.4, 0.3, -0.2, 1.0, -1.1]
+    calibration_logits = calibration_logits or [
+        -3.0,
+        3.0,
+        -2.0,
+        2.0,
+        -1.0,
+        1.0,
+        -0.5,
+        0.5,
+    ]
+    test_labels = test_labels or [0, 1, 0, 1, 1, 0, 1, 0]
+    test_logits = test_logits or [-2.0, 2.0, -1.3, 1.4, 0.3, -0.2, 1.0, -1.1]
     full_rows = [
         _row(f"cal-{i}", "utsw_calibration", "full", label, logit)
         for i, (label, logit) in enumerate(
