@@ -57,6 +57,8 @@ All map to `scores` above (higher = more confident):
   `max(p, 1 - p) = sigmoid(|z| / T)`), so their risk-coverage curves and AURC are identical up to rounding ties; they differ
   only in operating points and in the set-valued coverage analysis (see D-047).
 
+**Which errors go with which score (D-059).** The 0/1 loss for M1, M2, M3 and M5 is the error of the raw single-model classifier (`p_hat >= 0.5`); for M4 it is the error of the ensemble-mean classifier (`mean_m p_m >= 0.5`). M3 changes the ranking only. An MC-mean reading of the M3 loss moves one patient and is reported as a sensitivity.
+
 ## Cross-check rule (T09.8)
 
 Claude implements S1, S4, S6 (`selective/risk_coverage.py`, `selective/abstention.py`). Codex implements S2, S3, S5 and the
