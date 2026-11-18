@@ -366,3 +366,26 @@ def test_cohort_flow_copies_source_retained_and_excluded_counts(
     assert f"Retained: {cohort['cohorts']['utsw']['retained_patient_count']}" in texts
     assert f"Excluded: {cohort['cohorts']['utsw']['excluded_patient_count']}" in texts
     fig.clear()
+
+
+def test_manifest_without_sidecar_is_marked_unsealed_but_mismatch_still_fails(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "cohort_manifest_post_qc.json"
+    path.write_text("{}")
+    unsealed = builder.FrozenInput.read(path, require_sidecar=False)
+    assert unsealed.sealed is False
+    assert unsealed.registry_source().endswith("(no sidecar)")
+    with pytest.raises(ValueError, match="sidecar"):
+        builder.FrozenInput.read(path)
+    path.with_suffix(".json.sha256").write_text("0" * 64)
+    with pytest.raises(ValueError, match="mismatch"):
+        builder.FrozenInput.read(path, require_sidecar=False)
+
+
+def test_manifest_path_falls_back_to_committed_copy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GLIOMA_STORAGE_ROOT", str(tmp_path))
+    found = builder._manifest_path("cohort_manifest_post_qc.json")
+    assert found == REPO / "docs/research/manifests/cohort_manifest_post_qc.json"
