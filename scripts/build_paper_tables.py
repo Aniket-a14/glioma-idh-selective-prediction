@@ -307,36 +307,40 @@ def probe_table(probe: dict[str, Any]) -> str:
 
 
 def cohort_flow_table(directory: Path) -> str:
+    """One table: retained and excluded counts per cohort, then each reason."""
     with (directory / "table_1.csv").open() as handle:
         counts = list(csv.DictReader(handle))
     with (directory / "table_2.csv").open() as handle:
         reasons = list(csv.DictReader(handle))
-    rows = [
-        [
-            row["cohort"]
-            .replace("ucsf_pdgm", "UCSF-PDGM")
-            .replace("utsw", "UTSW-Glioma"),
-            row["retained_patient_count"],
-            row["excluded_patient_count"],
-        ]
-        for row in counts
-    ]
-    lines = tabular("lrr", ["Cohort", "Retained", "Excluded"], rows)
-    detail = [
-        [
-            row["cohort"]
-            .replace("ucsf_pdgm", "UCSF-PDGM")
-            .replace("utsw", "UTSW-Glioma"),
-            tex_escape(row["reason"]),
-            row["count"],
-        ]
-        for row in reasons
-    ]
-    return (
-        lines
-        + "%\n"
-        + tabular("llr", ["Cohort", "Exclusion reason", "Patients"], detail)
-    )
+
+    def cohort_name(raw: str) -> str:
+        return raw.replace("ucsf_pdgm", "UCSF-PDGM").replace("utsw", "UTSW-Glioma")
+
+    names = {
+        "no_imaging_available": "no imaging available",
+        "overlap:brats2021": "also in BraTS 2021",
+        "label:idh_unavailable": "no IDH label",
+        "qc:skullstrip-over": "failed skull-strip check",
+    }
+
+    def reason_text(raw: str) -> str:
+        return tex_escape(names.get(raw, raw.replace(":", " ").replace("_", " ")))
+
+    rows: list[list[str]] = []
+    for row in counts:
+        rows.append(
+            [
+                f"\\textbf{{{cohort_name(row['cohort'])}}}",
+                row["retained_patient_count"],
+                row["excluded_patient_count"],
+            ]
+        )
+        for reason in reasons:
+            if reason["cohort"] == row["cohort"]:
+                rows.append(
+                    [f"\\quad {reason_text(reason['reason'])}", "", reason["count"]]
+                )
+    return tabular("lrr", ["Cohort / exclusion reason", "Retained", "Excluded"], rows)
 
 
 def build(experiments: Path, flow: Path) -> dict[str, str]:
