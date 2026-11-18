@@ -1,19 +1,12 @@
 \begin{tabular}{lrr}
 \toprule
-Cohort & Retained & Excluded \\
+Cohort / exclusion reason & Retained & Excluded \\
 \midrule
-UCSF-PDGM & 202 & 299 \\
-UTSW-Glioma & 616 & 9 \\
-\bottomrule
-\end{tabular}
-%
-\begin{tabular}{llr}
-\toprule
-Cohort & Exclusion reason & Patients \\
-\midrule
-UCSF-PDGM & no\_imaging\_available & 6 \\
-UCSF-PDGM & overlap:brats2021 & 293 \\
-UTSW-Glioma & label:idh\_unavailable & 3 \\
-UTSW-Glioma & qc:skullstrip-over & 6 \\
+\textbf{UCSF-PDGM} & 202 & 299 \\
+\quad no imaging available &  & 6 \\
+\quad also in BraTS 2021 &  & 293 \\
+\textbf{UTSW-Glioma} & 616 & 9 \\
+\quad no IDH label &  & 3 \\
+\quad failed skull-strip check &  & 6 \\
 \bottomrule
 \end{tabular}
