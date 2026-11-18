@@ -2,7 +2,7 @@
 
 Written 2026-11-18. Claude-owned. Every number is read from a frozen aggregate file; nothing is recomputed here.
 
-**Status: provisional.** Single-agent. T13.9 (independent recomputation by Codex, degraded under D-001) is running; nothing here is final until every discrepancy it finds is resolved and the Research Lead signs Gate F.
+**Status: provisional until Gate F.** T13.9 (independent recomputation by Codex, degraded under D-001) is complete and every discrepancy is resolved (see below); the Research Lead signs Gate F.
 
 **Sources.** Internal: `01M46999FB083AX4WW0067YM13/phase09_analysis.json`, `phase10_analysis.json` (UTSW test, 124 patients, 35 mutant). External: `external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/phase09_external_analysis.json`, `phase10_external_analysis.json` (UCSF-PDGM, 202 patients, 80 mutant; manifests `2af464b0…` and `e28757de…`). Combined: `phase13/phase13_final_analysis.json` (written by `scripts/finalize_results.py`, SHA-256 in its sidecar). EGD was not evaluated (D-057): the family is 29 tests, not 44.
 
@@ -48,9 +48,23 @@ Regeneration: `build_paper_artifacts` was run twice by the Research Lead (flag s
 
 Provenance, three numbers traced table to analysis JSON to raw frozen parquet (UCSF `full`, R2, T = 1.1247554, conformal quantile 0.77727 from UTSW calibration): (1) Table 4 carried-over coverage at alpha 0.05, 0.98515 (200 of 202 sets cover): recomputed from `primary_seed0/full.parquet` as 0.9851485, equal. (2) Table 3 AURC (mean over cutoffs) 0.0505275: recomputed 0.0505275, equal to 1e-16. (3) Table 3 selective risk at coverage 0.5, 0.0297 (3 errors in the 101 most confident): recomputed 3 of 101 = 0.0297. These are my own checks, not the independent verification.
 
+## Independent verification, T13.9 (degraded: second agent, D-001)
+
+Codex recomputed the UCSF-PDGM numbers blind: its compute step could not read the author's code or results, and wrote `T139_EXTERNAL_RESULTS_CODEX.json` (SHA-256 `6f5afd01…`) before comparison. Report: `T139_EXTERNAL_REPORT_CODEX.md`. Of 2060 numbers compared, 1985 agree; 75 disagree; 159 further numbers have no reference in the author's files (per-condition AUROC, ECE, Brier, trapezoid intervals, C5 p-values: never reported, so nothing in a table depends on them). All 24 per-condition C3 to C6 status categories match.
+
+Every disagreement is explained; none moves a reported value, a status or a rejection:
+
+- **Oracle AURC, 6 numbers (D-061).** A contract ambiguity about ties. The reported values stay.
+- **C6 permutation p-values, 60.** 48 are float-versus-exact encoding of the same p (difference near 1e-20); the rest are permutation Monte Carlo (for example 16 against 23 exceedances out of 10001 at coverage 0.8). Seeds are not fixed by the contracts, so the schedule differs; every adjusted p stays below 0.05 in both implementations, so every C6 status is unchanged.
+- **C4 interval endpoints, 4, and block C1 raw p, 1 (8/29 against 554/2001).** Seed and stream layout. Codex, told the author's schedule after the comparison, reproduced the C4 endpoints (-0.1960396, 0.0861386) and the C1 interval and p (554/2001) exactly.
+- **Pooled BH, 3.** Follow from the C1 raw p and DeLong floating-point differences; BH itself is exact on both sides.
+- **Temperature, 1.** Independent bisection 1.1247554289 against the frozen fit 1.1247554245 (4.4e-9), inside the contract's 1e-6.
+- **Overall C3, 1.** A labelling bug in Codex's own summary (worst over conditions instead of the primary `full`); per-condition statuses agree.
+
+Reading: no real disagreement in any reported number. The seed schedule is a documentation gap, not a numerical one: the contracts should state the external seed schedule (the author's is in `results_summary.seed_schedule`). The paper should disclose that verification was by a second agent.
+
 ## Not yet done
 
-- Independent verification (T13.9) and resolution of every discrepancy.
 - Same-day `NEGATIVE_RESULTS.md` entries for C2, C4, C6 (Research Lead places them).
 - Wide intervals at the coverage extremes are shown in the figures as computed; none were hidden by grid coarsening (to be checked on the rebuilt figures).
 - Gate F signature and the `results-freeze` tag (Research Lead).

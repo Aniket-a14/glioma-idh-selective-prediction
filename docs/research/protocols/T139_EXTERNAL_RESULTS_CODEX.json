@@ -1,0 +1,3793 @@
+{
+  "schema": "t139_external_codex.v1",
+  "executor": "D-001 degraded solo fallback: second agent, not second human",
+  "input_sha256": {
+    "/Volumes/Research_2/artifacts/experiments/01M46999FB083AX4WW0067YM13/conditions/full.parquet": {
+      "sha256": "bf854c97a0c2a9f2b026d5fcdd633dc4252cb1c7677dd2ed3cec17ebe92744d0",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/01M46999FB083AX4WW0067YM13/predictions.parquet": {
+      "sha256": "83f3d99c98557cf1f8d7084008f062dce760d0f3e65c26d7260bed3937e0611d",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/primary_seed0/full.parquet": {
+      "sha256": "f40fda710a4bdf3f92280ce3467e57c0b6ab38be4e246d0dd6d4413f98fe95af",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed1/full.parquet": {
+      "sha256": "f2a2b4a85e8b2e707d7c722a8f275cc5ff5e3ed8233cc89d12d180b3d51c2774",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed2/full.parquet": {
+      "sha256": "c7698ed6379f1bee9a3d62eff7b4742fbc8ca4c255e4e14daf015cd13e73f210",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed3/full.parquet": {
+      "sha256": "d92adac9811fba3653eaccff318fe950961e89b9ed8f8c1007f4d9a744954a61",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed4/full.parquet": {
+      "sha256": "d9ade485c89377e2d9cd1cbf594af328818786d90454736a83c012677f337d63",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/m6_comparator_r1/full.parquet": {
+      "sha256": "fd1317c876251c724ef629e2f0f3a7c04ef25d55a2bd8542beec9c77cdf331c4",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/primary_seed0/drop_t1.parquet": {
+      "sha256": "4447a28fabfb21088aadd29d1e98d410f71b04ce501453a4adfd2704a07a053e",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed1/drop_t1.parquet": {
+      "sha256": "15f0da14f3e196934e441b9dbc0228c894cde7467beeba4ca34a74109baf1869",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed2/drop_t1.parquet": {
+      "sha256": "ce34c56e165118f0f3d01ff65e488b4829ed1171ef105cf563c8491842245af6",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed3/drop_t1.parquet": {
+      "sha256": "f979d18483f1e9cbfe8537a4c355acae5bd7b8ba910bdb6d1370fb3b945c0d99",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed4/drop_t1.parquet": {
+      "sha256": "72642c82dcf35a04d0cd0ac3f42fedc72453a32d175a1d3ded9a453278e158fb",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/m6_comparator_r1/drop_t1.parquet": {
+      "sha256": "8c4f7055af8bb3446efb0f8e31bc74508702fbd5ec2a4034cb5860355e452cf9",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/primary_seed0/drop_t1ce.parquet": {
+      "sha256": "4893626c0bf6309215b88e1879b7392831266896ed9fe318556f51c84c1e0ea0",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed1/drop_t1ce.parquet": {
+      "sha256": "3b64a4bac4c523bc8a7d1ef60baaa4277fa53c9c24f05f16f7ae414230cd68bf",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed2/drop_t1ce.parquet": {
+      "sha256": "5dd90f0d178ed77564ff9f0743505645fd0f06d97abd1467e546d9a9f019ad67",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed3/drop_t1ce.parquet": {
+      "sha256": "e5a47132dc38348b620d9f531807832250273bb275fa800aff639c3ca25d550f",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed4/drop_t1ce.parquet": {
+      "sha256": "3c2a2630293221dacd5cb2463067f263a3d7461566e94015ddcb9040cd0a4d26",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/m6_comparator_r1/drop_t1ce.parquet": {
+      "sha256": "86293b9854a9bf8e5af6e9896eb3ab5975bf1ac1351a05c3f5a9777df6810bcf",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/primary_seed0/drop_t2.parquet": {
+      "sha256": "9bbf16bebb7d1dc20294d29e8d2b837f16ef70359c0f6fb54a82074ea7a5ee4d",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed1/drop_t2.parquet": {
+      "sha256": "13eb3a03bb74baaafb8847b9b9f7a19ca9aec08b6a9dcc704d1ada6a1d70af7b",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed2/drop_t2.parquet": {
+      "sha256": "c0fe37d8f6fa60b183b4b26461f244d25d5e40866b2baa2ab12010463294a0a8",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed3/drop_t2.parquet": {
+      "sha256": "1e536d10dead718adfbad56b50ff09952fd6a2516dfc055111de68d0db24a7a6",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed4/drop_t2.parquet": {
+      "sha256": "ab34b6e29f488db9836786ad40272e63dd5488c88c3d302b497cc651ee83b52f",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/m6_comparator_r1/drop_t2.parquet": {
+      "sha256": "5d7ecdf4527418fec7937f0fd85adb2a3e814a1dd86e3a74b09fec4b4a2f3a73",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/primary_seed0/drop_flair.parquet": {
+      "sha256": "25d24227ec0199df8ed4f3a4ce22d3d4bf41df3a98a9066a195a0047d5fc274e",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed1/drop_flair.parquet": {
+      "sha256": "a5776e3f5a0994b92a5b9a1a9e833be5d9df40c6cec294487f464e5b08164ecb",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed2/drop_flair.parquet": {
+      "sha256": "0c08f5ffc20d52beb1452af4a2520390f357715ac0b73452e8e9d53f5532ae1a",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed3/drop_flair.parquet": {
+      "sha256": "356f1b5a4951f7eee1d0e006a7b607533fe2cb1324abde55a30093422e60bf56",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed4/drop_flair.parquet": {
+      "sha256": "95d1460823449392149e8d4c6a52b76cd6139c3470fa795c9e50449277d9df54",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/m6_comparator_r1/drop_flair.parquet": {
+      "sha256": "204d4c8cc05a222ffef99df8fee3dfde83345077b6a7ee237d27dc8e9e224d27",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/primary_seed0/t1ce_flair_only.parquet": {
+      "sha256": "6737819eb66692259ece9a1b00fa5b902511b5cb8a0e3038548c6366f89ea8a6",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed1/t1ce_flair_only.parquet": {
+      "sha256": "f74cab2cac1abab45b2d5ed34ea9f8fb5ffb7fa6fcf1f444b4eb9e7036854d3b",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed2/t1ce_flair_only.parquet": {
+      "sha256": "62227b28cd97c784d10dcbf0557cd4efa15c7ef64e1d8f8fdd2e51119f54d38b",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed3/t1ce_flair_only.parquet": {
+      "sha256": "807b856836c1b63572e9503bdeadea5b44809bc33b0997d7db74079f510879b4",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/ensemble_seed4/t1ce_flair_only.parquet": {
+      "sha256": "80c077c9fcadf33281c93a850a41700bb5efb4961dd3231168b3fc4a5efed9c6",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_20261118/m6_comparator_r1/t1ce_flair_only.parquet": {
+      "sha256": "0cdc40690b749da8f6eaccd8f3539c905ea5b5589c7c75a7b43db27ac5d7a7f9",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_r7r8_20261118/ablation_r7_whole_brain/full.parquet": {
+      "sha256": "fc9cd591cacf9e3ba402d70c1eb9e70161cd829c85050ac0abe70c2393920353",
+      "sidecar_verified": true
+    },
+    "/Volumes/Research_2/artifacts/experiments/external_frozen/ucsf_pdgm/ucsf_pdgm_gate_e_r7r8_20261118/ablation_r8_two_stage/full.parquet": {
+      "sha256": "6eb05a4e8ff344e0077a7a5f5525670d23528a674699ce3554e720226890ae93",
+      "sidecar_verified": true
+    }
+  },
+  "implementation_sha256": "cd22dfe61ccf4a72ed89272f06388b0615c523878c472c127666471b759eb6c4",
+  "numpy": "2.5.3",
+  "pandas": "3.0.6",
+  "resampling": {
+    "bootstrap_iterations": 2000,
+    "permutations": 10000,
+    "seed": 0,
+    "row_order": "patient_id ascending",
+    "paired": "default_rng(0).integers(0,202,(2000,202)), reused everywhere",
+    "C4": "default_rng(0), calibration matrix first then independent external matrix; fixed fitted temperature, refit quantiles only",
+    "C6": "default_rng(0), 10000 permutation(loss) vectors per condition, shared over grid; reset per condition",
+    "unpaired_C": "default_rng(0), external matrix first then independent UTSW matrix",
+    "author_seed_index_match": "Unknown until compare; only S4 internal seed scheme explicitly fixed in permitted contracts",
+    "draw_matrix_sha256": "2c3b6b00a187fdaa39c008ae45962130b19d8fa5706eb99a21e66674b67f6583"
+  },
+  "conventions": {
+    "AUPRC": "noninterpolated average precision, ties grouped",
+    "Hanley_McNeil_z": 1.959964,
+    "M6_AURC": "confidence-ranked diagnostic; M6 is deployed always-predict",
+    "float_computation": "float64 sums; tie-block decisions exact; rational p-values and BH exact"
+  },
+  "rules": {
+    "C3": "D-035: refuted if any D(phi) >= 0; supported if all upper 95% limits < 0; otherwise inconclusive at this n. Full primary; missing conditions secondary; worst across conditions also reported.",
+    "C4": "D-004, D-045, D-050, D-058: supported iff every two-stage coverage-deviation interval half-width <= .07; otherwise refuted. Preserved iff interval inside +/- band; degraded iff wholly below -band or above +band; otherwise indeterminate. Also report .05 band. D-058 permits negative calibration findings, no refit.",
+    "C5": "D-035, D-050: adjacent difference = risk at lower coverage minus risk at higher coverage. Refuted if any lower 95% limit > 0; supported if all point differences <= 0; otherwise inconclusive at this n. Bootstrap intervals, not permutation inference.",
+    "C6": "D-035, D-050: rejected error rate minus overall error rate. Refuted if any observed difference <= 0; supported if every one-sided permutation p, BH-adjusted across five coverages, < .05; otherwise inconclusive at this n. Permutation p=(1+count)/(10000+1).",
+    "loss": "D-059: M1/M2/M3/M5 use deterministic R2 errors; M4 uses ensemble-mean errors. Threshold >= .5 per updated metric contract. M6 uses its own classifier.",
+    "family": "D-052, D-060: 15 external members plus 14 UTSW members, one pooled BH pass at q=.05 in compare only. Block C independent cohorts; R7/R8 from supplementary frozen run."
+  },
+  "temperature": 1.1247554289138795,
+  "calibration_source": {
+    "selected": "conditions/full.parquet",
+    "reason": "Full-input condition sweep; independently derived T and quantiles agree with freeze_spec within its temperature fitting tolerance. predictions.parquet has small numerical inference differences.",
+    "base_predictions_max_logit_difference": 4.38690185546875e-05,
+    "base_predictions_temperature": 1.124756091252605
+  },
+  "calibration_n": 124,
+  "quantiles": {
+    "0.05": 0.777272037215785,
+    "0.1": 0.6621428457682237,
+    "0.2": 0.3923337643879117
+  },
+  "calibration_coverage": {
+    "0.05": 0.9596774193548387,
+    "0.1": 0.9112903225806451,
+    "0.2": 0.8064516129032258
+  },
+  "conditions": {
+    "full": {
+      "n": 202,
+      "n_positive": 80,
+      "n_errors": 31,
+      "always_predict_risk": 0.15346534653465346,
+      "auroc": 0.9285860655737705,
+      "auprc": 0.897789537045756,
+      "calibration": {
+        "M1": {
+          "ece": 0.09663086735740267,
+          "brier": 0.11781259301521835
+        },
+        "M2": {
+          "ece": 0.1056412353146365,
+          "brier": 0.1211958169662402
+        }
+      },
+      "mechanisms": {
+        "M1": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.05052748456692471,
+            "lower": 0.028780791496715117,
+            "upper": 0.0805371023026979
+          },
+          "aurc_trapezoid": {
+            "point": 0.050147619847779525,
+            "lower": 0.028197440795435104,
+            "upper": 0.07926943766160809
+          },
+          "risk_0.5": {
+            "point": 0.0297029702970297,
+            "lower": 0.0,
+            "upper": 0.0892396786848489
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.02459016393442623,
+            "upper": 0.11475409836065574
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.08450704225352113,
+            "lower": 0.035211267605633804,
+            "upper": 0.13380281690140844
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1111111111111111,
+            "lower": 0.06172839506172839,
+            "upper": 0.1656441717791411
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.12637362637362637,
+            "lower": 0.07692307692307693,
+            "upper": 0.1813186813186813
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.15346534653465346,
+          "n_errors": 31,
+          "D_0.5": {
+            "point": -0.12376237623762376,
+            "lower": -0.1634634051640458,
+            "upper": -0.06626453907526683
+          },
+          "D_0.6": {
+            "point": -0.08789157604285018,
+            "lower": -0.13098530145697496,
+            "upper": -0.043495374127576716
+          },
+          "D_0.7": {
+            "point": -0.06895830428113234,
+            "lower": -0.11468818756875689,
+            "upper": -0.03649312334402464
+          },
+          "D_0.8": {
+            "point": -0.04235423542354236,
+            "lower": -0.07804839021734485,
+            "upper": -0.015155543332111016
+          },
+          "D_0.9": {
+            "point": -0.027091720161027094,
+            "lower": -0.05066818157225557,
+            "upper": -0.006146478230961268
+          }
+        },
+        "M2": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.05052748456692471,
+            "lower": 0.028780791496715117,
+            "upper": 0.0805371023026979
+          },
+          "aurc_trapezoid": {
+            "point": 0.050147619847779525,
+            "lower": 0.028197440795435104,
+            "upper": 0.07926943766160809
+          },
+          "risk_0.5": {
+            "point": 0.0297029702970297,
+            "lower": 0.0,
+            "upper": 0.0892396786848489
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.02459016393442623,
+            "upper": 0.11475409836065574
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.08450704225352113,
+            "lower": 0.035211267605633804,
+            "upper": 0.13380281690140844
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1111111111111111,
+            "lower": 0.06172839506172839,
+            "upper": 0.1656441717791411
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.12637362637362637,
+            "lower": 0.07692307692307693,
+            "upper": 0.1813186813186813
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.15346534653465346,
+          "n_errors": 31,
+          "D_0.5": {
+            "point": -0.12376237623762376,
+            "lower": -0.1634634051640458,
+            "upper": -0.06626453907526683
+          },
+          "D_0.6": {
+            "point": -0.08789157604285018,
+            "lower": -0.13098530145697496,
+            "upper": -0.043495374127576716
+          },
+          "D_0.7": {
+            "point": -0.06895830428113234,
+            "lower": -0.11468818756875689,
+            "upper": -0.03649312334402464
+          },
+          "D_0.8": {
+            "point": -0.04235423542354236,
+            "lower": -0.07804839021734485,
+            "upper": -0.015155543332111016
+          },
+          "D_0.9": {
+            "point": -0.027091720161027094,
+            "lower": -0.05066818157225557,
+            "upper": -0.006146478230961268
+          }
+        },
+        "M3": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.05075400219484429,
+            "lower": 0.029326191693565998,
+            "upper": 0.08078713178335015
+          },
+          "aurc_trapezoid": {
+            "point": 0.05037413747569911,
+            "lower": 0.028938075704425657,
+            "upper": 0.07930666933382952
+          },
+          "risk_0.5": {
+            "point": 0.0297029702970297,
+            "lower": 0.0,
+            "upper": 0.07920792079207921
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.05737704918032787,
+            "lower": 0.024193548387096774,
+            "upper": 0.11475409836065574
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.09154929577464789,
+            "lower": 0.04225352112676056,
+            "upper": 0.14084507042253522
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1111111111111111,
+            "lower": 0.06172839506172839,
+            "upper": 0.1656441717791411
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.12637362637362637,
+            "lower": 0.08140677257525085,
+            "upper": 0.1813186813186813
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.15346534653465346,
+          "n_errors": 31,
+          "D_0.5": {
+            "point": -0.12376237623762376,
+            "lower": -0.16831683168316833,
+            "upper": -0.07101136691339043
+          },
+          "D_0.6": {
+            "point": -0.09608829735432559,
+            "lower": -0.13382973543255966,
+            "upper": -0.046745658172374624
+          },
+          "D_0.7": {
+            "point": -0.06191605076000557,
+            "lower": -0.10438819477830776,
+            "upper": -0.028573420722354
+          },
+          "D_0.8": {
+            "point": -0.04235423542354236,
+            "lower": -0.07572423909057574,
+            "upper": -0.013995844028847348
+          },
+          "D_0.9": {
+            "point": -0.027091720161027094,
+            "lower": -0.04852573169404853,
+            "upper": -0.0037086444300167987
+          }
+        },
+        "M4": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.1198174572895907,
+            "lower": 0.07281638905739213,
+            "upper": 0.1730346578294826
+          },
+          "aurc_trapezoid": {
+            "point": 0.11943759257044552,
+            "lower": 0.07253971096147928,
+            "upper": 0.17139411207816702
+          },
+          "risk_0.5": {
+            "point": 0.12871287128712872,
+            "lower": 0.06861079383209595,
+            "upper": 0.2079207920792079
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.1721311475409836,
+            "lower": 0.10569105691056911,
+            "upper": 0.2459016393442623
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.15492957746478872,
+            "lower": 0.09859154929577464,
+            "upper": 0.22610587899543336
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.17901234567901234,
+            "lower": 0.11728395061728394,
+            "upper": 0.24074074074074073
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.17032967032967034,
+            "lower": 0.11538461538461539,
+            "upper": 0.22527472527472528
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.15346534653465346,
+          "n_errors": 31,
+          "D_0.5": {
+            "point": -0.024752475247524747,
+            "lower": -0.07426955930887208,
+            "upper": 0.03960396039603961
+          },
+          "D_0.6": {
+            "point": 0.01866580100633014,
+            "lower": -0.028649167395747962,
+            "upper": 0.05791747657372696
+          },
+          "D_0.7": {
+            "point": 0.0014642309301352574,
+            "lower": -0.028768261441528775,
+            "upper": 0.04239297169153533
+          },
+          "D_0.8": {
+            "point": 0.025546999144358873,
+            "lower": 0.0009167583425009063,
+            "upper": 0.041559711526708204
+          },
+          "D_0.9": {
+            "point": 0.016864323795016872,
+            "lower": 0.003699271026003703,
+            "upper": 0.021760417800021747
+          }
+        },
+        "M5": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.05052748456692471,
+            "lower": 0.028780791496715117,
+            "upper": 0.0805371023026979
+          },
+          "aurc_trapezoid": {
+            "point": 0.050147619847779525,
+            "lower": 0.028197440795435104,
+            "upper": 0.07926943766160809
+          },
+          "risk_0.5": {
+            "point": 0.0297029702970297,
+            "lower": 0.0,
+            "upper": 0.0892396786848489
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.02459016393442623,
+            "upper": 0.11475409836065574
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.08450704225352113,
+            "lower": 0.035211267605633804,
+            "upper": 0.13380281690140844
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1111111111111111,
+            "lower": 0.06172839506172839,
+            "upper": 0.1656441717791411
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.12637362637362637,
+            "lower": 0.07692307692307693,
+            "upper": 0.1813186813186813
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.15346534653465346,
+          "n_errors": 31,
+          "D_0.5": {
+            "point": -0.12376237623762376,
+            "lower": -0.1634634051640458,
+            "upper": -0.06626453907526683
+          },
+          "D_0.6": {
+            "point": -0.08789157604285018,
+            "lower": -0.13098530145697496,
+            "upper": -0.043495374127576716
+          },
+          "D_0.7": {
+            "point": -0.06895830428113234,
+            "lower": -0.11468818756875689,
+            "upper": -0.03649312334402464
+          },
+          "D_0.8": {
+            "point": -0.04235423542354236,
+            "lower": -0.07804839021734485,
+            "upper": -0.015155543332111016
+          },
+          "D_0.9": {
+            "point": -0.027091720161027094,
+            "lower": -0.05066818157225557,
+            "upper": -0.006146478230961268
+          }
+        },
+        "M6": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.09205372202438773,
+            "lower": 0.05755344115300282,
+            "upper": 0.13724323050348053
+          },
+          "aurc_trapezoid": {
+            "point": 0.09147779809536118,
+            "lower": 0.05676863386780159,
+            "upper": 0.1353333777259497
+          },
+          "risk_0.5": {
+            "point": 0.0891089108910891,
+            "lower": 0.039603960396039604,
+            "upper": 0.1485148514851485
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.09016393442622951,
+            "lower": 0.04878048780487805,
+            "upper": 0.1557377049180328
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.11267605633802817,
+            "lower": 0.06338028169014084,
+            "upper": 0.1724437260536397
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.15432098765432098,
+            "lower": 0.09259259259259259,
+            "upper": 0.2208929788684388
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.1978021978021978,
+            "lower": 0.1428376268540203,
+            "upper": 0.2623311115114392
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.23267326732673269,
+          "n_errors": 47,
+          "D_0.5": {
+            "point": -0.14356435643564358,
+            "lower": -0.19917692011919638,
+            "upper": -0.08503203261502619
+          },
+          "D_0.6": {
+            "point": -0.14250933290050316,
+            "lower": -0.18535951955851326,
+            "upper": -0.08804605220618027
+          },
+          "D_0.7": {
+            "point": -0.11999721098870451,
+            "lower": -0.16169292985636594,
+            "upper": -0.0718083251987171
+          },
+          "D_0.8": {
+            "point": -0.0783522796724117,
+            "lower": -0.11234814432363482,
+            "upper": -0.044006356936506695
+          },
+          "D_0.9": {
+            "point": -0.03487106952453489,
+            "lower": -0.05576107061255575,
+            "upper": -0.009143537304550142
+          }
+        }
+      },
+      "conformal": {
+        "0.05": {
+          "quantile": 0.777272037215785,
+          "coverage": 0.9851485148514851,
+          "abstention_rate": 0.5247524752475248,
+          "empty_count": 0,
+          "full_count": 106,
+          "singleton_count": 96,
+          "singleton_true_label_fraction": 0.96875,
+          "deviation": {
+            "point": 0.03514851485148518,
+            "lower": -0.03910891089108903,
+            "upper": 0.050000000000000044,
+            "half_width": 0.04455445544554454
+          },
+          "coverage_labels": {
+            "0.07": "preserved",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.1": {
+          "quantile": 0.6621428457682237,
+          "coverage": 0.9306930693069307,
+          "abstention_rate": 0.24257425742574257,
+          "empty_count": 0,
+          "full_count": 49,
+          "singleton_count": 153,
+          "singleton_true_label_fraction": 0.9084967320261438,
+          "deviation": {
+            "point": 0.03069306930693072,
+            "lower": -0.08316831683168324,
+            "upper": 0.08019801980198016,
+            "half_width": 0.0816831683168317
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.2": {
+          "quantile": 0.3923337643879117,
+          "coverage": 0.7376237623762376,
+          "abstention_rate": 0.16336633663366337,
+          "empty_count": 33,
+          "full_count": 0,
+          "singleton_count": 169,
+          "singleton_true_label_fraction": 0.8816568047337278,
+          "deviation": {
+            "point": -0.06237623762376243,
+            "lower": -0.2110148514851486,
+            "upper": 0.0762376237623762,
+            "half_width": 0.1436262376237624
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        }
+      },
+      "oracle_aurc": 0.023551612587001277,
+      "c5_adjacent": {
+        "0.5-0.6": {
+          "point": -0.03587080019477358,
+          "lower": -0.06707850339113608,
+          "upper": 0.007141697776335013,
+          "p_value": "88/667",
+          "p_adjusted": "1520/6003"
+        },
+        "0.6-0.7": {
+          "point": -0.018933271761717843,
+          "lower": -0.045466016292192865,
+          "upper": 0.01127299808514821,
+          "p_value": "312/667",
+          "p_adjusted": "312/667"
+        },
+        "0.7-0.8": {
+          "point": -0.02660406885758998,
+          "lower": -0.06007650843331594,
+          "upper": -0.0027816981415875433,
+          "p_value": "20/667",
+          "p_adjusted": "80/667"
+        },
+        "0.8-0.9": {
+          "point": -0.015262515262515264,
+          "lower": -0.044753510378510386,
+          "upper": 0.0067171191488131195,
+          "p_value": "380/2001",
+          "p_adjusted": "1520/6003"
+        }
+      },
+      "c6_enrichment": {
+        "0.5": {
+          "observed": 0.12376237623762379,
+          "p_value": "1/10001",
+          "n_rejected": 101,
+          "rejected_but_correct_rate": 0.7227722772277227,
+          "p_adjusted": "5/30003"
+        },
+        "0.6": {
+          "observed": 0.13403465346534651,
+          "p_value": "1/10001",
+          "n_rejected": 80,
+          "rejected_but_correct_rate": 0.7125,
+          "p_adjusted": "5/30003"
+        },
+        "0.7": {
+          "observed": 0.1632013201320132,
+          "p_value": "1/10001",
+          "n_rejected": 60,
+          "rejected_but_correct_rate": 0.6833333333333333,
+          "p_adjusted": "5/30003"
+        },
+        "0.8": {
+          "observed": 0.17153465346534655,
+          "p_value": "23/10001",
+          "n_rejected": 40,
+          "rejected_but_correct_rate": 0.675,
+          "p_adjusted": "115/40004"
+        },
+        "0.9": {
+          "observed": 0.24653465346534656,
+          "p_value": "48/10001",
+          "n_rejected": 20,
+          "rejected_but_correct_rate": 0.6,
+          "p_adjusted": "48/10001"
+        }
+      },
+      "claims": {
+        "C3": "supported",
+        "C4": "refuted",
+        "C5": "supported",
+        "C6": "supported"
+      },
+      "auroc_bootstrap_95_interval": {
+        "lower": 0.8919764827064027,
+        "upper": 0.9595573115690432
+      },
+      "auroc_hanley_mcneil_95_interval": {
+        "lower": 0.8875476030185966,
+        "upper": 0.9696245281289445
+      },
+      "auroc_valid_draws": 2000
+    },
+    "drop_t1": {
+      "n": 202,
+      "n_positive": 80,
+      "n_errors": 33,
+      "always_predict_risk": 0.16336633663366337,
+      "auroc": 0.9136270491803279,
+      "auprc": 0.869001434716188,
+      "calibration": {
+        "M1": {
+          "ece": 0.0902428216315889,
+          "brier": 0.12489746712624698
+        },
+        "M2": {
+          "ece": 0.09178439564184102,
+          "brier": 0.1282017735439047
+        }
+      },
+      "mechanisms": {
+        "M1": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.05755315126837404,
+            "lower": 0.03401188999848717,
+            "upper": 0.0901407019406821
+          },
+          "aurc_trapezoid": {
+            "point": 0.057148779147993684,
+            "lower": 0.03348680387165584,
+            "upper": 0.08852598036132824
+          },
+          "risk_0.5": {
+            "point": 0.04950495049504951,
+            "lower": 0.009900990099009901,
+            "upper": 0.09920455637796684
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.02459016393442623,
+            "upper": 0.11475409836065574
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.07746478873239436,
+            "lower": 0.041666666666666664,
+            "upper": 0.13380281690140844
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1111111111111111,
+            "lower": 0.06172839506172839,
+            "upper": 0.16666666666666666
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.14835164835164835,
+            "lower": 0.09340659340659341,
+            "upper": 0.2032967032967033
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.16336633663366337,
+          "n_errors": 33,
+          "D_0.5": {
+            "point": -0.11386138613861387,
+            "lower": -0.16336633663366334,
+            "upper": -0.06435643564356436
+          },
+          "D_0.6": {
+            "point": -0.09779256614186009,
+            "lower": -0.142889197456331,
+            "upper": -0.053558675539685144
+          },
+          "D_0.7": {
+            "point": -0.08590154790126901,
+            "lower": -0.11923362162868509,
+            "upper": -0.04134648720153706
+          },
+          "D_0.8": {
+            "point": -0.05225522552255227,
+            "lower": -0.08446400195575113,
+            "upper": -0.020229800757853578
+          },
+          "D_0.9": {
+            "point": -0.01501468828201502,
+            "lower": -0.03808073115003807,
+            "upper": 0.004144487400245043
+          }
+        },
+        "M2": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.05755315126837404,
+            "lower": 0.03401188999848717,
+            "upper": 0.0901407019406821
+          },
+          "aurc_trapezoid": {
+            "point": 0.057148779147993684,
+            "lower": 0.03348680387165584,
+            "upper": 0.08852598036132824
+          },
+          "risk_0.5": {
+            "point": 0.04950495049504951,
+            "lower": 0.009900990099009901,
+            "upper": 0.09920455637796684
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.02459016393442623,
+            "upper": 0.11475409836065574
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.07746478873239436,
+            "lower": 0.041666666666666664,
+            "upper": 0.13380281690140844
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1111111111111111,
+            "lower": 0.06172839506172839,
+            "upper": 0.16666666666666666
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.14835164835164835,
+            "lower": 0.09340659340659341,
+            "upper": 0.2032967032967033
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.16336633663366337,
+          "n_errors": 33,
+          "D_0.5": {
+            "point": -0.11386138613861387,
+            "lower": -0.16336633663366334,
+            "upper": -0.06435643564356436
+          },
+          "D_0.6": {
+            "point": -0.09779256614186009,
+            "lower": -0.142889197456331,
+            "upper": -0.053558675539685144
+          },
+          "D_0.7": {
+            "point": -0.08590154790126901,
+            "lower": -0.11923362162868509,
+            "upper": -0.04134648720153706
+          },
+          "D_0.8": {
+            "point": -0.05225522552255227,
+            "lower": -0.08446400195575113,
+            "upper": -0.020229800757853578
+          },
+          "D_0.9": {
+            "point": -0.01501468828201502,
+            "lower": -0.03808073115003807,
+            "upper": 0.004144487400245043
+          }
+        },
+        "M3": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.06088963120805249,
+            "lower": 0.034689011831165795,
+            "upper": 0.09556201265474044
+          },
+          "aurc_trapezoid": {
+            "point": 0.06048525908767213,
+            "lower": 0.03420163871061763,
+            "upper": 0.0945486058269202
+          },
+          "risk_0.5": {
+            "point": 0.0594059405940594,
+            "lower": 0.0196078431372549,
+            "upper": 0.10891089108910891
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.05737704918032787,
+            "lower": 0.024390243902439025,
+            "upper": 0.10655737704918032
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.07746478873239436,
+            "lower": 0.035211267605633804,
+            "upper": 0.13390602234094162
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.11728395061728394,
+            "lower": 0.06172839506172839,
+            "upper": 0.17177914110429449
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.14835164835164835,
+            "lower": 0.09836065573770492,
+            "upper": 0.20334942084942056
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.16336633663366337,
+          "n_errors": 33,
+          "D_0.5": {
+            "point": -0.10396039603960397,
+            "lower": -0.1584158415841584,
+            "upper": -0.05445544554455446
+          },
+          "D_0.6": {
+            "point": -0.1059892874533355,
+            "lower": -0.15038143158578152,
+            "upper": -0.05680895958448305
+          },
+          "D_0.7": {
+            "point": -0.08590154790126901,
+            "lower": -0.12399072653744247,
+            "upper": -0.042420498651977875
+          },
+          "D_0.8": {
+            "point": -0.04608238601637943,
+            "lower": -0.08383726920749335,
+            "upper": -0.018946339078352276
+          },
+          "D_0.9": {
+            "point": -0.01501468828201502,
+            "lower": -0.03699341983887831,
+            "upper": 0.005875312806005867
+          }
+        },
+        "M4": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.11203365770934595,
+            "lower": 0.06917869969577967,
+            "upper": 0.1656063485452943
+          },
+          "aurc_trapezoid": {
+            "point": 0.11164153928958319,
+            "lower": 0.06859789878085741,
+            "upper": 0.1642147505602366
+          },
+          "risk_0.5": {
+            "point": 0.13861386138613863,
+            "lower": 0.06930693069306931,
+            "upper": 0.21364458404721082
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.16393442622950818,
+            "lower": 0.0967741935483871,
+            "upper": 0.23577235772357724
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.1619718309859155,
+            "lower": 0.1056338028169014,
+            "upper": 0.2323943661971831
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1728395061728395,
+            "lower": 0.1165644171779141,
+            "upper": 0.23170731707317074
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.16483516483516483,
+            "lower": 0.10989010989010989,
+            "upper": 0.21978021978021978
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.15841584158415842,
+          "n_errors": 32,
+          "D_0.5": {
+            "point": -0.019801980198019792,
+            "lower": -0.07503640069889342,
+            "upper": 0.03281158998252766
+          },
+          "D_0.6": {
+            "point": 0.005518584645349767,
+            "lower": -0.04366580100633014,
+            "upper": 0.04766260162601622
+          },
+          "D_0.7": {
+            "point": 0.0035559894017570814,
+            "lower": -0.026723957607028306,
+            "upper": 0.040315158276390935
+          },
+          "D_0.8": {
+            "point": 0.014423664588681079,
+            "lower": -0.010267693436010278,
+            "upper": 0.03404247945119714
+          },
+          "D_0.9": {
+            "point": 0.006419323251006415,
+            "lower": -0.010608203677510614,
+            "upper": 0.017989503868419632
+          }
+        },
+        "M5": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.05755315126837404,
+            "lower": 0.03401188999848717,
+            "upper": 0.0901407019406821
+          },
+          "aurc_trapezoid": {
+            "point": 0.057148779147993684,
+            "lower": 0.03348680387165584,
+            "upper": 0.08852598036132824
+          },
+          "risk_0.5": {
+            "point": 0.04950495049504951,
+            "lower": 0.009900990099009901,
+            "upper": 0.09920455637796684
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.02459016393442623,
+            "upper": 0.11475409836065574
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.07746478873239436,
+            "lower": 0.041666666666666664,
+            "upper": 0.13380281690140844
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1111111111111111,
+            "lower": 0.06172839506172839,
+            "upper": 0.16666666666666666
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.14835164835164835,
+            "lower": 0.09340659340659341,
+            "upper": 0.2032967032967033
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.16336633663366337,
+          "n_errors": 33,
+          "D_0.5": {
+            "point": -0.11386138613861387,
+            "lower": -0.16336633663366334,
+            "upper": -0.06435643564356436
+          },
+          "D_0.6": {
+            "point": -0.09779256614186009,
+            "lower": -0.142889197456331,
+            "upper": -0.053558675539685144
+          },
+          "D_0.7": {
+            "point": -0.08590154790126901,
+            "lower": -0.11923362162868509,
+            "upper": -0.04134648720153706
+          },
+          "D_0.8": {
+            "point": -0.05225522552255227,
+            "lower": -0.08446400195575113,
+            "upper": -0.020229800757853578
+          },
+          "D_0.9": {
+            "point": -0.01501468828201502,
+            "lower": -0.03808073115003807,
+            "upper": 0.004144487400245043
+          }
+        },
+        "M6": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.06542083211693928,
+            "lower": 0.038883893966476374,
+            "upper": 0.10091504575021557
+          },
+          "aurc_trapezoid": {
+            "point": 0.06493068409223582,
+            "lower": 0.038276035984612704,
+            "upper": 0.09935873913983222
+          },
+          "risk_0.5": {
+            "point": 0.0297029702970297,
+            "lower": 0.0,
+            "upper": 0.08823529411764706
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.024390243902439025,
+            "upper": 0.12295081967213115
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.1056338028169014,
+            "lower": 0.04929577464788732,
+            "upper": 0.15492957746478872
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.12345679012345678,
+            "lower": 0.0736196319018405,
+            "upper": 0.18295488553045025
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.17582417582417584,
+            "lower": 0.11538461538461539,
+            "upper": 0.23087431693989016
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.19801980198019803,
+          "n_errors": 40,
+          "D_0.5": {
+            "point": -0.16831683168316833,
+            "lower": -0.21287128712871287,
+            "upper": -0.10891089108910892
+          },
+          "D_0.6": {
+            "point": -0.13244603148839473,
+            "lower": -0.17717957132062537,
+            "upper": -0.08277732982182408
+          },
+          "D_0.7": {
+            "point": -0.09238599916329662,
+            "lower": -0.14112397155208478,
+            "upper": -0.05772157524528191
+          },
+          "D_0.8": {
+            "point": -0.07456301185674125,
+            "lower": -0.10665108177484416,
+            "upper": -0.04130347850735993
+          },
+          "D_0.9": {
+            "point": -0.02219562615602219,
+            "lower": -0.04858013273854858,
+            "upper": -0.0027385843983543543
+          }
+        }
+      },
+      "conformal": {
+        "0.05": {
+          "quantile": 0.777272037215785,
+          "coverage": 0.9851485148514851,
+          "abstention_rate": 0.5792079207920792,
+          "empty_count": 0,
+          "full_count": 117,
+          "singleton_count": 85,
+          "singleton_true_label_fraction": 0.9647058823529412,
+          "deviation": {
+            "point": 0.03514851485148518,
+            "lower": -0.03910891089108903,
+            "upper": 0.050000000000000044,
+            "half_width": 0.04455445544554454
+          },
+          "coverage_labels": {
+            "0.07": "preserved",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.1": {
+          "quantile": 0.6621428457682237,
+          "coverage": 0.9257425742574258,
+          "abstention_rate": 0.24752475247524752,
+          "empty_count": 0,
+          "full_count": 50,
+          "singleton_count": 152,
+          "singleton_true_label_fraction": 0.9013157894736842,
+          "deviation": {
+            "point": 0.025742574257425765,
+            "lower": -0.09306930693069304,
+            "upper": 0.08019801980198016,
+            "half_width": 0.0866336633663366
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.2": {
+          "quantile": 0.3923337643879117,
+          "coverage": 0.7475247524752475,
+          "abstention_rate": 0.13861386138613863,
+          "empty_count": 28,
+          "full_count": 0,
+          "singleton_count": 174,
+          "singleton_true_label_fraction": 0.867816091954023,
+          "deviation": {
+            "point": -0.05247524752475252,
+            "lower": -0.24554455445544554,
+            "upper": 0.06138613861386133,
+            "half_width": 0.15346534653465344
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        }
+      },
+      "oracle_aurc": 0.02668855994510342,
+      "c5_adjacent": {
+        "0.5-0.6": {
+          "point": -0.016068819996753775,
+          "lower": -0.04597056390399671,
+          "upper": 0.011722206865652087,
+          "p_value": "718/2001",
+          "p_adjusted": "718/2001"
+        },
+        "0.6-0.7": {
+          "point": -0.011891018240591078,
+          "lower": -0.050565689217270844,
+          "upper": 0.0069268067420918955,
+          "p_value": "454/2001",
+          "p_adjusted": "1816/6003"
+        },
+        "0.7-0.8": {
+          "point": -0.033646322378716745,
+          "lower": -0.05668484571953644,
+          "upper": -0.0010290955000624752,
+          "p_value": "80/2001",
+          "p_adjusted": "160/2001"
+        },
+        "0.8-0.9": {
+          "point": -0.03724053724053725,
+          "lower": -0.0626119251119251,
+          "upper": -0.010319928698687652,
+          "p_value": "8/2001",
+          "p_adjusted": "32/2001"
+        }
+      },
+      "c6_enrichment": {
+        "0.5": {
+          "observed": 0.11386138613861388,
+          "p_value": "1/10001",
+          "n_rejected": 101,
+          "rejected_but_correct_rate": 0.7227722772277227,
+          "p_adjusted": "5/30003"
+        },
+        "0.6": {
+          "observed": 0.14913366336633663,
+          "p_value": "1/10001",
+          "n_rejected": 80,
+          "rejected_but_correct_rate": 0.6875,
+          "p_adjusted": "5/30003"
+        },
+        "0.7": {
+          "observed": 0.20330033003300327,
+          "p_value": "1/10001",
+          "n_rejected": 60,
+          "rejected_but_correct_rate": 0.6333333333333333,
+          "p_adjusted": "5/30003"
+        },
+        "0.8": {
+          "observed": 0.21163366336633663,
+          "p_value": "2/10001",
+          "n_rejected": 40,
+          "rejected_but_correct_rate": 0.625,
+          "p_adjusted": "5/20002"
+        },
+        "0.9": {
+          "observed": 0.13663366336633662,
+          "p_value": "838/10001",
+          "n_rejected": 20,
+          "rejected_but_correct_rate": 0.7,
+          "p_adjusted": "838/10001"
+        }
+      },
+      "claims": {
+        "C3": "inconclusive at this n",
+        "C4": "refuted",
+        "C5": "supported",
+        "C6": "inconclusive at this n"
+      }
+    },
+    "drop_t1ce": {
+      "n": 202,
+      "n_positive": 80,
+      "n_errors": 91,
+      "always_predict_risk": 0.4504950495049505,
+      "auroc": 0.7354508196721311,
+      "auprc": 0.6753994038298823,
+      "calibration": {
+        "M1": {
+          "ece": 0.22914758368883983,
+          "brier": 0.2670643317487545
+        },
+        "M2": {
+          "ece": 0.2172138643199611,
+          "brier": 0.25987480571674965
+        }
+      },
+      "mechanisms": {
+        "M1": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.31038238353450354,
+            "lower": 0.23500765013410016,
+            "upper": 0.3962888931648692
+          },
+          "aurc_trapezoid": {
+            "point": 0.3092672967783031,
+            "lower": 0.23458838123703998,
+            "upper": 0.3933325599314172
+          },
+          "risk_0.5": {
+            "point": 0.31683168316831684,
+            "lower": 0.21782178217821782,
+            "upper": 0.39603960396039606
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.3442622950819672,
+            "lower": 0.25203252032520324,
+            "upper": 0.4355094726062467
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.39436619718309857,
+            "lower": 0.30985915492957744,
+            "upper": 0.4859154929577465
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.4444444444444444,
+            "lower": 0.36809815950920244,
+            "upper": 0.5214723926380368
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.44505494505494503,
+            "lower": 0.3770491803278688,
+            "upper": 0.5164835164835165
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.4504950495049505,
+          "n_errors": 91,
+          "D_0.5": {
+            "point": -0.13366336633663367,
+            "lower": -0.21287128712871284,
+            "upper": -0.07318724519510779
+          },
+          "D_0.6": {
+            "point": -0.1062327544229833,
+            "lower": -0.16277973958931283,
+            "upper": -0.04788455904766813
+          },
+          "D_0.7": {
+            "point": -0.05612885232185194,
+            "lower": -0.09915806721517223,
+            "upper": -0.0020722670858635663
+          },
+          "D_0.8": {
+            "point": -0.006050605060506087,
+            "lower": -0.04308917002811396,
+            "upper": 0.02982520474269651
+          },
+          "D_0.9": {
+            "point": -0.0054401044500054785,
+            "lower": -0.026973118953021482,
+            "upper": 0.0193776520509193
+          }
+        },
+        "M2": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.31038238353450354,
+            "lower": 0.23500765013410016,
+            "upper": 0.3962888931648692
+          },
+          "aurc_trapezoid": {
+            "point": 0.3092672967783031,
+            "lower": 0.23458838123703998,
+            "upper": 0.3933325599314172
+          },
+          "risk_0.5": {
+            "point": 0.31683168316831684,
+            "lower": 0.21782178217821782,
+            "upper": 0.39603960396039606
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.3442622950819672,
+            "lower": 0.25203252032520324,
+            "upper": 0.4355094726062467
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.39436619718309857,
+            "lower": 0.30985915492957744,
+            "upper": 0.4859154929577465
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.4444444444444444,
+            "lower": 0.36809815950920244,
+            "upper": 0.5214723926380368
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.44505494505494503,
+            "lower": 0.3770491803278688,
+            "upper": 0.5164835164835165
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.4504950495049505,
+          "n_errors": 91,
+          "D_0.5": {
+            "point": -0.13366336633663367,
+            "lower": -0.21287128712871284,
+            "upper": -0.07318724519510779
+          },
+          "D_0.6": {
+            "point": -0.1062327544229833,
+            "lower": -0.16277973958931283,
+            "upper": -0.04788455904766813
+          },
+          "D_0.7": {
+            "point": -0.05612885232185194,
+            "lower": -0.09915806721517223,
+            "upper": -0.0020722670858635663
+          },
+          "D_0.8": {
+            "point": -0.006050605060506087,
+            "lower": -0.04308917002811396,
+            "upper": 0.02982520474269651
+          },
+          "D_0.9": {
+            "point": -0.0054401044500054785,
+            "lower": -0.026973118953021482,
+            "upper": 0.0193776520509193
+          }
+        },
+        "M3": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.2901795900889756,
+            "lower": 0.22003429582720319,
+            "upper": 0.3696369610921511
+          },
+          "aurc_trapezoid": {
+            "point": 0.2890645033327752,
+            "lower": 0.21870223474328263,
+            "upper": 0.3666003774428029
+          },
+          "risk_0.5": {
+            "point": 0.26732673267326734,
+            "lower": 0.19607843137254902,
+            "upper": 0.38613861386138615
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.3442622950819672,
+            "lower": 0.2601626016260163,
+            "upper": 0.4435483870967742
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.39436619718309857,
+            "lower": 0.31690140845070425,
+            "upper": 0.48951048951048953
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.4444444444444444,
+            "lower": 0.37031356509884117,
+            "upper": 0.5215528667727027
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.45604395604395603,
+            "lower": 0.3825136612021858,
+            "upper": 0.521978021978022
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.4504950495049505,
+          "n_errors": 91,
+          "D_0.5": {
+            "point": -0.18316831683168316,
+            "lower": -0.23030722189866046,
+            "upper": -0.08910891089108913
+          },
+          "D_0.6": {
+            "point": -0.1062327544229833,
+            "lower": -0.15642535065181848,
+            "upper": -0.04082129524427852
+          },
+          "D_0.7": {
+            "point": -0.05612885232185194,
+            "lower": -0.09705759308325196,
+            "upper": 0.004188746339422619
+          },
+          "D_0.8": {
+            "point": -0.006050605060506087,
+            "lower": -0.04063673835004497,
+            "upper": 0.03356339468302653
+          },
+          "D_0.9": {
+            "point": 0.005548906539005527,
+            "lower": -0.022216048843219732,
+            "upper": 0.022576433467522583
+          }
+        },
+        "M4": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.39304284185871213,
+            "lower": 0.2961564734881671,
+            "upper": 0.4909794040904188
+          },
+          "aurc_trapezoid": {
+            "point": 0.3921238143123932,
+            "lower": 0.2951332587977708,
+            "upper": 0.4868659527275296
+          },
+          "risk_0.5": {
+            "point": 0.38613861386138615,
+            "lower": 0.291158800346054,
+            "upper": 0.48514851485148514
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.3524590163934426,
+            "lower": 0.27049180327868855,
+            "upper": 0.44264608672659955
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.38028169014084506,
+            "lower": 0.2937062937062937,
+            "upper": 0.45774647887323944
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.3765432098765432,
+            "lower": 0.30246913580246915,
+            "upper": 0.4512887176417773
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.36813186813186816,
+            "lower": 0.3005464480874317,
+            "upper": 0.44021739130434784
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.3712871287128713,
+          "n_errors": 75,
+          "D_0.5": {
+            "point": 0.014851485148514865,
+            "lower": -0.05445544554455445,
+            "upper": 0.08415841584158412
+          },
+          "D_0.6": {
+            "point": -0.018828112319428658,
+            "lower": -0.06614186008764811,
+            "upper": 0.044880943342879995
+          },
+          "D_0.7": {
+            "point": 0.00899456142797378,
+            "lower": -0.03688467438293125,
+            "upper": 0.05202414201333457
+          },
+          "D_0.8": {
+            "point": 0.005256081163671933,
+            "lower": -0.029155971152670806,
+            "upper": 0.04100965652120764
+          },
+          "D_0.9": {
+            "point": -0.0031552605810031276,
+            "lower": -0.025812232862630513,
+            "upper": 0.020512422990338872
+          }
+        },
+        "M5": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.31038238353450354,
+            "lower": 0.23500765013410016,
+            "upper": 0.3962888931648692
+          },
+          "aurc_trapezoid": {
+            "point": 0.3092672967783031,
+            "lower": 0.23458838123703998,
+            "upper": 0.3933325599314172
+          },
+          "risk_0.5": {
+            "point": 0.31683168316831684,
+            "lower": 0.21782178217821782,
+            "upper": 0.39603960396039606
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.3442622950819672,
+            "lower": 0.25203252032520324,
+            "upper": 0.4355094726062467
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.39436619718309857,
+            "lower": 0.30985915492957744,
+            "upper": 0.4859154929577465
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.4444444444444444,
+            "lower": 0.36809815950920244,
+            "upper": 0.5214723926380368
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.44505494505494503,
+            "lower": 0.3770491803278688,
+            "upper": 0.5164835164835165
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.4504950495049505,
+          "n_errors": 91,
+          "D_0.5": {
+            "point": -0.13366336633663367,
+            "lower": -0.21287128712871284,
+            "upper": -0.07318724519510779
+          },
+          "D_0.6": {
+            "point": -0.1062327544229833,
+            "lower": -0.16277973958931283,
+            "upper": -0.04788455904766813
+          },
+          "D_0.7": {
+            "point": -0.05612885232185194,
+            "lower": -0.09915806721517223,
+            "upper": -0.0020722670858635663
+          },
+          "D_0.8": {
+            "point": -0.006050605060506087,
+            "lower": -0.04308917002811396,
+            "upper": 0.02982520474269651
+          },
+          "D_0.9": {
+            "point": -0.0054401044500054785,
+            "lower": -0.026973118953021482,
+            "upper": 0.0193776520509193
+          }
+        },
+        "M6": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.5892212150002819,
+            "lower": 0.4911316433684857,
+            "upper": 0.6820245931577362
+          },
+          "aurc_trapezoid": {
+            "point": 0.5878120394292594,
+            "lower": 0.4892995543247109,
+            "upper": 0.6777820494897365
+          },
+          "risk_0.5": {
+            "point": 0.6237623762376238,
+            "lower": 0.5392156862745098,
+            "upper": 0.7254901960784313
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.6147540983606558,
+            "lower": 0.5327868852459017,
+            "upper": 0.7049180327868853
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.6267605633802817,
+            "lower": 0.5422535211267606,
+            "upper": 0.704225352112676
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.5987654320987654,
+            "lower": 0.5246913580246914,
+            "upper": 0.6790123456790124
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.5934065934065934,
+            "lower": 0.5136612021857924,
+            "upper": 0.6612021857923497
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.5693069306930693,
+          "n_errors": 115,
+          "D_0.5": {
+            "point": 0.054455445544554504,
+            "lower": -0.004950495049504955,
+            "upper": 0.13181906425936707
+          },
+          "D_0.6": {
+            "point": 0.0454471676675865,
+            "lower": -0.004076042850186636,
+            "upper": 0.11149581421556787
+          },
+          "D_0.7": {
+            "point": 0.057453632687212486,
+            "lower": 0.007587103340615776,
+            "upper": 0.09970715381397299
+          },
+          "D_0.8": {
+            "point": 0.02945850140569617,
+            "lower": 0.0009763476347635165,
+            "upper": 0.06765829360713847
+          },
+          "D_0.9": {
+            "point": 0.02409966271352415,
+            "lower": -0.0013345646400345075,
+            "upper": 0.04335914856122612
+          }
+        }
+      },
+      "conformal": {
+        "0.05": {
+          "quantile": 0.777272037215785,
+          "coverage": 0.9158415841584159,
+          "abstention_rate": 0.6831683168316832,
+          "empty_count": 0,
+          "full_count": 138,
+          "singleton_count": 64,
+          "singleton_true_label_fraction": 0.734375,
+          "deviation": {
+            "point": -0.03415841584158408,
+            "lower": -0.23712871287128712,
+            "upper": 0.050000000000000044,
+            "half_width": 0.14356435643564358
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.1": {
+          "quantile": 0.6621428457682237,
+          "coverage": 0.7277227722772277,
+          "abstention_rate": 0.3069306930693069,
+          "empty_count": 0,
+          "full_count": 62,
+          "singleton_count": 140,
+          "singleton_true_label_fraction": 0.6071428571428571,
+          "deviation": {
+            "point": -0.17227722772277232,
+            "lower": -0.3900990099009901,
+            "upper": -0.0038366336633670153,
+            "half_width": 0.19313118811881155
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.2": {
+          "quantile": 0.3923337643879117,
+          "coverage": 0.4504950495049505,
+          "abstention_rate": 0.17326732673267325,
+          "empty_count": 35,
+          "full_count": 0,
+          "singleton_count": 167,
+          "singleton_true_label_fraction": 0.5449101796407185,
+          "deviation": {
+            "point": -0.34950495049504954,
+            "lower": -0.45841584158415843,
+            "upper": -0.205940594059406,
+            "half_width": 0.1262376237623762
+          },
+          "coverage_labels": {
+            "0.07": "degraded",
+            "0.05": "degraded"
+          }
+        }
+      },
+      "oracle_aurc": 0.2029457896284678,
+      "c5_adjacent": {
+        "0.5-0.6": {
+          "point": -0.02743061191365037,
+          "lower": -0.09129283250784329,
+          "upper": 0.015323682600400065,
+          "p_value": "4/23",
+          "p_adjusted": "16/69"
+        },
+        "0.6-0.7": {
+          "point": -0.05010390210113136,
+          "lower": -0.08532067122290363,
+          "upper": -0.018164622262982943,
+          "p_value": "4/667",
+          "p_adjusted": "12/667"
+        },
+        "0.7-0.8": {
+          "point": -0.050078247261345854,
+          "lower": -0.07349432527338537,
+          "upper": -0.015674910729276702,
+          "p_value": "6/667",
+          "p_adjusted": "12/667"
+        },
+        "0.8-0.9": {
+          "point": -0.0006105006105006083,
+          "lower": -0.035612535612535634,
+          "upper": 0.029365589155977655,
+          "p_value": "1922/2001",
+          "p_adjusted": "1922/2001"
+        }
+      },
+      "c6_enrichment": {
+        "0.5": {
+          "observed": 0.13366336633663362,
+          "p_value": "3/10001",
+          "n_rejected": 101,
+          "rejected_but_correct_rate": 0.4158415841584159,
+          "p_adjusted": "15/20002"
+        },
+        "0.6": {
+          "observed": 0.16200495049504954,
+          "p_value": "3/10001",
+          "n_rejected": 80,
+          "rejected_but_correct_rate": 0.38749999999999996,
+          "p_adjusted": "15/20002"
+        },
+        "0.7": {
+          "observed": 0.13283828382838286,
+          "p_value": "112/10001",
+          "n_rejected": 60,
+          "rejected_but_correct_rate": 0.41666666666666663,
+          "p_adjusted": "560/30003"
+        },
+        "0.8": {
+          "observed": 0.02450495049504947,
+          "p_value": "4255/10001",
+          "n_rejected": 40,
+          "rejected_but_correct_rate": 0.525,
+          "p_adjusted": "4255/10001"
+        },
+        "0.9": {
+          "observed": 0.04950495049504949,
+          "p_value": "4005/10001",
+          "n_rejected": 20,
+          "rejected_but_correct_rate": 0.5,
+          "p_adjusted": "4255/10001"
+        }
+      },
+      "claims": {
+        "C3": "inconclusive at this n",
+        "C4": "refuted",
+        "C5": "supported",
+        "C6": "inconclusive at this n"
+      }
+    },
+    "drop_t2": {
+      "n": 202,
+      "n_positive": 80,
+      "n_errors": 26,
+      "always_predict_risk": 0.12871287128712872,
+      "auroc": 0.9369877049180327,
+      "auprc": 0.915026997560515,
+      "calibration": {
+        "M1": {
+          "ece": 0.1589174541335848,
+          "brier": 0.11676188069688082
+        },
+        "M2": {
+          "ece": 0.15170979101208207,
+          "brier": 0.12243502073987791
+        }
+      },
+      "mechanisms": {
+        "M1": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.039554363128503425,
+            "lower": 0.0205919389858565,
+            "upper": 0.06658511751467668
+          },
+          "aurc_trapezoid": {
+            "point": 0.03923576691244617,
+            "lower": 0.020252933194641002,
+            "upper": 0.06545334735388578
+          },
+          "risk_0.5": {
+            "point": 0.019801980198019802,
+            "lower": 0.0,
+            "upper": 0.0594059405940594
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.02459016393442623,
+            "lower": 0.0,
+            "upper": 0.07377049180327869
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.07042253521126761,
+            "lower": 0.02112676056338028,
+            "upper": 0.11888111888111888
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.08024691358024691,
+            "lower": 0.043209876543209874,
+            "upper": 0.13416691605566353
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.10989010989010989,
+            "lower": 0.06043956043956044,
+            "upper": 0.15934065934065933
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.12871287128712872,
+          "n_errors": 26,
+          "D_0.5": {
+            "point": -0.10891089108910891,
+            "lower": -0.15346534653465346,
+            "upper": -0.06435643564356436
+          },
+          "D_0.6": {
+            "point": -0.10412270735270249,
+            "lower": -0.1421872627506008,
+            "upper": -0.05786398311962343
+          },
+          "D_0.7": {
+            "point": -0.05829033607586111,
+            "lower": -0.10054385720262167,
+            "upper": -0.02593586688029585
+          },
+          "D_0.8": {
+            "point": -0.04846595770688181,
+            "lower": -0.07867265714301491,
+            "upper": -0.01747758109144249
+          },
+          "D_0.9": {
+            "point": -0.018822761397018828,
+            "lower": -0.04437118635300749,
+            "upper": 0.0008927122220418748
+          }
+        },
+        "M2": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.039554363128503425,
+            "lower": 0.0205919389858565,
+            "upper": 0.06658511751467668
+          },
+          "aurc_trapezoid": {
+            "point": 0.03923576691244617,
+            "lower": 0.020252933194641002,
+            "upper": 0.06545334735388578
+          },
+          "risk_0.5": {
+            "point": 0.019801980198019802,
+            "lower": 0.0,
+            "upper": 0.0594059405940594
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.02459016393442623,
+            "lower": 0.0,
+            "upper": 0.07377049180327869
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.07042253521126761,
+            "lower": 0.02112676056338028,
+            "upper": 0.11888111888111888
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.08024691358024691,
+            "lower": 0.043209876543209874,
+            "upper": 0.13416691605566353
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.10989010989010989,
+            "lower": 0.06043956043956044,
+            "upper": 0.15934065934065933
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.12871287128712872,
+          "n_errors": 26,
+          "D_0.5": {
+            "point": -0.10891089108910891,
+            "lower": -0.15346534653465346,
+            "upper": -0.06435643564356436
+          },
+          "D_0.6": {
+            "point": -0.10412270735270249,
+            "lower": -0.1421872627506008,
+            "upper": -0.05786398311962343
+          },
+          "D_0.7": {
+            "point": -0.05829033607586111,
+            "lower": -0.10054385720262167,
+            "upper": -0.02593586688029585
+          },
+          "D_0.8": {
+            "point": -0.04846595770688181,
+            "lower": -0.07867265714301491,
+            "upper": -0.01747758109144249
+          },
+          "D_0.9": {
+            "point": -0.018822761397018828,
+            "lower": -0.04437118635300749,
+            "upper": 0.0008927122220418748
+          }
+        },
+        "M3": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.03926469813125777,
+            "lower": 0.019572597288542555,
+            "upper": 0.06746517782728055
+          },
+          "aurc_trapezoid": {
+            "point": 0.038946101915200516,
+            "lower": 0.019185174759764237,
+            "upper": 0.06636197775308489
+          },
+          "risk_0.5": {
+            "point": 0.0297029702970297,
+            "lower": 0.0,
+            "upper": 0.0594059405940594
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.03278688524590164,
+            "lower": 0.008064516129032258,
+            "upper": 0.07317073170731707
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.04929577464788732,
+            "lower": 0.014084507042253521,
+            "upper": 0.09791933418693972
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.07407407407407407,
+            "lower": 0.037037037037037035,
+            "upper": 0.12883435582822086
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.10989010989010989,
+            "lower": 0.06043956043956044,
+            "upper": 0.16393442622950818
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.12871287128712872,
+          "n_errors": 26,
+          "D_0.5": {
+            "point": -0.09900990099009901,
+            "lower": -0.1485148514851485,
+            "upper": -0.05940594059405941
+          },
+          "D_0.6": {
+            "point": -0.09592598604122707,
+            "lower": -0.13971599479020275,
+            "upper": -0.056322025645187464
+          },
+          "D_0.7": {
+            "point": -0.0794170966392414,
+            "lower": -0.1153953423511365,
+            "upper": -0.04056955803922759
+          },
+          "D_0.8": {
+            "point": -0.054638797213054646,
+            "lower": -0.0830598337611539,
+            "upper": -0.021268793546021278
+          },
+          "D_0.9": {
+            "point": -0.018822761397018828,
+            "lower": -0.044663257534544656,
+            "upper": 0.002381589510302401
+          }
+        },
+        "M4": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.17265039964898152,
+            "lower": 0.10014424042751002,
+            "upper": 0.25395095013132424
+          },
+          "aurc_trapezoid": {
+            "point": 0.17233180343292429,
+            "lower": 0.10000759572962054,
+            "upper": 0.24985372076190512
+          },
+          "risk_0.5": {
+            "point": 0.2079207920792079,
+            "lower": 0.1188118811881188,
+            "upper": 0.27722772277227725
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.1721311475409836,
+            "lower": 0.10655737704918032,
+            "upper": 0.2459016393442623
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.14788732394366197,
+            "lower": 0.0957818830792977,
+            "upper": 0.2112676056338028
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1419753086419753,
+            "lower": 0.09202453987730061,
+            "upper": 0.19753086419753085
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.13186813186813187,
+            "lower": 0.08743169398907104,
+            "upper": 0.1858178706539361
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.12871287128712872,
+          "n_errors": 26,
+          "D_0.5": {
+            "point": 0.0792079207920792,
+            "lower": 0.014822364589400104,
+            "upper": 0.11386138613861388
+          },
+          "D_0.6": {
+            "point": 0.04341827625385489,
+            "lower": 0.007547476059081307,
+            "upper": 0.07774711897419251
+          },
+          "D_0.7": {
+            "point": 0.019174452656533253,
+            "lower": -0.004881257356504881,
+            "upper": 0.04792821491656206
+          },
+          "D_0.8": {
+            "point": 0.013262437354846585,
+            "lower": -0.009053072996461214,
+            "upper": 0.030558611416697218
+          },
+          "D_0.9": {
+            "point": 0.0031552605810031553,
+            "lower": -0.009850958974477885,
+            "upper": 0.016320313350016324
+          }
+        },
+        "M5": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.039554363128503425,
+            "lower": 0.0205919389858565,
+            "upper": 0.06658511751467668
+          },
+          "aurc_trapezoid": {
+            "point": 0.03923576691244617,
+            "lower": 0.020252933194641002,
+            "upper": 0.06545334735388578
+          },
+          "risk_0.5": {
+            "point": 0.019801980198019802,
+            "lower": 0.0,
+            "upper": 0.0594059405940594
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.02459016393442623,
+            "lower": 0.0,
+            "upper": 0.07377049180327869
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.07042253521126761,
+            "lower": 0.02112676056338028,
+            "upper": 0.11888111888111888
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.08024691358024691,
+            "lower": 0.043209876543209874,
+            "upper": 0.13416691605566353
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.10989010989010989,
+            "lower": 0.06043956043956044,
+            "upper": 0.15934065934065933
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.12871287128712872,
+          "n_errors": 26,
+          "D_0.5": {
+            "point": -0.10891089108910891,
+            "lower": -0.15346534653465346,
+            "upper": -0.06435643564356436
+          },
+          "D_0.6": {
+            "point": -0.10412270735270249,
+            "lower": -0.1421872627506008,
+            "upper": -0.05786398311962343
+          },
+          "D_0.7": {
+            "point": -0.05829033607586111,
+            "lower": -0.10054385720262167,
+            "upper": -0.02593586688029585
+          },
+          "D_0.8": {
+            "point": -0.04846595770688181,
+            "lower": -0.07867265714301491,
+            "upper": -0.01747758109144249
+          },
+          "D_0.9": {
+            "point": -0.018822761397018828,
+            "lower": -0.04437118635300749,
+            "upper": 0.0008927122220418748
+          }
+        },
+        "M6": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.07828575073769241,
+            "lower": 0.04248527472642301,
+            "upper": 0.125052991917827
+          },
+          "aurc_trapezoid": {
+            "point": 0.07785687121607687,
+            "lower": 0.04198373093390768,
+            "upper": 0.12302522434776436
+          },
+          "risk_0.5": {
+            "point": 0.0594059405940594,
+            "lower": 0.009900990099009901,
+            "upper": 0.11893682225365325
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.07377049180327869,
+            "lower": 0.03278688524590164,
+            "upper": 0.13114754098360656
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.1056338028169014,
+            "lower": 0.055934343434343434,
+            "upper": 0.1619718309859155
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.12962962962962962,
+            "lower": 0.07961258804817088,
+            "upper": 0.19135802469135801
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.14835164835164835,
+            "lower": 0.0989010989010989,
+            "upper": 0.21428571428571427
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.17326732673267325,
+          "n_errors": 35,
+          "D_0.5": {
+            "point": -0.11386138613861385,
+            "lower": -0.1683168316831683,
+            "upper": -0.05940594059405942
+          },
+          "D_0.6": {
+            "point": -0.09949683492939457,
+            "lower": -0.14234702158740464,
+            "upper": -0.0470662230157442
+          },
+          "D_0.7": {
+            "point": -0.06763352391577185,
+            "lower": -0.10989033627089685,
+            "upper": -0.028762407490749115
+          },
+          "D_0.8": {
+            "point": -0.04363769710304363,
+            "lower": -0.07694811147781445,
+            "upper": -0.012712382349346046
+          },
+          "D_0.9": {
+            "point": -0.024915678381024903,
+            "lower": -0.04580567946904579,
+            "upper": 0.0020128386465020076
+          }
+        }
+      },
+      "conformal": {
+        "0.05": {
+          "quantile": 0.777272037215785,
+          "coverage": 0.995049504950495,
+          "abstention_rate": 0.6831683168316832,
+          "empty_count": 0,
+          "full_count": 138,
+          "singleton_count": 64,
+          "singleton_true_label_fraction": 0.984375,
+          "deviation": {
+            "point": 0.04504950495049509,
+            "lower": 0.020297029702970315,
+            "upper": 0.050000000000000044,
+            "half_width": 0.014851485148514865
+          },
+          "coverage_labels": {
+            "0.07": "preserved",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.1": {
+          "quantile": 0.6621428457682237,
+          "coverage": 0.9851485148514851,
+          "abstention_rate": 0.36633663366336633,
+          "empty_count": 0,
+          "full_count": 74,
+          "singleton_count": 128,
+          "singleton_true_label_fraction": 0.9765625,
+          "deviation": {
+            "point": 0.08514851485148511,
+            "lower": -0.06336633663366342,
+            "upper": 0.09999999999999998,
+            "half_width": 0.0816831683168317
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.2": {
+          "quantile": 0.3923337643879117,
+          "coverage": 0.7524752475247525,
+          "abstention_rate": 0.17326732673267325,
+          "empty_count": 35,
+          "full_count": 0,
+          "singleton_count": 167,
+          "singleton_true_label_fraction": 0.9101796407185628,
+          "deviation": {
+            "point": -0.04752475247524757,
+            "lower": -0.33960396039603963,
+            "upper": 0.09108910891089106,
+            "half_width": 0.21534653465346534
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        }
+      },
+      "oracle_aurc": 0.016567003234976965,
+      "c5_adjacent": {
+        "0.5-0.6": {
+          "point": -0.004788183736406427,
+          "lower": -0.041060426117776196,
+          "upper": 0.008525736019180025,
+          "p_value": "1756/2001",
+          "p_adjusted": "1756/2001"
+        },
+        "0.6-0.7": {
+          "point": -0.04583237127684138,
+          "lower": -0.07644880792150849,
+          "upper": 0.0,
+          "p_value": "106/2001",
+          "p_adjusted": "212/2001"
+        },
+        "0.7-0.8": {
+          "point": -0.0098243783689793,
+          "lower": -0.045905059989567024,
+          "upper": 0.0065744417165828645,
+          "p_value": "168/667",
+          "p_adjusted": "224/667"
+        },
+        "0.8-0.9": {
+          "point": -0.02964319630986298,
+          "lower": -0.05467636607857333,
+          "upper": -0.00171733208618456,
+          "p_value": "18/667",
+          "p_adjusted": "212/2001"
+        }
+      },
+      "c6_enrichment": {
+        "0.5": {
+          "observed": 0.1089108910891089,
+          "p_value": "1/10001",
+          "n_rejected": 101,
+          "rejected_but_correct_rate": 0.7623762376237624,
+          "p_adjusted": "5/20002"
+        },
+        "0.6": {
+          "observed": 0.15878712871287126,
+          "p_value": "1/10001",
+          "n_rejected": 80,
+          "rejected_but_correct_rate": 0.7125,
+          "p_adjusted": "5/20002"
+        },
+        "0.7": {
+          "observed": 0.13795379537953795,
+          "p_value": "8/10001",
+          "n_rejected": 60,
+          "rejected_but_correct_rate": 0.7333333333333334,
+          "p_adjusted": "10/10001"
+        },
+        "0.8": {
+          "observed": 0.1962871287128713,
+          "p_value": "2/10001",
+          "n_rejected": 40,
+          "rejected_but_correct_rate": 0.675,
+          "p_adjusted": "10/30003"
+        },
+        "0.9": {
+          "observed": 0.17128712871287127,
+          "p_value": "281/10001",
+          "n_rejected": 20,
+          "rejected_but_correct_rate": 0.7,
+          "p_adjusted": "281/10001"
+        }
+      },
+      "claims": {
+        "C3": "inconclusive at this n",
+        "C4": "refuted",
+        "C5": "supported",
+        "C6": "supported"
+      }
+    },
+    "drop_flair": {
+      "n": 202,
+      "n_positive": 80,
+      "n_errors": 41,
+      "always_predict_risk": 0.20297029702970298,
+      "auroc": 0.8561475409836066,
+      "auprc": 0.8342808325915545,
+      "calibration": {
+        "M1": {
+          "ece": 0.07653971055077648,
+          "brier": 0.1479914720782612
+        },
+        "M2": {
+          "ece": 0.06773916403923684,
+          "brier": 0.14985328113459886
+        }
+      },
+      "mechanisms": {
+        "M1": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.10108680129700627,
+            "lower": 0.06179698654418596,
+            "upper": 0.15156382922073097
+          },
+          "aurc_trapezoid": {
+            "point": 0.1005843995716852,
+            "lower": 0.061190682430810106,
+            "upper": 0.1497913148282299
+          },
+          "risk_0.5": {
+            "point": 0.09900990099009901,
+            "lower": 0.049019607843137254,
+            "upper": 0.16831683168316833
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.11475409836065574,
+            "lower": 0.05737704918032787,
+            "upper": 0.17886178861788618
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.14788732394366197,
+            "lower": 0.08450704225352113,
+            "upper": 0.20422535211267606
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.16049382716049382,
+            "lower": 0.10427857997905132,
+            "upper": 0.21604938271604937
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.1813186813186813,
+            "lower": 0.12087912087912088,
+            "upper": 0.23626373626373626
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.20297029702970298,
+          "n_errors": 41,
+          "D_0.5": {
+            "point": -0.10396039603960397,
+            "lower": -0.1584158415841584,
+            "upper": -0.044554455445544566
+          },
+          "D_0.6": {
+            "point": -0.08821619866904724,
+            "lower": -0.13602948259640038,
+            "upper": -0.043516023006319675
+          },
+          "D_0.7": {
+            "point": -0.055082973086041015,
+            "lower": -0.09690910992507701,
+            "upper": -0.01888705528190962
+          },
+          "D_0.8": {
+            "point": -0.042476469869209166,
+            "lower": -0.07829269038014912,
+            "upper": -0.01278624794994837
+          },
+          "D_0.9": {
+            "point": -0.02165161571102167,
+            "lower": -0.05048575227726341,
+            "upper": -0.003349699724070786
+          }
+        },
+        "M2": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.10108680129700627,
+            "lower": 0.06179698654418596,
+            "upper": 0.15156382922073097
+          },
+          "aurc_trapezoid": {
+            "point": 0.1005843995716852,
+            "lower": 0.061190682430810106,
+            "upper": 0.1497913148282299
+          },
+          "risk_0.5": {
+            "point": 0.09900990099009901,
+            "lower": 0.049019607843137254,
+            "upper": 0.16831683168316833
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.11475409836065574,
+            "lower": 0.05737704918032787,
+            "upper": 0.17886178861788618
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.14788732394366197,
+            "lower": 0.08450704225352113,
+            "upper": 0.20422535211267606
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.16049382716049382,
+            "lower": 0.10427857997905132,
+            "upper": 0.21604938271604937
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.1813186813186813,
+            "lower": 0.12087912087912088,
+            "upper": 0.23626373626373626
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.20297029702970298,
+          "n_errors": 41,
+          "D_0.5": {
+            "point": -0.10396039603960397,
+            "lower": -0.1584158415841584,
+            "upper": -0.044554455445544566
+          },
+          "D_0.6": {
+            "point": -0.08821619866904724,
+            "lower": -0.13602948259640038,
+            "upper": -0.043516023006319675
+          },
+          "D_0.7": {
+            "point": -0.055082973086041015,
+            "lower": -0.09690910992507701,
+            "upper": -0.01888705528190962
+          },
+          "D_0.8": {
+            "point": -0.042476469869209166,
+            "lower": -0.07829269038014912,
+            "upper": -0.01278624794994837
+          },
+          "D_0.9": {
+            "point": -0.02165161571102167,
+            "lower": -0.05048575227726341,
+            "upper": -0.003349699724070786
+          }
+        },
+        "M3": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.10479657248533696,
+            "lower": 0.06346510001499094,
+            "upper": 0.15767116957491453
+          },
+          "aurc_trapezoid": {
+            "point": 0.1042941707600159,
+            "lower": 0.06283782043147085,
+            "upper": 0.15572349809655886
+          },
+          "risk_0.5": {
+            "point": 0.09900990099009901,
+            "lower": 0.049019607843137254,
+            "upper": 0.16831683168316833
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.11475409836065574,
+            "lower": 0.05737704918032787,
+            "upper": 0.17886178861788618
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.14084507042253522,
+            "lower": 0.08391608391608392,
+            "upper": 0.19718309859154928
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.15432098765432098,
+            "lower": 0.10493827160493827,
+            "upper": 0.21821507760532133
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.1813186813186813,
+            "lower": 0.12087912087912088,
+            "upper": 0.23626373626373626
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.20297029702970298,
+          "n_errors": 41,
+          "D_0.5": {
+            "point": -0.10396039603960397,
+            "lower": -0.15346534653465346,
+            "upper": -0.044554455445544566
+          },
+          "D_0.6": {
+            "point": -0.08821619866904724,
+            "lower": -0.13547996642926988,
+            "upper": -0.04211233565979551
+          },
+          "D_0.7": {
+            "point": -0.062125226607167766,
+            "lower": -0.10591322810504238,
+            "upper": -0.026401478175986634
+          },
+          "D_0.8": {
+            "point": -0.048649309375382005,
+            "lower": -0.07584800146681335,
+            "upper": -0.011814371621211212
+          },
+          "D_0.9": {
+            "point": -0.02165161571102167,
+            "lower": -0.046895060385159386,
+            "upper": -0.0029376564030029195
+          }
+        },
+        "M4": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.1748448822225951,
+            "lower": 0.11173430354449505,
+            "upper": 0.2488584019266819
+          },
+          "aurc_trapezoid": {
+            "point": 0.1743669878985092,
+            "lower": 0.11136490702083275,
+            "upper": 0.24676296914668372
+          },
+          "risk_0.5": {
+            "point": 0.1782178217821782,
+            "lower": 0.09900990099009901,
+            "upper": 0.2549019607843137
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.19672131147540983,
+            "lower": 0.12295081967213115,
+            "upper": 0.26229508196721313
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.18309859154929578,
+            "lower": 0.11971830985915492,
+            "upper": 0.2517482517482518
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.18518518518518517,
+            "lower": 0.12883435582822086,
+            "upper": 0.25308641975308643
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.19230769230769232,
+            "lower": 0.13736263736263737,
+            "upper": 0.25274725274725274
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.19306930693069307,
+          "n_errors": 39,
+          "D_0.5": {
+            "point": -0.014851485148514865,
+            "lower": -0.07428169287516988,
+            "upper": 0.03960396039603961
+          },
+          "D_0.6": {
+            "point": 0.003652004544716758,
+            "lower": -0.04878482493939506,
+            "upper": 0.04138938484012336
+          },
+          "D_0.7": {
+            "point": -0.009970715381397294,
+            "lower": -0.0522262441154266,
+            "upper": 0.028657091061218803
+          },
+          "D_0.8": {
+            "point": -0.0078841217455079,
+            "lower": -0.039972191663610816,
+            "upper": 0.02786945361202786
+          },
+          "D_0.9": {
+            "point": -0.0007616146230007559,
+            "lower": -0.0200256413229145,
+            "upper": 0.01735529322162986
+          }
+        },
+        "M5": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.10108680129700627,
+            "lower": 0.06179698654418596,
+            "upper": 0.15156382922073097
+          },
+          "aurc_trapezoid": {
+            "point": 0.1005843995716852,
+            "lower": 0.061190682430810106,
+            "upper": 0.1497913148282299
+          },
+          "risk_0.5": {
+            "point": 0.09900990099009901,
+            "lower": 0.049019607843137254,
+            "upper": 0.16831683168316833
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.11475409836065574,
+            "lower": 0.05737704918032787,
+            "upper": 0.17886178861788618
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.14788732394366197,
+            "lower": 0.08450704225352113,
+            "upper": 0.20422535211267606
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.16049382716049382,
+            "lower": 0.10427857997905132,
+            "upper": 0.21604938271604937
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.1813186813186813,
+            "lower": 0.12087912087912088,
+            "upper": 0.23626373626373626
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.20297029702970298,
+          "n_errors": 41,
+          "D_0.5": {
+            "point": -0.10396039603960397,
+            "lower": -0.1584158415841584,
+            "upper": -0.044554455445544566
+          },
+          "D_0.6": {
+            "point": -0.08821619866904724,
+            "lower": -0.13602948259640038,
+            "upper": -0.043516023006319675
+          },
+          "D_0.7": {
+            "point": -0.055082973086041015,
+            "lower": -0.09690910992507701,
+            "upper": -0.01888705528190962
+          },
+          "D_0.8": {
+            "point": -0.042476469869209166,
+            "lower": -0.07829269038014912,
+            "upper": -0.01278624794994837
+          },
+          "D_0.9": {
+            "point": -0.02165161571102167,
+            "lower": -0.05048575227726341,
+            "upper": -0.003349699724070786
+          }
+        },
+        "M6": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.25511398239206523,
+            "lower": 0.19327271421933762,
+            "upper": 0.3279546664452384
+          },
+          "aurc_trapezoid": {
+            "point": 0.2540969252408055,
+            "lower": 0.19224447085561966,
+            "upper": 0.32531368049768106
+          },
+          "risk_0.5": {
+            "point": 0.27722772277227725,
+            "lower": 0.18811881188118812,
+            "upper": 0.38613861386138615
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.3442622950819672,
+            "lower": 0.2540983606557377,
+            "upper": 0.4355723839496455
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.36619718309859156,
+            "lower": 0.293655303030303,
+            "upper": 0.4507042253521127
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.38271604938271603,
+            "lower": 0.3067484662576687,
+            "upper": 0.4573872138261256
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.38461538461538464,
+            "lower": 0.31868131868131866,
+            "upper": 0.45901639344262296
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.41089108910891087,
+          "n_errors": 83,
+          "D_0.5": {
+            "point": -0.13366336633663362,
+            "lower": -0.198019801980198,
+            "upper": -0.0530892059794215
+          },
+          "D_0.6": {
+            "point": -0.06662879402694366,
+            "lower": -0.1260398068495374,
+            "upper": -0.007385164745982775
+          },
+          "D_0.7": {
+            "point": -0.044693906010319306,
+            "lower": -0.08618044903081862,
+            "upper": 0.004927200466525479
+          },
+          "D_0.8": {
+            "point": -0.02817503972619484,
+            "lower": -0.06649706637330398,
+            "upper": 0.008235892607665683
+          },
+          "D_0.9": {
+            "point": -0.02627570449352623,
+            "lower": -0.04439936812004181,
+            "upper": 0.0011976757521311966
+          }
+        }
+      },
+      "conformal": {
+        "0.05": {
+          "quantile": 0.777272037215785,
+          "coverage": 0.9554455445544554,
+          "abstention_rate": 0.6039603960396039,
+          "empty_count": 0,
+          "full_count": 122,
+          "singleton_count": 80,
+          "singleton_true_label_fraction": 0.8875,
+          "deviation": {
+            "point": 0.00544554455445545,
+            "lower": -0.07871287128712867,
+            "upper": 0.050000000000000044,
+            "half_width": 0.06435643564356436
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.1": {
+          "quantile": 0.6621428457682237,
+          "coverage": 0.8861386138613861,
+          "abstention_rate": 0.2524752475247525,
+          "empty_count": 0,
+          "full_count": 51,
+          "singleton_count": 151,
+          "singleton_true_label_fraction": 0.847682119205298,
+          "deviation": {
+            "point": -0.013861386138613874,
+            "lower": -0.12772277227722773,
+            "upper": 0.0653465346534653,
+            "half_width": 0.09653465346534651
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.2": {
+          "quantile": 0.3923337643879117,
+          "coverage": 0.7079207920792079,
+          "abstention_rate": 0.15346534653465346,
+          "empty_count": 31,
+          "full_count": 0,
+          "singleton_count": 171,
+          "singleton_true_label_fraction": 0.8362573099415205,
+          "deviation": {
+            "point": -0.09207920792079216,
+            "lower": -0.2950495049504951,
+            "upper": 0.036633663366336555,
+            "half_width": 0.16584158415841582
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        }
+      },
+      "oracle_aurc": 0.04119694147632585,
+      "c5_adjacent": {
+        "0.5-0.6": {
+          "point": -0.015744197370556726,
+          "lower": -0.05056780917995838,
+          "upper": 0.019286403085824494,
+          "p_value": "1166/2001",
+          "p_adjusted": "1166/2001"
+        },
+        "0.6-0.7": {
+          "point": -0.03313322558300623,
+          "lower": -0.06724216265333939,
+          "upper": 0.0020780420226275687,
+          "p_value": "140/2001",
+          "p_adjusted": "172/667"
+        },
+        "0.7-0.8": {
+          "point": -0.01260650321683185,
+          "lower": -0.04407770980540933,
+          "upper": 0.011997913406364108,
+          "p_value": "698/2001",
+          "p_adjusted": "2792/6003"
+        },
+        "0.8-0.9": {
+          "point": -0.020824854158187495,
+          "lower": -0.045072561750123856,
+          "upper": 0.0056688859546857005,
+          "p_value": "86/667",
+          "p_adjusted": "172/667"
+        }
+      },
+      "c6_enrichment": {
+        "0.5": {
+          "observed": 0.10396039603960394,
+          "p_value": "4/10001",
+          "n_rejected": 101,
+          "rejected_but_correct_rate": 0.693069306930693,
+          "p_adjusted": "10/10001"
+        },
+        "0.6": {
+          "observed": 0.13452970297029704,
+          "p_value": "2/10001",
+          "n_rejected": 80,
+          "rejected_but_correct_rate": 0.6625,
+          "p_adjusted": "10/10001"
+        },
+        "0.7": {
+          "observed": 0.13036303630363033,
+          "p_value": "27/10001",
+          "n_rejected": 60,
+          "rejected_but_correct_rate": 0.6666666666666667,
+          "p_adjusted": "45/10001"
+        },
+        "0.8": {
+          "observed": 0.17202970297029702,
+          "p_value": "41/10001",
+          "n_rejected": 40,
+          "rejected_but_correct_rate": 0.625,
+          "p_adjusted": "205/40004"
+        },
+        "0.9": {
+          "observed": 0.19702970297029704,
+          "p_value": "276/10001",
+          "n_rejected": 20,
+          "rejected_but_correct_rate": 0.6,
+          "p_adjusted": "276/10001"
+        }
+      },
+      "claims": {
+        "C3": "supported",
+        "C4": "refuted",
+        "C5": "supported",
+        "C6": "supported"
+      }
+    },
+    "t1ce_flair_only": {
+      "n": 202,
+      "n_positive": 80,
+      "n_errors": 42,
+      "always_predict_risk": 0.2079207920792079,
+      "auroc": 0.909733606557377,
+      "auprc": 0.8693042604042823,
+      "calibration": {
+        "M1": {
+          "ece": 0.13312180584301195,
+          "brier": 0.1401596566232839
+        },
+        "M2": {
+          "ece": 0.13964446515897705,
+          "brier": 0.14466675918935562
+        }
+      },
+      "mechanisms": {
+        "M1": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.06390654132817762,
+            "lower": 0.037411736828682096,
+            "upper": 0.09945206777804896
+          },
+          "aurc_trapezoid": {
+            "point": 0.06339188590223899,
+            "lower": 0.03676710326167421,
+            "upper": 0.09808533115776301
+          },
+          "risk_0.5": {
+            "point": 0.019801980198019802,
+            "lower": 0.0,
+            "upper": 0.09711117456691401
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.02459016393442623,
+            "upper": 0.12295081967213115
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.09859154929577464,
+            "lower": 0.04929577464788732,
+            "upper": 0.1619718309859155
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.12962962962962962,
+            "lower": 0.07407407407407407,
+            "upper": 0.19135802469135801
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.16483516483516483,
+            "lower": 0.1092896174863388,
+            "upper": 0.2185792349726776
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.2079207920792079,
+          "n_errors": 42,
+          "D_0.5": {
+            "point": -0.18811881188118812,
+            "lower": -0.22772277227722773,
+            "upper": -0.11957872257814023
+          },
+          "D_0.6": {
+            "point": -0.14234702158740464,
+            "lower": -0.1870723657731627,
+            "upper": -0.09282018215815996
+          },
+          "D_0.7": {
+            "point": -0.10932924278343327,
+            "lower": -0.15082101520011157,
+            "upper": -0.06719219457156984
+          },
+          "D_0.8": {
+            "point": -0.07829116244957829,
+            "lower": -0.10677331622051094,
+            "upper": -0.04356933152664864
+          },
+          "D_0.9": {
+            "point": -0.04308562724404308,
+            "lower": -0.06899276466108151,
+            "upper": -0.021053204221521044
+          }
+        },
+        "M2": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.06390654132817762,
+            "lower": 0.037411736828682096,
+            "upper": 0.09945206777804896
+          },
+          "aurc_trapezoid": {
+            "point": 0.06339188590223899,
+            "lower": 0.03676710326167421,
+            "upper": 0.09808533115776301
+          },
+          "risk_0.5": {
+            "point": 0.019801980198019802,
+            "lower": 0.0,
+            "upper": 0.09711117456691401
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.02459016393442623,
+            "upper": 0.12295081967213115
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.09859154929577464,
+            "lower": 0.04929577464788732,
+            "upper": 0.1619718309859155
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.12962962962962962,
+            "lower": 0.07407407407407407,
+            "upper": 0.19135802469135801
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.16483516483516483,
+            "lower": 0.1092896174863388,
+            "upper": 0.2185792349726776
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.2079207920792079,
+          "n_errors": 42,
+          "D_0.5": {
+            "point": -0.18811881188118812,
+            "lower": -0.22772277227722773,
+            "upper": -0.11957872257814023
+          },
+          "D_0.6": {
+            "point": -0.14234702158740464,
+            "lower": -0.1870723657731627,
+            "upper": -0.09282018215815996
+          },
+          "D_0.7": {
+            "point": -0.10932924278343327,
+            "lower": -0.15082101520011157,
+            "upper": -0.06719219457156984
+          },
+          "D_0.8": {
+            "point": -0.07829116244957829,
+            "lower": -0.10677331622051094,
+            "upper": -0.04356933152664864
+          },
+          "D_0.9": {
+            "point": -0.04308562724404308,
+            "lower": -0.06899276466108151,
+            "upper": -0.021053204221521044
+          }
+        },
+        "M3": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.06499735995899784,
+            "lower": 0.03826865356156274,
+            "upper": 0.10152405237230662
+          },
+          "aurc_trapezoid": {
+            "point": 0.06448270453305922,
+            "lower": 0.03763254581506908,
+            "upper": 0.10003776875003247
+          },
+          "risk_0.5": {
+            "point": 0.039603960396039604,
+            "lower": 0.0,
+            "upper": 0.10384914819563983
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.07377049180327869,
+            "lower": 0.02459016393442623,
+            "upper": 0.12295081967213115
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.09154929577464789,
+            "lower": 0.04225352112676056,
+            "upper": 0.14788732394366197
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.12345679012345678,
+            "lower": 0.07360840939697741,
+            "upper": 0.19135802469135801
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.15934065934065933,
+            "lower": 0.1092896174863388,
+            "upper": 0.21978021978021978
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.2079207920792079,
+          "n_errors": 42,
+          "D_0.5": {
+            "point": -0.1683168316831683,
+            "lower": -0.21782178217821782,
+            "upper": -0.10997379149679676
+          },
+          "D_0.6": {
+            "point": -0.13415030027592922,
+            "lower": -0.18552537730782273,
+            "upper": -0.0897581561434832
+          },
+          "D_0.7": {
+            "point": -0.11637149630456002,
+            "lower": -0.1588375820247247,
+            "upper": -0.07536522883057535
+          },
+          "D_0.8": {
+            "point": -0.08446400195575113,
+            "lower": -0.11018973148166895,
+            "upper": -0.04464556885136367
+          },
+          "D_0.9": {
+            "point": -0.04858013273854858,
+            "lower": -0.07110216516157111,
+            "upper": -0.019416490829410816
+          }
+        },
+        "M4": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.26965509186417735,
+            "lower": 0.18180293842488787,
+            "upper": 0.36519231578100464
+          },
+          "aurc_trapezoid": {
+            "point": 0.26927522714503216,
+            "lower": 0.18100823732747223,
+            "upper": 0.359807033804338
+          },
+          "risk_0.5": {
+            "point": 0.24752475247524752,
+            "lower": 0.16666666666666666,
+            "upper": 0.3465346534653465
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.21311475409836064,
+            "lower": 0.13934426229508196,
+            "upper": 0.29508196721311475
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.19014084507042253,
+            "lower": 0.1267605633802817,
+            "upper": 0.25874125874125875
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.1728395061728395,
+            "lower": 0.11728395061728394,
+            "upper": 0.2345679012345679
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.15934065934065933,
+            "lower": 0.10989010989010989,
+            "upper": 0.21428571428571427
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.15346534653465346,
+          "n_errors": 31,
+          "D_0.5": {
+            "point": 0.09405940594059406,
+            "lower": 0.04455445544554455,
+            "upper": 0.14511745292176276
+          },
+          "D_0.6": {
+            "point": 0.05964940756370718,
+            "lower": 0.02138414569230331,
+            "upper": 0.09568251907157929
+          },
+          "D_0.7": {
+            "point": 0.03667549853576907,
+            "lower": 0.006410779722338426,
+            "upper": 0.06178182959140984
+          },
+          "D_0.8": {
+            "point": 0.019374159638186034,
+            "lower": -0.0024600619571159554,
+            "upper": 0.039115022613372435
+          },
+          "D_0.9": {
+            "point": 0.005875312806005867,
+            "lower": -0.009525005645610889,
+            "upper": 0.018496355130018488
+          }
+        },
+        "M5": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.06390654132817762,
+            "lower": 0.037411736828682096,
+            "upper": 0.09945206777804896
+          },
+          "aurc_trapezoid": {
+            "point": 0.06339188590223899,
+            "lower": 0.03676710326167421,
+            "upper": 0.09808533115776301
+          },
+          "risk_0.5": {
+            "point": 0.019801980198019802,
+            "lower": 0.0,
+            "upper": 0.09711117456691401
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.06557377049180328,
+            "lower": 0.02459016393442623,
+            "upper": 0.12295081967213115
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.09859154929577464,
+            "lower": 0.04929577464788732,
+            "upper": 0.1619718309859155
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.12962962962962962,
+            "lower": 0.07407407407407407,
+            "upper": 0.19135802469135801
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.16483516483516483,
+            "lower": 0.1092896174863388,
+            "upper": 0.2185792349726776
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.2079207920792079,
+          "n_errors": 42,
+          "D_0.5": {
+            "point": -0.18811881188118812,
+            "lower": -0.22772277227722773,
+            "upper": -0.11957872257814023
+          },
+          "D_0.6": {
+            "point": -0.14234702158740464,
+            "lower": -0.1870723657731627,
+            "upper": -0.09282018215815996
+          },
+          "D_0.7": {
+            "point": -0.10932924278343327,
+            "lower": -0.15082101520011157,
+            "upper": -0.06719219457156984
+          },
+          "D_0.8": {
+            "point": -0.07829116244957829,
+            "lower": -0.10677331622051094,
+            "upper": -0.04356933152664864
+          },
+          "D_0.9": {
+            "point": -0.04308562724404308,
+            "lower": -0.06899276466108151,
+            "upper": -0.021053204221521044
+          }
+        },
+        "M6": {
+          "aurc_mean_over_cutoffs": {
+            "point": 0.08306373388792017,
+            "lower": 0.04491804764823012,
+            "upper": 0.13424745391987505
+          },
+          "aurc_trapezoid": {
+            "point": 0.08257358586321671,
+            "lower": 0.04438817307651605,
+            "upper": 0.13245204517098072
+          },
+          "risk_0.5": {
+            "point": 0.0594059405940594,
+            "lower": 0.019417475728155338,
+            "upper": 0.1188118811881188
+          },
+          "coverage_0.5": 0.5,
+          "risk_0.6": {
+            "point": 0.07377049180327869,
+            "lower": 0.032520325203252036,
+            "upper": 0.13114754098360656
+          },
+          "coverage_0.6": 0.6039603960396039,
+          "risk_0.7": {
+            "point": 0.1056338028169014,
+            "lower": 0.04929577464788732,
+            "upper": 0.1619718309859155
+          },
+          "coverage_0.7": 0.7029702970297029,
+          "risk_0.8": {
+            "point": 0.13580246913580246,
+            "lower": 0.08023460577141558,
+            "upper": 0.19135802469135801
+          },
+          "coverage_0.8": 0.801980198019802,
+          "risk_0.9": {
+            "point": 0.15384615384615385,
+            "lower": 0.10989010989010989,
+            "upper": 0.22407449108268762
+          },
+          "coverage_0.9": 0.900990099009901,
+          "always_predict_risk": 0.19801980198019803,
+          "n_errors": 40,
+          "D_0.5": {
+            "point": -0.13861386138613863,
+            "lower": -0.18841244418559502,
+            "upper": -0.08415841584158418
+          },
+          "D_0.6": {
+            "point": -0.12424931017691934,
+            "lower": -0.17172689498458044,
+            "upper": -0.0725267648716091
+          },
+          "D_0.7": {
+            "point": -0.09238599916329662,
+            "lower": -0.13826523497420165,
+            "upper": -0.05354830986890671
+          },
+          "D_0.8": {
+            "point": -0.06221733284439557,
+            "lower": -0.09770394217335845,
+            "upper": -0.03193855769353356
+          },
+          "D_0.9": {
+            "point": -0.044173648134044174,
+            "lower": -0.05957050375367206,
+            "upper": -0.01226758901834587
+          }
+        }
+      },
+      "conformal": {
+        "0.05": {
+          "quantile": 0.777272037215785,
+          "coverage": 0.995049504950495,
+          "abstention_rate": 0.7425742574257426,
+          "empty_count": 0,
+          "full_count": 150,
+          "singleton_count": 52,
+          "singleton_true_label_fraction": 0.9807692307692307,
+          "deviation": {
+            "point": 0.04504950495049509,
+            "lower": 0.010396039603960405,
+            "upper": 0.050000000000000044,
+            "half_width": 0.01980198019801982
+          },
+          "coverage_labels": {
+            "0.07": "preserved",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.1": {
+          "quantile": 0.6621428457682237,
+          "coverage": 0.9702970297029703,
+          "abstention_rate": 0.4405940594059406,
+          "empty_count": 0,
+          "full_count": 89,
+          "singleton_count": 113,
+          "singleton_true_label_fraction": 0.9469026548672567,
+          "deviation": {
+            "point": 0.07029702970297025,
+            "lower": -0.13267326732673268,
+            "upper": 0.09999999999999998,
+            "half_width": 0.11633663366336633
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        },
+        "0.2": {
+          "quantile": 0.3923337643879117,
+          "coverage": 0.6683168316831684,
+          "abstention_rate": 0.24752475247524752,
+          "empty_count": 50,
+          "full_count": 0,
+          "singleton_count": 152,
+          "singleton_true_label_fraction": 0.8881578947368421,
+          "deviation": {
+            "point": -0.1316831683168317,
+            "lower": -0.40891089108910894,
+            "upper": 0.04158415841584151,
+            "half_width": 0.22524752475247523
+          },
+          "coverage_labels": {
+            "0.07": "indeterminate",
+            "0.05": "indeterminate"
+          }
+        }
+      },
+      "oracle_aurc": 0.04323105577884521,
+      "c5_adjacent": {
+        "0.5-0.6": {
+          "point": -0.045771790293783476,
+          "lower": -0.07317073170731707,
+          "upper": 0.00048251520591527646,
+          "p_value": "110/2001",
+          "p_adjusted": "112/2001"
+        },
+        "0.6-0.7": {
+          "point": -0.03301777880397136,
+          "lower": -0.06511529226693162,
+          "upper": 0.0010390210113137843,
+          "p_value": "112/2001",
+          "p_adjusted": "112/2001"
+        },
+        "0.7-0.8": {
+          "point": -0.03103808033385498,
+          "lower": -0.06372391227824642,
+          "upper": -0.004578926875633582,
+          "p_value": "16/667",
+          "p_adjusted": "32/667"
+        },
+        "0.8-0.9": {
+          "point": -0.03520553520553521,
+          "lower": -0.056862821787894716,
+          "upper": -0.0035951702618369358,
+          "p_value": "34/2001",
+          "p_adjusted": "32/667"
+        }
+      },
+      "c6_enrichment": {
+        "0.5": {
+          "observed": 0.18811881188118815,
+          "p_value": "1/10001",
+          "n_rejected": 101,
+          "rejected_but_correct_rate": 0.6039603960396039,
+          "p_adjusted": "5/40004"
+        },
+        "0.6": {
+          "observed": 0.21707920792079208,
+          "p_value": "1/10001",
+          "n_rejected": 80,
+          "rejected_but_correct_rate": 0.575,
+          "p_adjusted": "5/40004"
+        },
+        "0.7": {
+          "observed": 0.2587458745874588,
+          "p_value": "1/10001",
+          "n_rejected": 60,
+          "rejected_but_correct_rate": 0.5333333333333333,
+          "p_adjusted": "5/40004"
+        },
+        "0.8": {
+          "observed": 0.31707920792079214,
+          "p_value": "1/10001",
+          "n_rejected": 40,
+          "rejected_but_correct_rate": 0.475,
+          "p_adjusted": "5/40004"
+        },
+        "0.9": {
+          "observed": 0.3920792079207921,
+          "p_value": "2/10001",
+          "n_rejected": 20,
+          "rejected_but_correct_rate": 0.4,
+          "p_adjusted": "2/10001"
+        }
+      },
+      "claims": {
+        "C3": "supported",
+        "C4": "refuted",
+        "C5": "supported",
+        "C6": "supported"
+      }
+    }
+  },
+  "ablations": {
+    "R7": {
+      "n": 202,
+      "auroc": 0.9044057377049181,
+      "auprc": 0.8762964390845026,
+      "aurc_mean_over_cutoffs": 0.0901919544720286,
+      "ece": 0.11801785059125706,
+      "brier": 0.13727356649845235,
+      "coverage": 1.0,
+      "delong_vs_R2": {
+        "difference": -0.02418032786885249,
+        "variance": 0.00014999126505076506,
+        "p_value": 0.048339346858190045
+      },
+      "aurc_vs_R2": {
+        "point": 0.03966446990510389,
+        "lower": 0.01597727470238529,
+        "upper": 0.06782056625843857,
+        "p_value": "2/2001"
+      }
+    },
+    "R8": {
+      "n": 202,
+      "auroc": 0.9269467213114754,
+      "auprc": 0.9051594347495573,
+      "aurc_mean_over_cutoffs": 0.0756403181990247,
+      "ece": 0.14169574235524332,
+      "brier": 0.1432496402767709,
+      "coverage": 1.0,
+      "delong_vs_R2": {
+        "difference": -0.0016393442622951726,
+        "variance": 0.0001517072808039599,
+        "p_value": 0.8941169860900324
+      },
+      "aurc_vs_R2": {
+        "point": 0.025112833632099985,
+        "lower": 0.0008665094217082761,
+        "upper": 0.05593823145200499,
+        "p_value": "28/667"
+      }
+    },
+    "R2": {
+      "n": 202,
+      "auroc": 0.9285860655737705,
+      "auprc": 0.897789537045756,
+      "aurc_mean_over_cutoffs": 0.05052748456692471,
+      "ece": 0.09663086735740267,
+      "brier": 0.11781259301521835,
+      "coverage": 1.0
+    }
+  },
+  "external_family": {
+    "A1": {
+      "point": -0.0002265176279195799,
+      "lower": -0.005225538852066346,
+      "upper": 0.005830042345601972,
+      "p_value": "594/667"
+    },
+    "A2": {
+      "point": -0.06928997272266599,
+      "lower": -0.11371607305258152,
+      "upper": -0.029165530978743425,
+      "p_value": "2/2001"
+    },
+    "A3": {
+      "point": -0.0690634550947464,
+      "lower": -0.11322116067809988,
+      "upper": -0.028812135013865217,
+      "p_value": "2/2001"
+    },
+    "B1": {
+      "point": 0.007025666701449329,
+      "lower": -0.0012394595613362818,
+      "upper": 0.016423474764111965,
+      "p_value": "214/2001"
+    },
+    "B2": {
+      "point": 0.25985489896757885,
+      "lower": 0.18983302435680924,
+      "upper": 0.3370456286316798,
+      "p_value": "2/2001"
+    },
+    "B3": {
+      "point": -0.010973121438421288,
+      "lower": -0.028759281260692295,
+      "upper": 0.007004122728824307,
+      "p_value": "436/2001"
+    },
+    "B4": {
+      "point": 0.05055931673008156,
+      "lower": 0.01685717110128205,
+      "upper": 0.08843422671856334,
+      "p_value": "2/667"
+    },
+    "B5": {
+      "point": 0.013379056761252908,
+      "lower": -0.011426478278723005,
+      "upper": 0.040343217404633674,
+      "p_value": "568/2001"
+    },
+    "C1": {
+      "point": -0.02500691345362914,
+      "lower": -0.0781785270998407,
+      "upper": 0.021050505865391356,
+      "p_value": "8/29"
+    },
+    "D1": {
+      "point": -0.009010367957233825,
+      "lower": -0.035428143837204204,
+      "upper": 0.009819235806519357,
+      "p_value": "454/2001"
+    },
+    "D2": {
+      "point": -0.0033832239510218493,
+      "lower": -0.005088663778355816,
+      "upper": -0.0015221725310580008,
+      "p_value": "2/2001"
+    },
+    "E1": {
+      "point": -0.02418032786885249,
+      "lower": -0.049699463062544,
+      "upper": -0.00040800736101199227,
+      "p_value": 0.048339346858190045
+    },
+    "E2": {
+      "point": 0.03966446990510389,
+      "lower": 0.01597727470238529,
+      "upper": 0.06782056625843857,
+      "p_value": "2/2001"
+    },
+    "E3": {
+      "point": -0.0016393442622951726,
+      "lower": -0.027464364468483375,
+      "upper": 0.023107121741088994,
+      "p_value": 0.8941169860900324
+    },
+    "E4": {
+      "point": 0.025112833632099985,
+      "lower": 0.0008665094217082761,
+      "upper": 0.05593823145200499,
+      "p_value": "28/667"
+    }
+  },
+  "supplementary_external_only_bh": {
+    "A1": "2235292465225081/2500000000000000",
+    "A2": "2/667",
+    "A3": "2/667",
+    "B1": "1070/6003",
+    "B2": "2/667",
+    "B3": "2270/7337",
+    "B4": "5/667",
+    "B5": "2840/8671",
+    "C1": "2840/8671",
+    "D1": "2270/7337",
+    "D2": "2/667",
+    "E1": "29003608114914027/320000000000000000",
+    "E2": "2/667",
+    "E3": "2235292465225081/2500000000000000",
+    "E4": "60/667"
+  },
+  "pooled_BH": "Deferred until compare: author UTSW raw p-values have not been read; external-only BH is supplementary, not the registered family.",
+  "overall_claims": {
+    "C3": "inconclusive at this n",
+    "C4": "refuted",
+    "C5": "supported",
+    "C6": "inconclusive at this n"
+  }
+}
