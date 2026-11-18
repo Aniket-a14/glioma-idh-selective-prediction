@@ -11,7 +11,7 @@ from glioma_selective.data.adapters._common import (
 )
 from glioma_selective.utils import paths
 
-__all__ = ["cohort_root", "discover_files", "identify_sequence"]
+__all__ = ["cohort_root", "discover_files", "identify_sequence", "load_labels"]
 
 
 _SEQUENCE_BY_SUFFIX: tuple[tuple[str, CanonicalSequence], ...] = (
@@ -56,3 +56,41 @@ def discover_files(root: Path | None = None) -> tuple[PatientFileInventory, ...]
     return discover_patient_files(
         root if root is not None else cohort_root(), identify_sequence
     )
+
+
+def load_labels() -> dict[str, str]:
+    """Read IDH only after Gate E, using LABEL_DEFINITIONS.md section 4."""
+    import csv
+
+    from glioma_selective.data.metadata import default_metadata_specs
+    from glioma_selective.evaluation import firewall
+    from glioma_selective.leakage.id_normalization import Cohort, normalize_identifier
+
+    firewall.assert_external_eval_authorized("ucsf_pdgm")
+    spec = next(item for item in default_metadata_specs() if item.cohort == "UCSF-PDGM")
+    mutants = {
+        "IDH1 p.R132H",
+        "IDH1 p.R132C",
+        "IDH1 p.R132G",
+        "IDH1 p.R132S",
+        "IDH1 p.Arg132His",
+        "IDH2 p.R172K",
+        "IDH2 p.Arg172Trp",
+        "mutated (NOS)",
+    }
+    result: dict[str, str] = {}
+    with spec.path.open("r", encoding="utf-8-sig", newline="") as stream:
+        reader = csv.DictReader(stream, delimiter=spec.delimiter)
+        if not {spec.identifier_column, "IDH"}.issubset(reader.fieldnames or ()):
+            raise ValueError("external metadata lacks required IDH columns")
+        for row in reader:
+            patient = normalize_identifier(
+                row[spec.identifier_column], Cohort.UCSF_PDGM
+            )
+            value = row["IDH"]
+            if patient in result or value not in mutants | {"wildtype"}:
+                raise ValueError(
+                    "external metadata has duplicate IDs or unsupported IDH"
+                )
+            result[patient] = "mutant" if value in mutants else "wildtype"
+    return result
