@@ -28,6 +28,7 @@ from glioma_selective.visualization.tables import (  # noqa: E402
 PANEL_COLUMNS = 2
 PANEL_WIDTH = 7
 PANEL_HEIGHT = 5
+COMPACT_PANEL_HEIGHT = 3.6
 FLOW_SIZE = (10, 6)
 PLOT_STYLE: dict[Any, Any] = {
     "path.simplify": False,
@@ -53,28 +54,54 @@ def figure_style() -> Iterator[None]:
         yield
 
 
-def condition_panels(conditions: list[str]) -> tuple[Figure, list[Any], list[Any]]:
-    """One condition per panel, with separate empty slots for absent cells."""
+def condition_panels(
+    conditions: list[str], absent_conditions: set[str] | None = None
+) -> tuple[Figure, list[Any], list[Any]]:
+    """One condition per panel; a slot for absent cells only where one exists.
+
+    ``absent_conditions`` names the conditions that have an absent cell. ``None``
+    keeps the original layout (a reserved slot under every panel). An empty set
+    gives compact panels with no slot, so a figure with nothing absent has no
+    blank bands; the returned slot is then ``None``.
+    """
+    reserve = absent_conditions is None or bool(absent_conditions)
     rows = (len(conditions) + PANEL_COLUMNS - 1) // PANEL_COLUMNS
-    fig = Figure(figsize=(PANEL_WIDTH * PANEL_COLUMNS, PANEL_HEIGHT * rows))
+    height = PANEL_HEIGHT if reserve else COMPACT_PANEL_HEIGHT
+    fig = Figure(figsize=(PANEL_WIDTH * PANEL_COLUMNS, height * rows))
     FigureCanvasAgg(fig)
-    grid = fig.add_gridspec(rows, PANEL_COLUMNS, hspace=0.35, wspace=0.3)
+    grid = fig.add_gridspec(
+        rows, PANEL_COLUMNS, hspace=0.35 if reserve else 0.45, wspace=0.3
+    )
     axes, slots = [], []
     for index, condition in enumerate(conditions):
-        nested = grid[index // PANEL_COLUMNS, index % PANEL_COLUMNS].subgridspec(
-            2, 1, height_ratios=(4, 1.5), hspace=0.75
-        )
-        ax = fig.add_subplot(nested[0])
+        cell = grid[index // PANEL_COLUMNS, index % PANEL_COLUMNS]
+        if reserve:
+            nested = cell.subgridspec(2, 1, height_ratios=(4, 1.5), hspace=0.75)
+            ax = fig.add_subplot(nested[0])
+            slot = fig.add_subplot(nested[1])
+            slot.set_axis_off()
+        else:
+            ax = fig.add_subplot(cell)
+            slot = None
         ax.set_title(condition_label(condition))
-        slot = fig.add_subplot(nested[1])
-        slot.set_axis_off()
         axes.append(ax)
         slots.append(slot)
     return fig, axes, slots
 
 
+def conditions_with_absent(document: dict[str, Any]) -> set[str]:
+    """Conditions in which at least one mechanism cell is absent."""
+    return {
+        condition
+        for condition, cells in document["conditions"].items()
+        if any(cells[name].get("absent") is True for name in MECHANISMS)
+    }
+
+
 def absent_slots(slot: Any, cells: dict[str, Any]) -> None:
     """Keep an empty labelled slot, including its source reason, for each absence."""
+    if slot is None:
+        return
     absent = [
         (name, cells[name]["reason"])
         for name in MECHANISMS
@@ -102,7 +129,7 @@ def probability_axes(ax: Any, xlabel: str, ylabel: str) -> None:
 def risk_coverage_figure(document: dict[str, Any]) -> tuple[Figure, str]:
     """Fig 2, including both stored interval axes at every operating point."""
     conditions = sorted(document["conditions"])
-    fig, axes, slots = condition_panels(conditions)
+    fig, axes, slots = condition_panels(conditions, conditions_with_absent(document))
     for condition, ax, slot in zip(conditions, axes, slots, strict=True):
         cells = document["conditions"][condition]
         for color_index, mechanism in enumerate(MECHANISMS):

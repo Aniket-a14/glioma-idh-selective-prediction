@@ -21,7 +21,7 @@ from glioma_selective.visualization.tables import (
 def coverage_figure(document: dict[str, Any]) -> tuple[Figure, str]:
     """Fig 3: show both named variants; the band is the frozen tolerance, not a CI."""
     conditions = sorted(document["conformal"])
-    fig, axes, _ = condition_panels(conditions)
+    fig, axes, _ = condition_panels(conditions, set())
     for condition, ax in zip(conditions, axes, strict=True):
         nominal_axis = np.asarray([0, 1])
         ax.fill_between(

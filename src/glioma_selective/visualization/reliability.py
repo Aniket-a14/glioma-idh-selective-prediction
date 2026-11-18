@@ -19,7 +19,7 @@ def reliability_figure(
 ) -> tuple[Figure, str]:
     """Fig 4 transforms logits with the stored temperature; it never refits it."""
     conditions = sorted(frames)
-    fig, axes, _ = condition_panels(conditions)
+    fig, axes, _ = condition_panels(conditions, set())
     for condition, ax in zip(conditions, axes, strict=True):
         frame = frames[condition]
         selected = frame[

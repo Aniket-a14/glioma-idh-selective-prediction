@@ -9,6 +9,7 @@ from matplotlib.figure import Figure
 from glioma_selective.visualization.risk_coverage import (
     absent_slots,
     condition_panels,
+    conditions_with_absent,
     probability_axes,
 )
 from glioma_selective.visualization.tables import MECHANISMS, operating_points
@@ -17,7 +18,7 @@ from glioma_selective.visualization.tables import MECHANISMS, operating_points
 def abstention_figure(document: dict[str, Any]) -> tuple[Figure, str]:
     """Fig 5 uses attained coverage, preserving tie-block behavior from the file."""
     conditions = sorted(document["conditions"])
-    fig, axes, slots = condition_panels(conditions)
+    fig, axes, slots = condition_panels(conditions, conditions_with_absent(document))
     for condition, ax, slot in zip(conditions, axes, slots, strict=True):
         cells = document["conditions"][condition]
         for color_index, mechanism in enumerate(MECHANISMS):
