@@ -1,4 +1,4 @@
-"""UTSW-only dataset construction for reproducible Phase 06 training."""
+"""Cohort-selected dataset construction for reproducible Phase 06 training."""
 
 from __future__ import annotations
 
@@ -168,7 +168,7 @@ def _load_utsw_labels() -> dict[str, object]:
 
 
 class IDHDataset(Dataset[dict[str, Any]]):
-    """UTSW-only IDH dataset with deterministic online augmentation."""
+    """IDH dataset; external cohort selection is guarded before label loading."""
 
     def __init__(
         self,
@@ -179,6 +179,7 @@ class IDHDataset(Dataset[dict[str, Any]]):
         augment: bool = False,
         zero_channels: Sequence[int] = (),
         storage: StageCache | Path | None = None,
+        cohort: Cohort = Cohort.UTSW,
     ) -> None:
         if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
             raise ValueError("seed must be a non-negative integer")
@@ -194,14 +195,22 @@ class IDHDataset(Dataset[dict[str, Any]]):
             for channel in channels
         ):
             raise ValueError("zero_channels entries must be indices from 0 to 3")
-        labels = _load_utsw_labels()
+        self.cohort = Cohort(cohort)
+        if self.cohort is Cohort.UTSW:
+            labels = _load_utsw_labels()
+        elif self.cohort is Cohort.UCSF_PDGM:
+            from glioma_selective.data.adapters import ucsf_pdgm
+
+            labels = dict(ucsf_pdgm.load_labels())
+        else:
+            raise ValueError("no dataset label adapter for this cohort")
         canonical_ids: list[str] = []
         dataset_labels: list[float] = []
         for patient_id in patient_ids:
             if not isinstance(patient_id, str):
                 raise ValueError("patient IDs must be UTSW strings")
             try:
-                canonical_id = normalize_identifier(patient_id, Cohort.UTSW)
+                canonical_id = normalize_identifier(patient_id, self.cohort)
             except ValueError as error:
                 raise ValueError(
                     "patient IDs must belong to the UTSW cohort"
@@ -209,7 +218,7 @@ class IDHDataset(Dataset[dict[str, Any]]):
             label = labels.get(canonical_id)
             if label is None:
                 raise ValueError("a requested UTSW patient has no IDH label")
-            idh = getattr(label, "idh", None)
+            idh = label if isinstance(label, str) else getattr(label, "idh", None)
             if idh not in {"mutant", "wildtype"}:
                 raise ValueError("a requested UTSW patient has no valid IDH label")
             canonical_ids.append(canonical_id)
@@ -244,7 +253,7 @@ class IDHDataset(Dataset[dict[str, Any]]):
         self.epoch = epoch
 
     def _patient_entry(self, patient_id: str) -> Mapping[str, object]:
-        cohorts = self._outputs.get("utsw")
+        cohorts = self._outputs.get(self.cohort.value)
         if not isinstance(cohorts, dict):
             raise ValueError("preprocessing output index has no UTSW records")
         entry = cohorts.get(patient_id)

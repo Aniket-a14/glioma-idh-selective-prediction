@@ -151,6 +151,7 @@ def write_prediction_artifact(
     git_sha: str,
     checkpoint_hash: str,
     record_git_sha: str | None = None,
+    freeze_manifest_sha256: str | None = None,
 ) -> str:
     """Validate and freeze predictions to a hashed zstd Parquet artifact.
 
@@ -181,11 +182,21 @@ def write_prediction_artifact(
     }
     if record_git_sha is not None:
         metadata[b"record_git_sha"] = record_git_sha.encode()
+    if freeze_manifest_sha256 is not None:
+        metadata[b"freeze_manifest_sha256"] = freeze_manifest_sha256.encode()
     table = pa.Table.from_pylist(validated, schema=_SCHEMA.with_metadata(metadata))
     target.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(table, target, compression="zstd")
-    digest = sha256_file(target)
-    _write_sidecar(target, digest)
+    if freeze_manifest_sha256 is None:
+        pq.write_table(table, target, compression="zstd")
+        digest = sha256_file(target)
+        _write_sidecar(target, digest)
+    else:
+        # External frozen artifacts use exclusive creation for both files.
+        with target.open("xb") as stream:
+            pq.write_table(table, stream, compression="zstd")
+        digest = sha256_file(target)
+        with sidecar.open("x", encoding="ascii") as stream:
+            stream.write(f"{digest}  {target.name}\n")
     return digest
 
 
