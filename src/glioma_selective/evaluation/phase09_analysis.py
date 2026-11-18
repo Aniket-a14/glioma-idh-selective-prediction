@@ -444,24 +444,27 @@ def _claim(
 
 
 def _patient_roster(
-    frames: dict[str, Any], predictions: Any, mc_frame: Any
+    frames: dict[str, Any],
+    predictions: Any,
+    mc_frame: Any,
+    test_cohort: str = "utsw_internal_test",
 ) -> tuple[list[str], np.ndarray]:
-    baseline = _rows(predictions, "utsw_internal_test", "full")
+    baseline = _rows(predictions, test_cohort, "full")
     ids = sorted(baseline["patient_id"].tolist())
     if len(ids) != len(set(ids)):
         raise ValueError("full internal-test patient IDs are not unique")
     baseline_labels = _aligned_values(baseline, ids)[2]
     for condition, frame in frames.items():
-        test = _rows(frame, "utsw_internal_test", condition)
+        test = _rows(frame, test_cohort, condition)
         if set(test["patient_id"].tolist()) != set(ids):
             raise ValueError(f"internal-test patient sets differ for {condition}")
         if not np.array_equal(_aligned_values(test, ids)[2], baseline_labels):
             raise ValueError(f"internal-test labels differ for {condition}")
     if mc_frame is not None:
-        mc_test = _rows(mc_frame, "utsw_internal_test", "full")
+        mc_test = _rows(mc_frame, test_cohort, "full")
         if set(mc_test["patient_id"].tolist()) != set(ids):
             raise ValueError("internal-test patient sets differ between artifacts")
-        condition_test = _rows(frames["full"], "utsw_internal_test", "full")
+        condition_test = _rows(frames["full"], test_cohort, "full")
         mc_p = (
             mc_test.set_index("patient_id").loc[ids]["p_hat"].to_numpy(dtype=np.float64)
         )
@@ -478,7 +481,10 @@ def _patient_roster(
 
 
 def _aligned_conditions(
-    frames: dict[str, Any], ids: list[str], passes: int
+    frames: dict[str, Any],
+    ids: list[str],
+    passes: int,
+    test_cohort: str = "utsw_internal_test",
 ) -> tuple[dict[str, dict[str, Any]], float, np.ndarray]:
     full_cal = _rows(frames["full"], "utsw_calibration", "full")
     full_cal_ids = sorted(full_cal["patient_id"].tolist())
@@ -488,18 +494,23 @@ def _aligned_conditions(
     aligned: dict[str, dict[str, Any]] = {}
     for condition in CONDITIONS:
         aligned[condition] = _align_condition(
-            frames[condition], condition, ids, temperature, passes
+            frames[condition], condition, ids, temperature, passes, test_cohort
         )
     return aligned, temperature, full_scaled
 
 
 def _align_condition(
-    frame: Any, condition: str, ids: list[str], full_temperature: float, passes: int
+    frame: Any,
+    condition: str,
+    ids: list[str],
+    full_temperature: float,
+    passes: int,
+    test_cohort: str = "utsw_internal_test",
 ) -> dict[str, Any]:
     calibration = _rows(frame, "utsw_calibration", condition)
     cal_ids = sorted(calibration["patient_id"].tolist())
     cal_logits, _, cal_labels = _aligned_values(calibration, cal_ids)
-    test = _rows(frame, "utsw_internal_test", condition)
+    test = _rows(frame, test_cohort, condition)
     test_logits, raw_p, labels = _aligned_values(test, ids)
     scaled_full = apply_temperature(test_logits, full_temperature)
     refit_temperature = fit_temperature(cal_logits, cal_labels)
@@ -547,7 +558,10 @@ def _condition_scores(
     )
     scores["M3"] = mc_dropout_scores(arrays["samples"])
     losses["M3"] = losses["M1"]
-    if ensemble_run_ids is not None:
+    if arrays.get("member_matrix") is not None:
+        # External scoring: the member probabilities arrive already aligned.
+        _add_member_scores(scores, losses, arrays["member_matrix"], arrays["labels"])
+    elif ensemble_run_ids is not None:
         _add_ensemble_scores(
             condition,
             ids,
@@ -622,6 +636,15 @@ def _add_ensemble_scores(
     member_matrix = _member_probabilities(
         [run_id, *ensemble_run_ids], condition, ids, checkpoint_hashes
     )
+    _add_member_scores(scores, losses, member_matrix, labels)
+
+
+def _add_member_scores(
+    scores: dict[str, list[float]],
+    losses: dict[str, np.ndarray],
+    member_matrix: np.ndarray,
+    labels: np.ndarray,
+) -> None:
     mean_probability = member_matrix.mean(axis=1)
     scores["M4"] = ensemble_variance_scores(member_matrix.tolist())
     losses["M4"] = ((mean_probability >= 0.5) != (labels == 1)).astype(np.int64)

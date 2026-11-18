@@ -128,12 +128,14 @@ def _valid_class_draws(labels: np.ndarray, indices: np.ndarray) -> np.ndarray:
     return np.asarray(valid, dtype=np.bool_)
 
 
-def _full_run_arrays(frame: Any, ids: list[str]) -> dict[str, Any]:
+def _full_run_arrays(
+    frame: Any, ids: list[str], test_cohort: str = "utsw_internal_test"
+) -> dict[str, Any]:
     cal = _rows(frame, "utsw_calibration", "full")
     cal_ids = sorted(cal["patient_id"].tolist())
     logits, _, labels = _aligned_values(cal, cal_ids)
     temperature = fit_temperature(logits, labels)
-    test = _rows(frame, "utsw_internal_test", "full")
+    test = _rows(frame, test_cohort, "full")
     test_logits, raw_p, test_labels = _aligned_values(test, ids)
     return {
         "logits": test_logits,
@@ -154,6 +156,7 @@ def _run_metrics(
     indices: np.ndarray,
     valid: np.ndarray,
     aurc: _Estimate,
+    include_segmentation: bool = True,
 ) -> tuple[dict[str, Any], dict[str, _Estimate]]:
     labels, raw_p = arrays["labels"], arrays["raw_p"]
     valid_indices = indices[valid]
@@ -199,18 +202,7 @@ def _run_metrics(
             **_metric_interval(_estimate(risk, (score_array, errors["M5"]), indices)),
             "attained_coverage": attained,
         }
-    dice = _read_dice(
-        run_dir / "segmentation_dice.json", run_id=run_id, checkpoint_hash=checkpoint
-    )
-    try:
-        internal_dice = dice["splits"]["internal_test"]
-        if not internal_dice["per_channel"]:
-            raise ValueError("internal-test segmentation Dice needs per-channel values")
-    except (KeyError, TypeError) as error:
-        raise ValueError(
-            "internal-test per-channel segmentation Dice is required"
-        ) from error
-    return {
+    result: dict[str, Any] = {
         "status": "computed",
         "run_id": run_id,
         "checkpoint_hash": checkpoint,
@@ -223,9 +215,26 @@ def _run_metrics(
         "aurc_mean_over_cutoffs": _metric_interval(aurc),
         "selective_mechanism": "M5",
         "selective_risk_at_coverage": selective,
-        "segmentation_dice": internal_dice,
-        "hd95": _internal_hd95(run_dir, run_id, checkpoint),
-    }, estimates
+    }
+    if include_segmentation:
+        dice = _read_dice(
+            run_dir / "segmentation_dice.json",
+            run_id=run_id,
+            checkpoint_hash=checkpoint,
+        )
+        try:
+            internal_dice = dice["splits"]["internal_test"]
+            if not internal_dice["per_channel"]:
+                raise ValueError(
+                    "internal-test segmentation Dice needs per-channel values"
+                )
+        except (KeyError, TypeError) as error:
+            raise ValueError(
+                "internal-test per-channel segmentation Dice is required"
+            ) from error
+        result["segmentation_dice"] = internal_dice
+        result["hd95"] = _internal_hd95(run_dir, run_id, checkpoint)
+    return result, estimates
 
 
 def _internal_hd95(run_dir: Path, run_id: str, checkpoint: str) -> dict[str, Any]:
@@ -409,6 +418,7 @@ def _internal_comparisons(
     aurcs: dict[tuple[str, str], _Estimate],
     calibration: dict[str, _Estimate],
     n: int,
+    cohort_label: str = "utsw",
 ) -> dict[str, Any]:
     pairs = {
         "A1": (aurcs["full", "M5"], aurcs["full", "M3"]),
@@ -421,7 +431,10 @@ def _internal_comparisons(
         "D1": (calibration["M1:ece"], calibration["M2:ece"]),
         "D2": (calibration["M1:brier"], calibration["M2:brier"]),
     }
-    return {key: _difference(a, b, f"utsw:{key}", n) for key, (a, b) in pairs.items()}
+    return {
+        key: _difference(a, b, f"{cohort_label}:{key}", n)
+        for key, (a, b) in pairs.items()
+    }
 
 
 def _ablation_results(
@@ -434,8 +447,16 @@ def _ablation_results(
     indices: np.ndarray,
     valid: np.ndarray,
     primary_aurc: _Estimate,
+    *,
+    data: (
+        tuple[Path, str, dict[str, Any], dict[str, list[float]], dict[str, np.ndarray]]
+        | None
+    ) = None,
+    cohort_label: str = "utsw",
+    include_segmentation: bool = True,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-    data = _ablation(ablation_id, ids, labels)
+    if data is None:
+        data = _ablation(ablation_id, ids, labels)
     if data is None:
         absent = {"status": "absent", "reason": f"{name} has no frozen predictions"}
         return dict(absent), dict(absent), dict(absent)
@@ -452,11 +473,12 @@ def _ablation_results(
         indices,
         valid,
         estimate,
+        include_segmentation,
     )
     test = delong_paired_auroc(arrays["logits"], full_arrays["logits"], labels)
     auc_a = _estimate(binary_auroc, (arrays["logits"], labels), indices[valid])
     auc_b = _estimate(binary_auroc, (full_arrays["logits"], labels), indices[valid])
-    row = _difference(auc_a, auc_b, f"utsw:E{offset}", len(ids))
+    row = _difference(auc_a, auc_b, f"{cohort_label}:E{offset}", len(ids))
     row.update(
         point=test.difference,
         p_value=test.p_value,
@@ -467,7 +489,7 @@ def _ablation_results(
     return (
         run,
         row,
-        _difference(estimate, primary_aurc, f"utsw:E{offset + 1}", len(ids)),
+        _difference(estimate, primary_aurc, f"{cohort_label}:E{offset + 1}", len(ids)),
     )
 
 
