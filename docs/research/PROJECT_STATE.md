@@ -6,7 +6,7 @@ Do not hand-edit the status block during an agent run — let the agent own it.
 ```yaml
 current_phase: 12
 status: in-progress
-claude_tasks: done         # not-started | in-progress | done
+claude_tasks: in-progress         # not-started | in-progress | done
 codex_tasks: done          # not-started | in-progress | done | none-this-phase
 integration_mode: research-lead   # research-lead | agent
 blocked_on: null
