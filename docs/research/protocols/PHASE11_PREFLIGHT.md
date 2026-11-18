@@ -99,3 +99,7 @@ home server's checkout. Both runs gave the same result.
 4. The signature (criterion 10), which only the Research Lead can give.
 
 Nothing in 1 to 3 needs the GPU. Criterion 4 is met today and is re-run on the final tree.
+
+## Update 2026-11-18: EGD deferred (D-057 resolved)
+
+The Research Lead deferred the EGD download. Effect on the checklist: criterion 9 (EGD resolved) is **met by the recorded single-cohort contingency** (D-057 alternative (b)); criterion 8 is met for the cohort that will be evaluated (UCSF-PDGM); the BH family for the first external run is 29 (criterion 7 still needs the Research Lead's confirmation, `BH_FAMILY_CONFIRMATION.md`); the EGD leakage test stays skipped. EGD is a later, separately frozen evaluation reported as an addendum. Remaining blockers: Gate D reviews (Phases 06 to 10), D-058, Person C recomputation, BH family confirmation, T11.4 signature.

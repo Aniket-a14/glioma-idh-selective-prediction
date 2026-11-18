@@ -1336,8 +1336,8 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 ---
 
-## D-057 — Does Gate E wait for EGD? (OPEN)
-**Status:** OPEN · **Blocking:** YES (Phase 11: it fixes the BH family size, the freeze manifest contents and the Gate E criterion 9 wording)
+## D-057 — Does Gate E wait for EGD? (RESOLVED 2026-11-18: alternative (b))
+**Status:** RESOLVED by the Research Lead in chat on 2026-11-18 ("leave EGD for now, it is a tough download, we will do external validation of EGD later"), read as alternative (b). Original status was OPEN · **Blocking:** YES (Phase 11: it fixes the BH family size, the freeze manifest contents and the Gate E criterion 9 wording)
 
 **Conflict.** The SAP lists the BH family as 44 tests with EGD and 29 without, and says its composition is to be confirmed at the freeze. `EXTERNAL_VALIDATION_PROTOCOL.md` section 5 says: if EGD is not granted by Phase 11, go with UCSF-PDGM alone, and treat a late EGD as a second, separately frozen evaluation that does not join the primary result. The Research Lead is now downloading EGD (2026-11-17). EGD then needs its own audit, preprocessing and manifests (Phase 02 to 04 steps for a cohort that arrives after the Phase 05 freeze) before it can be in a freeze manifest, while the other Gate E blockers (Gate D, Person C, family confirmation) are also open. The licence terms also start a three-month retention clock on the data.
 
@@ -1349,6 +1349,8 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 **Recommendation.** (c). The other open blockers cannot be cleared this week anyway, so waiting costs little at first, and the SPEC's design stays reachable. Set the cut-off date from the EGD download size and the retention clause once both are known; if EGD is not audited and preprocessed by then, go with (b) and record the degradation as the protocol requires.
 
 **Consequences.** Nothing in `freeze_spec.json` changes until this is resolved. `PHASE11_PREFLIGHT.md` criterion 9 stays open. If (a) or (c) reaches EGD before the freeze, `bh_family` in `phase10_analysis.json` needs the 15 EGD rows listed (a code change in `phase10_analysis.py` plus a CPU re-run that writes a new file beside the frozen one, as with M6).
+
+**Resolution (2026-11-18).** EGD is not downloaded now. The first external evaluation uses UCSF-PDGM alone (alternative (b)): the BH family is 29, `freeze_spec.json` carries no EGD cohort, and Gate E criterion 9 is met by recording this single-cohort contingency (`EXTERNAL_VALIDATION_PROTOCOL.md` section 5). EGD becomes a second, separately frozen evaluation with its own manifest, run later and reported as an addendum; its 15 tests and C3 on EGD do not join the primary result, and the Limitations paragraph must say so. Not yet decided: whether the EGD licence retention clock (three months from download) makes a later download practical; settle that when the download starts. `EGD_DOWNLOAD_RUNBOOK.md` stays valid for that later start. If the Research Lead meant something else (for example, delay all external validation), this entry is wrong and needs correcting.
 
 **Owner.** Research Lead. **Resolve-by:** before T11.2 is run for real.
 
