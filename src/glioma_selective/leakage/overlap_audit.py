@@ -353,9 +353,9 @@ def _load_tcga_ids(
             else "mixed_or_unexpected"
         ),
         "normalizer_format_finding": (
-            "The real GDC IDs are TCGA-XX-XXXX barcodes. T03.1's conservative "
-            "generic normalizer prepends the cohort label; this is a format "
-            "surprise to review, not a new interpretation made by T03.4."
+            "The real GDC IDs are TCGA-XX-XXXX barcodes. The TCGA normalizer "
+            "preserves them unchanged (PR #15); the earlier format surprise, "
+            "where a cohort label was prepended, no longer applies."
         ),
     }
 
