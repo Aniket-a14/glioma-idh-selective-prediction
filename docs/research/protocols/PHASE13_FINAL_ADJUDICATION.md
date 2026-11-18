@@ -42,10 +42,15 @@ Not rejected: every UTSW block A, D and E member; all UCSF A1, B1, B3, B5, C1, D
 
 R7 (whole-brain pooling) and R8 (two-stage) are not distinguishable from R2 on UTSW (E1 to E4 adjusted p between 0.26 and 0.81). On UCSF R7 is worse on AURC (0.090 against 0.051, E2 adjusted 0.005) and its AUROC difference is not significant after adjustment (E1 0.904 against 0.929, adjusted 0.156); R8 is not distinguishable (AUROC 0.927, AURC 0.076, E4 adjusted 0.152). The tumour-aware pooling choice is supported only by the R7 AURC contrast on one cohort.
 
+## Regeneration test and provenance spot-check (acceptance criteria 6 and 8)
+
+Regeneration: `build_paper_artifacts` was run twice by the Research Lead (flag set for the command) into `build/paper_artifacts_ext_a` and `..._b` with the external analysis; 38 files each (Figures 1 to 5 with UCSF-PDGM variants, Tables 1 to 6, `CLAIMS.json`, registry rows). Every file is byte-identical except `REGISTRY_ROWS.md`, which embeds the output directory name; after normalising that name it is identical too. The test ran into `build/`, not `paper/` (parked, human-owned).
+
+Provenance, three numbers traced table to analysis JSON to raw frozen parquet (UCSF `full`, R2, T = 1.1247554, conformal quantile 0.77727 from UTSW calibration): (1) Table 4 carried-over coverage at alpha 0.05, 0.98515 (200 of 202 sets cover): recomputed from `primary_seed0/full.parquet` as 0.9851485, equal. (2) Table 3 AURC (mean over cutoffs) 0.0505275: recomputed 0.0505275, equal to 1e-16. (3) Table 3 selective risk at coverage 0.5, 0.0297 (3 errors in the 101 most confident): recomputed 3 of 101 = 0.0297. These are my own checks, not the independent verification.
+
 ## Not yet done
 
 - Independent verification (T13.9) and resolution of every discrepancy.
-- Figures and tables with the external analysis, regeneration test, provenance spot-check of at least three numbers (acceptance criteria 5, 6, 8).
 - Same-day `NEGATIVE_RESULTS.md` entries for C2, C4, C6 (Research Lead places them).
 - Wide intervals at the coverage extremes are shown in the figures as computed; none were hidden by grid coarsening (to be checked on the rebuilt figures).
 - Gate F signature and the `results-freeze` tag (Research Lead).
