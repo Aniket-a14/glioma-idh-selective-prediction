@@ -1356,7 +1356,7 @@ own lr and is untouched. `base_config_sha256()` is unchanged, since it hashes th
 
 ---
 
-## D-058 — Phase 07 acceptance criteria 5 and 6 are not met as written (OPEN)
+## D-058 — Phase 07 acceptance criteria 5 and 6 are not met as written (RESOLVED 2026-11-18: alternative (a))
 **Status:** OPEN · **Blocking:** YES for Gate D of Phase 07 (and so for Gate E criterion 1) · **Found 2026-11-17** while preparing the Gate D evidence for Phases 07 to 10.
 
 **Conflict.** `PHASE_07_CALIBRATION_UNCERTAINTY.md` acceptance criteria say (5) conformal empirical coverage lands within +/-2 pp of nominal on exchangeable internal data for every alpha, and (6) temperature scaling reduces internal-test ECE against raw softmax. The scientific validation adds that if coverage does not hold under exchangeability "the implementation is wrong". On the frozen internal-test results (`PHASE07_INTERNAL_RESULTS.md`, n = 124):
@@ -1381,6 +1381,8 @@ An SD of 2.5 to 5 pp means a correct implementation misses a +/-2 pp window on o
 **Recommendation.** (a) for criterion 5 and "not met, reported" for criterion 6, both recorded as exceptions at Gate D with the evidence above. Neither changes a pre-registered rule or any frozen number.
 
 **Consequences.** Gate D for Phase 07 cannot close until the Research Lead accepts or rejects the exceptions. `PHASE07_INTERNAL_RESULTS.md` gets a pointer here. The ECE result belongs in `paper/NEGATIVE_RESULTS.md` (human-owned).
+
+**Resolution (2026-11-18).** The Research Lead approved the recommendation in chat ("Both", answering whether to accept D-058 and merge PR #15). Criterion 5: the replication check is the evidence; single-split gaps reported as found. Criterion 6: recorded as not met on R1 and R2 and reported, with the Brier improvement and the D1 interval beside it; no refit. Gate D for Phase 07 may close on these two exceptions once the independent reviewer has seen them. The ECE finding goes into `paper/NEGATIVE_RESULTS.md`.
 
 **Owner.** Research Lead. **Resolve-by:** Gate D, Phase 07.
 
