@@ -85,6 +85,12 @@ def test_generic_unseen_cohort_normalization_does_not_pad_or_guess() -> None:
     )
 
 
+@pytest.mark.parametrize("normalizer", [normalize_tcga_gbm_id, normalize_tcga_lgg_id])
+def test_tcga_gdc_barcodes_are_not_double_prefixed(normalizer) -> None:
+    assert normalizer("TCGA-12-0819") == "TCGA-12-0819"
+    assert normalizer("tcga_12_0819") == "TCGA-12-0819"
+
+
 def test_dispatch_accepts_documented_cohort_aliases() -> None:
     assert normalize_identifier("bt-0001", "UTSW-Glioma") == "UTSW-BT0001"
     assert normalize_identifier("UCSF_PDGM_004", Cohort.UCSF_PDGM) == ("UCSF-PDGM-0004")
