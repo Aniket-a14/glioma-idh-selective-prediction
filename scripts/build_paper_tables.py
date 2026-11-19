@@ -7,7 +7,7 @@ Phase 13 final analysis and the verified cohort-flow CSVs. No statistic is
 recomputed.
 
     PYTHONPATH=src:. python scripts/build_paper_tables.py \
-        --experiments /Volumes/Research_2/artifacts/experiments \
+        --experiments artifacts/experiments \
         --cohort-flow build/paper_artifacts_ext_a --out paper/generated
 """
 
@@ -262,10 +262,10 @@ def segmentation_table(i10: dict[str, Any]) -> str:
             "Dice",
             "Enh.",
             "Core",
-            "Oedema",
+            "Edema",
             "HD95 enh.",
             "HD95 core",
-            "HD95 oed.",
+            "HD95 ed.",
         ],
         rows,
     )
@@ -276,7 +276,7 @@ def probe_table(probe: dict[str, Any]) -> str:
     rows = []
     for label, point, boot, comparator in (
         (
-            "All labelled patients",
+            "All labeled patients",
             test["probe"],
             test["probe_bootstrap"],
             test["comparator_idh_probability"],
