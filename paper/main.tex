@@ -1,18 +1,24 @@
-% Draft manuscript. Every number below is a macro from generated/numbers.tex,
-% produced by scripts/build_paper_numbers.py from the frozen result files.
-% Do not type a result into the text. References are marked for the D-010
-% verify-before-cite pass; none has been checked against its source yet.
+% Conference manuscript (IEEEtran conference, 6 pages). Every result below is a
+% macro from generated/numbers.tex, produced by scripts/build_paper_numbers.py from
+% the frozen result files. Do not type a result into the text. Typed numbers are
+% cohort facts, configuration constants or pre-registered thresholds.
+% References: IEEE style, numbered in order of first citation. After editing, run
+%   python scripts/order_bibitems.py paper/main.tex
+% Entries were checked against publisher or index pages on 2026-11-19.
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 \usepackage{cite}
+% Times text as in IEEEtran under pdfLaTeX; under XeTeX (tectonic) load the same face.
+\usepackage{iftex}
+\ifPDFTeX\else\usepackage{fontspec}\setmainfont{texgyretermes}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]\fi
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
-\usepackage[hidelinks]{hyperref}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
 \input{generated/numbers.tex}
 
 \begin{document}
@@ -34,99 +40,75 @@ aniketsahaworkspace@gmail.com
 \maketitle
 
 \begin{abstract}
-% Anchored on the SPEC 8.3 sentence. The word "first" is deliberately absent:
-% it ships only after the dated novelty check (D-010, PUBLICATION_PLAN 2).
-We provide a systematic risk--coverage analysis and an empirical characterisation of conformal coverage for inference-time calibrated selective prediction in MRI-based glioma IDH classification. The question is tested, not assumed: does abstaining on low-confidence cases improve reliability, and does conformal coverage stay close to nominal, under missing MRI sequences and cross-institutional shift? A segmentation-assisted 3D network was trained on UTSW-Glioma and evaluated on its held-out test split ($n=\numNInt$) and, once, on UCSF-PDGM ($n=\numNExt$), with temperature scaling, Monte Carlo dropout, a five-member ensemble and split conformal prediction as abstention mechanisms, and with sequences removed at inference. On complete input, abstaining lowered selective risk below the always-predict risk at every coverage level on both cohorts; on UCSF-PDGM the risk at coverage 0.5 was \numExtRiskZeroFive{} against \numExtAlwaysFull{}. Four of the six pre-registered claims were not supported in at least one cohort. The advantage was lost when T1 contrast-enhanced (T1ce) was removed (C2 refuted internally), conformal coverage could not be characterised within the pre-registered tolerance because the intervals at these sample sizes are wider than the band (C4 refuted on both cohorts), and abstention was not enriched for errors under T1ce removal (C6 refuted internally). Temperature scaling did not lower expected calibration error on either cohort. We report these as negative results. The analysis was pre-registered, the external evaluation was run once under a signed freeze manifest, and every number in the text is generated from frozen result files.
+% The word "first" is deliberately absent: it ships only after the dated novelty
+% check (D-010, PUBLICATION_PLAN 2).
+We test whether abstaining on low-confidence cases makes MRI-based glioma IDH classification more reliable, and whether conformal coverage stays near nominal, under missing sequences and cross-institutional shift. A segmentation-assisted 3D network was trained on UTSW-Glioma and evaluated on its held-out test split ($n=\numNInt$) and, once, on UCSF-PDGM ($n=\numNExt$), with temperature scaling, Monte Carlo dropout, a five-member ensemble, and split conformal prediction as abstention mechanisms, and with sequences removed at inference. Six claims and their decision rules were fixed before any external result was seen. On complete input, abstaining lowered selective risk below the always-predict risk at every coverage level on both cohorts; on UCSF-PDGM the risk at coverage 0.5 was \numExtRiskZeroFive{} against \numExtAlwaysFull{}. The advantage was lost when contrast-enhanced T1 was removed, conformal coverage could not be characterized within the pre-registered $\pm0.07$ tolerance at these sample sizes, and temperature scaling did not lower calibration error. Four of six claims were not supported in at least one cohort, and we report them as negative results.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Glioma, IDH mutation, selective prediction, conformal prediction, calibration, missing modalities, domain shift.
+Calibration, conformal prediction, domain shift, glioma, IDH mutation, missing modalities, selective prediction.
 \end{IEEEkeywords}
 
 \section{Introduction}
 
-IDH mutation status drives diagnosis, prognosis and treatment planning for diffuse glioma under the WHO 2021 classification \cite{louis2021}. Obtaining it from a biopsy is invasive, so a model that predicts it from a preoperative MRI is attractive. A model that outputs a confident-looking probability for every scan is also risky. When one of the usual sequences is missing, or the scan comes from a different hospital than the training data, its confidence often stops tracking its accuracy, and it can be wrong while sounding sure.
+IDH mutation status is a defining criterion in the 2021 WHO classification of adult diffuse glioma and drives diagnosis, prognosis, and treatment planning \cite{louis2021}. Obtaining it requires tissue, so a model that predicts it from the preoperative MRI is attractive. A model that outputs a confident-looking probability for every scan is also risky. When one of the usual sequences is missing, or the scan comes from another hospital, its confidence can stop tracking its accuracy.
 
-This study asks a narrower question than ``how accurate is the model.'' Instead of forcing an answer for every case, can the classifier recognise when it should not answer and flag the case for a clinician or a laboratory test, in the two situations where MRI models are known to struggle: missing sequences and scans from another institution? Formally, a selective classifier $(f,g)$ pairs a probability estimator $f$ with an accept/abstain rule $g$. Coverage $\phi$ is the fraction of cases accepted and selective risk is the error rate on those cases. The risk--coverage curve traces selective risk as the threshold moves, and AURC is the area under it \cite{geifman2017}. We evaluate $(f,g)$ for complete and simulated missing MRI, on an internal and an external cohort, and measure how far the empirical coverage of a conformal rule drifts from its nominal level. The conformal guarantee assumes exchangeability between calibration and test data \cite{vovk2005,angelopoulos2023}, which domain shift and missing sequences violate. We do not assume it holds. The size and pattern of the deviation is what we measure.
+This study asks a narrower question than ``how accurate is the model'': can the classifier recognize when it should not answer and flag the case for a clinician, in the two situations where MRI models are known to struggle? A selective classifier $(f,g)$ pairs a probability estimator $f$ with an accept/abstain rule $g$ \cite{chow1970,geifman2017}. Coverage $\phi$ is the fraction of cases accepted and selective risk is the error rate on them; the risk--coverage curve traces selective risk as the threshold moves, and AURC is the area under it. Referral by uncertainty has helped in other imaging tasks \cite{leibig2017}, but it can fail under covariate shift, with referral curves that turn non-monotone \cite{srivastava2023}. Conformal prediction adds a coverage target that assumes exchangeability between calibration and test data \cite{vovk2005,angelopoulos2023}, which domain shift and missing sequences violate. We do not assume it holds; the size of the deviation is what we measure.
 
-The nearest glioma studies have solved the pieces separately (Section~II): discrimination is strong, missing-sequence handling exists, and calibration or a single conformal operating point has been reported. Among the five closest studies we identified, none follows the abstention decision itself through both missing sequences and an external cohort. This paper is an empirical trustworthiness study. It does not propose an architecture, and the backbone is not a contribution.
+Among the five closest glioma studies (Section~II), none follows the abstention decision through both missing sequences and an external cohort. This paper is an empirical trustworthiness study. It does not propose an architecture.
 
 \subsection{Objectives}
-We ask, for MRI-based IDH classification: (RQ1) under missing sequences and cross-institutional shift, does a calibrated selective mechanism give a well-behaved risk--coverage trade-off, so that rejecting low-confidence cases lowers selective risk and AURC relative to always predicting; (RQ2) does empirical coverage stay close to nominal, and how does breaking exchangeability affect it; (RQ3) does calibration degrade from internal to external data; and (RQ4, exploratory) does the same behaviour hold for 1p/19q codeletion given its small label count.
+We ask: (RQ1) under missing sequences and cross-institutional shift, does rejecting low-confidence cases lower selective risk and AURC relative to always predicting; (RQ2) does empirical conformal coverage stay close to nominal; (RQ3) does calibration degrade from internal to external data; and (RQ4, exploratory) does the same hold for 1p/19q codeletion.
 
 \subsection{Contributions}
 \begin{itemize}
 \item A pre-registered risk--coverage and coverage-deviation analysis of five abstention mechanisms across six input conditions on an internal and an external cohort.
-\item Six falsifiable claims, each with a fixed rule for supported, refuted and inconclusive, written before any external result was seen. We report which ones failed.
-\item A single external evaluation under a signed freeze manifest, with the analysis code tested on synthetic data first.
-\item A multiplicity-controlled family of $\numFamilySize$ comparisons (Benjamini--Hochberg, $q=0.05$), of which $\numFamilyRejected$ are rejected.
+\item Six falsifiable claims with fixed rules for supported, refuted, and inconclusive, written before any external result; we report which failed.
+\item A single external evaluation under a signed freeze manifest, and a multiplicity-controlled family of $\numFamilySize$ comparisons, of which $\numFamilyRejected$ are rejected.
 \end{itemize}
 
 \section{Related Work}
 
-\subsection{Glioma IDH prediction}
-\textbf{Elyassirad et al.}\ are the closest study \cite{elyassirad2026}. They train on UCSF and test on UPenn with complete sequences, and abstain at a single fixed conformal operating point. We add the full risk--coverage sweep, AURC, the missing-sequence axis, and the calibration metrics they do not report. \textbf{Liu et al.} (GMMAS) use uncertainty to filter pseudo-labels during training, never to gate an inference-time decision, and test no abstention, risk--coverage curve or coverage level \cite{liu2026gmmas}. \textbf{Yogananda et al.} work on the same cohort family (UTSW, UCSF, EGD) and derive a confidence score from a Bayesian logistic regression \cite{yogananda2025}; we differ in mechanism, testing abstention and risk--coverage, and they list missing sequences as an unaddressed limitation. \textbf{Liang et al.} (RISEN) estimate missing sequences by imputation and then always predict \cite{liang2026risen}; we zero the missing sequence and allow the model to abstain. \textbf{Farahani et al.} (FoundBioNet) set a discrimination ceiling with a tumour-aware foundation-style network and report neither uncertainty nor calibration \cite{farahani2025}. We approach that accuracy only as far as needed to make the trust mechanism meaningful.
+\subsection{Glioma IDH Prediction}
+Elyassirad \emph{et al.} are the closest study \cite{elyassirad2026}: they trained on UCSF data, calibrated and tested on parts of the UPenn cohort with complete sequences, and abstained at one fixed conformal operating point. We add the risk--coverage sweep, AURC, the missing-sequence axis, and calibration metrics. GMMAS uses uncertainty to filter pseudo-labels during training, never to gate an inference-time decision \cite{liu2026gmmas}. Bangalore Yogananda \emph{et al.} work on the same cohort family and attach a confidence score to each prediction but never withhold one \cite{yogananda2025}. RISEN estimates missing sequences and always predicts \cite{liang2026risen}; we zero the missing sequence and allow abstention. FoundBioNet sets a discrimination ceiling and reports no uncertainty \cite{farahani2025}. Missing-sequence robustness itself is usually obtained by modality dropout during training \cite{neverova2016}, which we use as an established recipe.
 
-Across these studies, discrimination, missing-sequence robustness and point-estimate calibration have each been addressed. We found none that turns uncertainty into an inference-time decision to withhold a prediction and then tests whether that decision stays trustworthy under both missing sequences and external shift.
+\subsection{Selective and Conformal Prediction under Shift}
+Selective classification under covariate and label shift has been analyzed formally \cite{liang2024selective}. Temperature scaling is the standard post-hoc calibration fix \cite{guo2017}; Monte Carlo dropout and deep ensembles supply alternative uncertainty scores \cite{gal2016,lakshminarayanan2017}. For classification, the score $1-\hat p(y\mid x)$ gives the smallest average conformal sets \cite{sadinle2019}, and conformal guarantees degrade under covariate shift unless reweighted \cite{tibshirani2019,barber2023}. We use the conformal target as a fixed number to measure deviation against.
 
-\subsection{Selective and conformal prediction under shift}
-Selective classification trades coverage for risk \cite{geifman2017}, and post-hoc confidence can reduce reliance on expert review even in segmentation under shift \cite{borges2024}. For classification, Hirsch and Goldberger learn an instance-dependent conformal threshold and then conformalise it, shrinking average set size at the requested coverage \cite{hirsch2024}. Lu et al.\ replace exchangeability with partial exchangeability for federated clients \cite{lu2023}, and Cheung et al.\ extend conformal bounds to reconstruction metrics rather than labels \cite{cheung2024}. These works motivate a post-hoc trust layer that can abstain, return a set, or bound an error, and each names the assumption that must be checked: calibration coverage, shift, site heterogeneity, and fit between the uncertainty target and the clinical decision. The trade can also fail. Selective classification has been analysed formally under covariate and label shift \cite{liang2024selective}, and Zadorozhny et al.\ show non-monotone referral curves and large error rises at high referral rates on retinal and chest images \cite{zadorozhny2023}. Our monotonicity claim (C5) tests that failure on glioma MRI instead of assuming it. Temperature scaling is the standard post-hoc calibration fix \cite{guo2017}; Monte Carlo dropout and deep ensembles supply alternative uncertainty scores \cite{gal2016,lakshminarayanan2017}; split conformal prediction and conformal risk control give a distribution-free target under exchangeability \cite{vovk2005,angelopoulos2023,angelopoulos2024crc}. We use the conformal target as a fixed number to measure deviations against.
-
-\subsection{Cohort overlap and leakage}
-Public brain-tumour benchmarks are not automatically independent. BraTS 2021 contains studies from TCGA-GBM, TCGA-LGG, IvyGAP and CPTAC-GBM \cite{dorfner2025}, so a cross-dataset test can place one patient on both sides unless source identifiers are reconciled. Ren et al.\ excluded patients overlapping between BraTS 2021 and the TCGA and UPenn collections before pooling five public glioma datasets \cite{ren2025}; Liu et al.\ matched identifiers and metadata, added perceptual hashing for near-identical images, and assigned each subject to one split \cite{liu2026dare}. Leakage also arises inside one collection: slice-level splits inflated brain-MRI classification accuracy by 29 to 55\% relative to subject-level splits in one study \cite{yagis2021}. We split by patient and, for the external cohort, excluded patients who also appear in BraTS 2021.
+\subsection{Cohort Overlap and Leakage}
+BraTS 2021 contains studies from TCGA and other collections \cite{dorfner2025}, so a cross-dataset test can place one patient on both sides unless identifiers are reconciled, as done before pooling public glioma datasets in \cite{ren2025}. Slice-level splits inflated brain-MRI classification accuracy by 29\% to 55\% in one study \cite{yagis2021}. We split by patient and excluded external patients who also appear in BraTS 2021.
 
 \section{Materials and Methods}
 
-\subsection{Cohorts and splits}
-UTSW-Glioma \cite{reddy2026utsw} is the only development cohort. After quality control, 616 of 625 patients remained (three without an IDH label, six with a failed skull-strip check). IDH labels in this cohort come from two assays: 413 of 622 labelled patients (66\%) by immunohistochemistry, which can miss non-R132H variants and so label them wildtype, and 209 (34\%) by sequencing. Label definitions across cohorts were harmonised by one reviewer without an independent cross-check.
+\subsection{Cohorts and Splits}
+UTSW-Glioma \cite{reddy2026utsw} is the only development cohort. After quality control, 616 of 625 patients remained. IDH labels come from immunohistochemistry (66\%) and sequencing (34\%). We split at the patient level, stratified on IDH, into 60/20/20 training (368), calibration (124), and internal-test (124) sets with a seed fixed before inspection; the test split holds $\numNIntPos$ mutant patients of $\numNInt$. A power simulation before the split showed that no feasible calibration size on this cohort brings the coverage-deviation half-width below five points. UCSF-PDGM \cite{calabrese2022ucsf} is an external cohort that is never split. Of 501 patients, 293 were excluded because they also appear in BraTS 2021 and 6 had no imaging, leaving $\numNExt$ ($\numNExtPos$ mutant). EGD is deferred.
 
-We split at the patient level, stratified on IDH only, into 60/20/20 train, calibration and internal-test sets with a seed fixed before the split was inspected. Per-class rounding gives 103 mutant and 265 wildtype patients in training (368) and 35 mutant and 89 wildtype in each of the calibration and internal-test splits (124 each). The 1p/19q categories are reported per split but not used for stratification. A power simulation run before the split showed that at this test size the 95\% bootstrap AUROC half-width is about 0.09 at a true AUROC of 0.75 and 0.06 at 0.90 (Hanley--McNeil intervals are wider), and that no feasible calibration size on this cohort brings the coverage-deviation half-width below five percentage points, while a five-point coverage grid from 0.5 to 0.9 remains usable. The internal-test split holds $\numNIntPos$ mutant patients of $\numNInt$ (prevalence $\numPrevInt$).
+\subsection{Preprocessing and Model}
+The four sequences were registered to T1ce, skull-stripped with HD-BET \cite{isensee2019hdbet}, bias-corrected with N4 \cite{tustison2010n4}, and resampled to about 1\,mm. Each volume was divided by its brain-voxel median and then standardized with per-modality statistics from the training split only; background stays zero. The classifier is a SegResNet \cite{myronenko2019segresnet} from MONAI \cite{cardoso2022monai} (32 filters, blocks $[1,2,2,4]$) with an auxiliary three-class segmentation head; features are pooled inside the predicted tumor and passed to a head with 64 units and dropout 0.2. Training used AdamW \cite{loshchilov2019adamw} (learning rate $3\times10^{-4}$), a class-weighted loss, early stopping on the calibration split, and modality dropout. Nothing was searched over. Five seeds (R2--R6) form the ensemble, with R2 primary; R7 (global pooling) and R8 (two-stage) are pre-specified ablations; R1 is R2 trained without modality dropout.
 
-UCSF-PDGM \cite{calabrese2022ucsf} is an external test cohort that is never split or used for development. Of 501 patients, 293 were excluded because they also appear in BraTS 2021 and 6 had no imaging, leaving $\numNExt$ patients ($\numNExtPos$ mutant, prevalence $\numPrevExt$). Its IDH assay was not independently re-confirmed against the original publication. The overlap exclusion shifts the label mix, so internal and external accuracy are not directly comparable. A third cohort (EGD) is deferred to a later, separately frozen evaluation.
+\subsection{Missing Sequences and Mechanisms}
+Missing sequences were simulated at inference by zeroing channels, never imputed: complete input, removal of each of T1, T1ce, T2, and FLAIR, and T1ce+FLAIR only. Each mechanism ranks patients by confidence. M1 and M2 use $\max(p,1-p)$ of the raw and temperature-scaled probability ($T=\numTemperature$, fitted once on the UTSW calibration split). M3 uses the negative entropy of 30 Monte Carlo dropout passes, and M4 the negative variance of the five ensemble members. M5 is split conformal prediction with nonconformity $1-p(\text{true class})$ and quantile $\lceil(n+1)(1-\alpha)\rceil$ for $\alpha\in\{0.05,0.1,0.2\}$, carried over unchanged to every condition and cohort. M6 is R1 with raw confidence. M1, M2, and M5 rank identically because temperature scaling is monotone.
 
-\subsection{Preprocessing}
-For each patient the four structural sequences (T1, T1ce, T2, FLAIR) were rigidly registered to T1ce, skull-stripped with HD-BET \cite{isensee2019hdbet}, bias-corrected with N4 \cite{tustison2010n4}, and resampled to about 1\,mm isotropic spacing. Raw intensity scales differ widely between patients (in the training dry run the per-patient mean T1 brain intensity ranged from 123 to 271\,321 around a median of about 565, and 7\% of patients had a modality above 5\,000), so each volume was first divided by its own positive brain-voxel median. Per-modality mean and population standard deviation were then computed from the 368 training patients' brain voxels in float64 and applied unchanged to every split and cohort. Background stays exactly zero and nothing is clipped. External volumes therefore need no statistics of their own.
+\subsection{Metrics, Claims, and Statistics}
+Selective risk is evaluated at $\phi\in\{0.5,\dots,0.9\}$; AURC is the mean risk over all cutoffs. Calibration uses ECE (10 bins) and the Brier score, and AUROC uses the Hanley--McNeil interval \cite{hanley1982}; AUROC is never reported without ECE, Brier score, AURC, and coverage. Coverage deviation is empirical minus nominal set coverage, with a two-stage bootstrap interval over calibration and test patients.
 
-\subsection{Model and training}
-The classifier is a MONAI SegResNet \cite{myronenko2019segresnet,cardoso2022monai} (32 initial filters, encoder blocks $[1,2,2,4]$) with an auxiliary three-class segmentation head (enhancing tumour, non-enhancing core, oedema). Features are pooled inside the predicted tumour region and passed to a small classification head (64 hidden units, dropout 0.2). Training used AdamW \cite{loshchilov2019adamw} (learning rate $3\times10^{-4}$, weight decay $10^{-4}$), batch size 2 with four-step accumulation, bf16, gradient clipping at 1.0, up to 300 epochs with early stopping (patience 30) on the class-balanced classification loss of the calibration split, and a mutant-class weight of 2.57. Modality dropout was applied during training: all four sequences were kept with probability 0.5, otherwise some sequences were zeroed. Nothing in the architecture or training recipe was searched over.
+Six claims were fixed before any external result. C1: selective prediction beats always predicting internally. C2: the advantage survives missing sequences. C3: it survives external shift. C4: coverage deviation can be characterized within $\pm0.07$. C5: risk--coverage curves are monotone. C6: abstention is enriched for errors. With $D(\phi)$ the selective minus always-predict risk, C1 to C3 are refuted if any point estimate of $D\ge0$ and supported if every upper 95\% limit is below 0. C4 is refuted if any interval half-width exceeds $0.07$. C5 is refuted if any adjacent-coverage lower limit is above 0. C6 is refuted if any enrichment is $\le0$ and supported if every adjusted permutation $p<0.05$. Otherwise a claim is inconclusive; the worst condition decides it.
 
-Five seeds were trained (R2 to R6). R2 is the primary model; R2 to R6 form the ensemble. Two pre-specified variants were also trained for ablation: R7 (global average pooling instead of tumour-aware pooling) and R8 (two independent networks, a segmentation network followed by a classifier that pools inside its frozen mask). A comparator, R1, uses R2's architecture but no modality dropout.
+Intervals use $\numBootDraws$ bootstrap draws with a shared index matrix; permutation tests use $\numPermDraws$ draws; AUROC differences use the DeLong test \cite{delong1988}. The confirmatory family of $\numFamilySize$ comparisons (14 UTSW, 15 UCSF-PDGM) was adjusted once with Benjamini--Hochberg at $q=0.05$ \cite{benjamini1995}.
 
-\subsection{Missing sequences}
-Missing sequences were simulated at inference by setting the removed channels to zero. Nothing was imputed. The six conditions are full input, removal of each of T1, T1ce, T2 and FLAIR, and T1ce+FLAIR only.
-
-\subsection{Abstention mechanisms}
-Each mechanism assigns a confidence to each patient; the model abstains on the least confident cases.
-\begin{itemize}
-\item \textbf{M1, M2:} $\max(p,1-p)$ for the raw and the temperature-scaled probability of IDH mutation. The temperature $T=\numTemperature$ was fitted once on the UTSW calibration split and never refitted on any other data.
-\item \textbf{M3:} negative predictive entropy of 30 Monte Carlo passes through the dropout layers of the head.
-\item \textbf{M4:} negative variance of the five ensemble members' probabilities.
-\item \textbf{M5:} split conformal prediction with nonconformity $1-p(\text{true class})$ on the scaled probability. The quantile for miscoverage $\alpha\in\{0.05,0.1,0.2\}$ is the $\lceil (n+1)(1-\alpha)\rceil$-th smallest calibration score and is carried over unchanged to every condition and cohort.
-\item \textbf{M6:} the comparator R1 with raw confidence.
-\end{itemize}
-M1, M2 and M5 rank patients identically, because temperature scaling is monotone; they differ in operating points and in prediction-set coverage.
-
-\subsection{Metrics}
-Selective risk at coverage $\phi$ is the error rate on the $\phi$ fraction of most-confident patients. The risk--coverage curve plots it against $\phi$, and AURC is its mean over all cutoffs. We evaluate $\phi\in\{0.5,0.6,0.7,0.8,0.9\}$ and compare with the always-predict risk. Calibration uses ECE (10 equal-width bins) and the Brier score; discrimination uses AUROC with the Hanley--McNeil interval \cite{hanley1982}. AUROC is never reported without ECE, Brier, AURC and coverage beside it. Coverage deviation is empirical minus nominal set coverage, with a two-stage bootstrap interval over calibration and test patients.
-
-\subsection{Pre-registered claims and decision rules}
-Six claims were fixed before any external result. C1: selective prediction beats always-predict internally. C2: that advantage survives missing sequences. C3: it survives external shift. C4: coverage deviation can be characterised within a $\pm0.07$ band. C5: risk--coverage curves are monotone. C6: abstention is enriched for errors. With $D(\phi)$ the selective minus always-predict risk, C1 to C3 are refuted if any point estimate of $D$ is $\ge0$, supported if every upper 95\% limit is below 0, and inconclusive otherwise. C4 is refuted if any condition's coverage-deviation interval has half-width above $0.07$. C5 is refuted if any adjacent-coverage lower limit is above 0 and supported if every point difference is $\le0$. C6 is refuted if any observed enrichment is $\le0$ and supported if every BH-adjusted permutation $p$ is below $0.05$. The worst status over conditions decides the claim. Refutations are reported as refutations.
-
-\subsection{Statistics and multiplicity}
-Intervals use $\numBootDraws$ bootstrap draws over patients with one shared index matrix; permutation tests use $\numPermDraws$ draws; AUROC differences use DeLong's test \cite{delong1988}. The confirmatory family has $\numFamilySize$ comparisons (14 on UTSW, 15 on UCSF-PDGM: mechanism contrasts, missing-sequence contrasts, internal versus external, calibration contrasts and ablations), adjusted once with Benjamini--Hochberg at $q=0.05$ \cite{benjamini1995}. The family is 29 rather than the 44 pre-registered with EGD because EGD is deferred.
-
-\subsection{Protocol integrity}
-The external cohort was evaluated once, through a harness that refuses to run without a signed freeze manifest naming the exact model checkpoints, calibration parameters and code commit, and that re-checks the repository state after the run. The manifest initially omitted R7 and R8; this was found before any external metric was examined and corrected with a second signed manifest and run, with no change to any method. External analysis code was written and tested on synthetic data before it saw real predictions. A second agent recomputed the external numbers independently from the written contracts (Section~\ref{sec:limits}).
+\subsection{Protocol Integrity}
+The external cohort was evaluated once by a harness that refuses to run without a signed freeze manifest naming the checkpoints, calibration parameters, and code commit. The first manifest omitted R7 and R8; this was found before any external metric was examined and corrected by a second signed manifest and run. A second agent recomputed the external numbers independently from written contracts.
 
 \section{Results}
 
-\subsection{Complete input}
-Table~\ref{tab:main} gives discrimination, calibration and AURC. On the internal test split the primary model reached an AUROC of \numIntRTwoAuroc{} (95\% interval \numIntAurocLo{} to \numIntAurocHi{}), and on UCSF-PDGM \numExtRTwoAuroc{} (\numExtAurocLo{} to \numExtAurocHi{}). The external value is higher; prevalence and case mix differ, so we do not read it as better generalisation.
+\subsection{Complete Input}
+Table~\ref{tab:main} gives discrimination, calibration, and AURC. The primary model reached an AUROC of \numIntRTwoAuroc{} (95\% interval \numIntAurocLo{} to \numIntAurocHi{}) internally and \numExtRTwoAuroc{} (\numExtAurocLo{} to \numExtAurocHi{}) on UCSF-PDGM. Prevalence and case mix differ, so we do not read the higher external value as better generalization.
 
 \begin{table}[t]
 \centering
-\caption{Primary model and ablations on complete input (temperature-scaled ECE and Brier; AURC as mean over cutoffs).}
+\caption{Primary Model and Ablations on Complete Input}
 \label{tab:main}
+\footnotesize
 \begin{tabular}{llcccc}
 \toprule
 Cohort & Model & AUROC & ECE & Brier & AURC \\
@@ -141,13 +123,15 @@ UCSF-PDGM & R8 & \numExtREightAuroc & \numExtREightEce & \numExtREightBrier & \n
 \end{tabular}
 \end{table}
 
-\subsection{Does abstaining lower risk? (RQ1, C1, C3)}
-Table~\ref{tab:risk} shows selective risk by coverage. Internally the always-predict risk was \numIntAlwaysFull{} and the risk fell to \numIntRiskZeroFive{} at coverage 0.5. Externally the always-predict risk was \numExtAlwaysFull{} and the risk fell to \numExtRiskZeroFive{}. Every upper 95\% limit of $D(\phi)$ was below zero on the external full-input condition, so C3 is supported there (\numCThreeDeltaZeroNine{} at coverage 0.9 and \numCThreeDeltaZeroFive{} at 0.5). C1 is supported internally.
+\subsection{Does Abstaining Lower Risk? (RQ1, C1, C3)}
+Table~\ref{tab:risk} shows selective risk by coverage. Internally the risk fell from \numIntAlwaysFull{} to \numIntRiskZeroFive{} at coverage 0.5, and externally from \numExtAlwaysFull{} to \numExtRiskZeroFive{}. Every upper limit of $D(\phi)$ was below zero on complete input on both cohorts, so C1 is supported internally and C3 externally (external $D$ of \numCThreeDeltaZeroNine{} at coverage 0.9). The mechanisms differ little on complete input. The contrast of conformal with MC dropout ranking was not different from zero (UCSF-PDGM adjusted $p=\numFamXAOneAdj$), and ensemble variance ranked worse than confidence ($p=\numFamXATwoAdj$). Conformal prediction therefore adds no ranking advantage over scaled confidence.
 
 \begin{table}[t]
 \centering
-\caption{Selective risk of the primary model at target coverage (full input), with always-predict risk.}
+\caption{Selective Risk of the Primary Model at Target Coverage (Complete Input)}
 \label{tab:risk}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lcccccc}
 \toprule
 Cohort & 0.5 & 0.6 & 0.7 & 0.8 & 0.9 & Always \\
@@ -158,15 +142,14 @@ UCSF-PDGM & \numExtRiskZeroFive & \numExtRiskZeroSix & \numExtRiskZeroSeven & \n
 \end{tabular}
 \end{table}
 
-The mechanisms differ little on complete input. M1, M2 and M5 rank identically, and the contrast with MC dropout was not different from zero after adjustment (UCSF-PDGM adjusted $p=\numFamXAOneAdj$). The ensemble variance ranking was worse than the confidence ranking on UCSF-PDGM (adjusted $p=\numFamXATwoAdj$). Conformal risk control therefore adds no ranking advantage over temperature-scaled confidence; its contribution is a coverage target, examined below.
-
-\subsection{Missing sequences (RQ1, C2, C5)}
-Removing T1ce had the largest effect. Table~\ref{tab:missing} and Fig.~\ref{fig:rc} show AURC and the curves against always-predict risk. With T1ce removed, the internal AURC was \numIntAurcDropTonece{} against an always-predict risk of \numIntAlwaysDropTonece{}, and D($\phi$) was not below zero at every coverage level, so C2 is refuted. The external AURC with T1ce removed was \numExtAurcDropTonece{} against \numExtAlwaysDropTonece{}. Its increase over full input is one of the rejected family members on both cohorts (internal adjusted $p=\numFamUBTwoAdj$, external $p=\numFamXBTwoAdj$). Removing FLAIR also raised the external AURC, by less (adjusted $p=\numFamXBFourAdj$); removing T1 or T2 changed little. Risk--coverage curves were monotone in every external condition (C5 supported) and inconclusive internally.
+\subsection{Missing Sequences (RQ1, C2, C5, C6)}
+Removing T1ce had the largest effect (Table~\ref{tab:missing}, Fig.~\ref{fig:rc}). Internally, with T1ce removed, the AURC was \numIntAurcDropTonece{} against an always-predict risk of \numIntAlwaysDropTonece{}, and $D(\phi)$ was positive at every coverage level, so C2 is refuted. The increase over complete input is rejected in the family on both cohorts (internal adjusted $p=\numFamUBTwoAdj$, external $p=\numFamXBTwoAdj$). Removing FLAIR raised the external AURC by less ($p=\numFamXBFourAdj$). Curves were monotone in every external condition (C5 supported) and inconclusive internally. Externally the rejected cases had a higher error rate than average at every coverage level, but two conditions were inconclusive, so external C6 is \numStatusCSixExt. Internally, with T1ce removed, enrichment was at or below zero, so C6 is refuted there.
 
 \begin{table}[t]
 \centering
-\caption{AURC and always-predict risk by input condition (primary model). Missing-sequence conditions ($-$T1 and below) are simulated by zeroing channels.}
+\caption{AURC and Always-Predict Risk by Input Condition (Missing Sequences Simulated)}
 \label{tab:missing}
+\footnotesize
 \begin{tabular}{lcccc}
 \toprule
  & \multicolumn{2}{c}{UTSW test} & \multicolumn{2}{c}{UCSF-PDGM} \\
@@ -184,22 +167,26 @@ T1ce+FLAIR & \numIntAurcCeFlair & \numIntAlwaysCeFlair & \numExtAurcCeFlair & \n
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.85\textwidth]{figures/fig_2_ucsf_pdgm.pdf}
-\caption{Risk--coverage curves on UCSF-PDGM for each input condition (simulated missing sequences) and mechanism M1 to M6. Vertical bars are 95\% intervals at the five evaluated coverage levels.}
+\includegraphics[width=0.74\textwidth]{figures/journal_fig_rc_ucsf.pdf}
+\caption{Risk--coverage curves on UCSF-PDGM for each input condition (missing sequences simulated) and mechanisms M1 to M6. Vertical bars are 95\% intervals at the five evaluated coverage levels.}
 \label{fig:rc}
 \end{figure*}
 
-\subsection{Is abstention enriched for errors? (C6)}
-On the external cohort the rejected cases had a higher error rate than the cohort average at every coverage level, and the BH-adjusted permutation $p$ was below 0.05 in four of six conditions. The two exceptions (T1 removed, T1ce removed) are inconclusive, so the external claim is \numStatusCSixExt. Internally, with T1ce removed, the observed enrichment was at or below zero at every coverage level, so C6 is refuted internally.
+\subsection{Does Conformal Coverage Hold? (RQ2, C4)}
+Table~\ref{tab:cov} gives set coverage on complete input. At $\alpha=0.05$ the external coverage was \numExtCovAlphafive{}, inside the band; at $\alpha=0.2$ it was \numExtCovAlphatwenty{}, with \numExtEmptyAlphatwenty{} of $\numNExt$ sets empty. External half-widths exceeded $0.07$ in every condition at $\alpha=0.1$ and $0.2$, and all but one internal cell exceeded the band, so C4 is refuted: at these sample sizes the intervals cannot separate preserved from degraded coverage. The internal test split, exchangeable with the calibration split by construction, showed a shortfall of the same order (\numIntCovAlphatwenty{} against a calibration coverage of \numIntCalCovAlphatwenty{}), so much of the deviation is sampling noise. Fig.~\ref{fig:cov} shows every condition. With T1ce removed the carried-over coverage fell far below nominal, while quantiles refit on calibration data with the same missing pattern stayed near nominal. At $\alpha=0.05$ and 0.1 no set was empty and the two-label sets acted as abstentions; at $\alpha=0.2$ the quantile fell below 0.5, no set held both labels, and the empty sets account for much of the shortfall.
 
-\subsection{Does conformal coverage hold? (RQ2, C4)}
-\label{sec:coverage}
-Table~\ref{tab:cov} gives set coverage on the full-input condition and Fig.~\ref{fig:cov} shows it for every condition. At $\alpha=0.05$ the external coverage was \numExtCovAlphafive{} against a nominal 0.95, inside the $\pm0.07$ band. At $\alpha=0.2$ it was \numExtCovAlphatwenty{} against 0.80, and \numExtEmptyAlphatwenty{} of the $\numNExt$ prediction sets were empty. On the external cohort the interval half-width exceeded $0.07$ in every condition at $\alpha=0.1$ and $0.2$; at $\alpha=0.05$ five of six conditions passed and T1ce removal did not (half-width \numExtHalfAlphafiveDropTonece). Internally, all but one of the condition--$\alpha$ cells exceeded the band. C4 is therefore refuted: at these sample sizes the intervals cannot separate preserved from degraded coverage. This is a statement about the precision of the measurement, not a finding that coverage holds or fails.
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.74\textwidth]{figures/journal_fig_cov_ucsf.pdf}
+\caption{Nominal against empirical conformal set coverage on UCSF-PDGM by condition, for quantiles carried over from the UTSW calibration split and refit per condition. The shaded band is the frozen $\pm0.07$ tolerance, not an interval. Missing sequences simulated.}
+\label{fig:cov}
+\end{figure*}
 
 \begin{table}[t]
 \centering
-\caption{Conformal set coverage, full input, quantiles from the UTSW calibration split. Half-width is that of the coverage-deviation interval.}
+\caption{Conformal Set Coverage, Complete Input, Quantiles From the UTSW Calibration Split; Half Is the Interval Half-Width}
 \label{tab:cov}
+\footnotesize
 \begin{tabular}{lccccc}
 \toprule
  & & \multicolumn{2}{c}{UTSW test} & \multicolumn{2}{c}{UCSF-PDGM} \\
@@ -212,26 +199,14 @@ $\alpha$ & Nominal & Cov. & Half & Cov. & Half \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig_3_ucsf_pdgm.pdf}
-\caption{Nominal against empirical conformal set coverage on UCSF-PDGM by condition, carried-over quantiles.}
-\label{fig:cov}
-\end{figure}
-
-\subsection{Calibration across cohorts (RQ3)}
-Temperature-scaled ECE was \numIntEceMTwo{} (bootstrap \numIntEceMTwoLo{} to \numIntEceMTwoHi{}) internally and \numExtEceMTwo{} (\numExtEceMTwoLo{} to \numExtEceMTwoHi{}) externally; Brier was \numIntBrierMTwo{} and \numExtBrierMTwo{}. We found no degradation from internal to external data, and the intervals overlap. No family test addresses this contrast, so the statement is descriptive. Temperature scaling did not lower ECE on either cohort (raw ECE \numIntEceMOne{} internally and \numExtEceMOne{} externally). The raw Brier score on UCSF-PDGM was lower than the scaled one by \numExtDTwoAbs, which is statistically detectable and clinically negligible.
-
-\subsection{Ablations}
-R7 and R8 did not differ from R2 on UTSW. On UCSF-PDGM R7 had a worse AURC than R2 (difference \numExtETwoDiff, adjusted $p=\numFamXETwoAdj$) and a non-significant AUROC difference (\numExtEOneDiff, adjusted $p=\numFamXEOneAdj$); R8 was not distinguishable from R2 (AUROC difference \numExtEThreeDiff, adjusted $p=\numFamXEThreeAdj$). The evidence for tumour-aware pooling is one AURC contrast on one cohort.
-
-\subsection{Claim summary and multiplicity}
-Table~\ref{tab:claims} lists every claim. Of the $\numFamilySize$ family tests, $\numFamilyRejected$ are rejected at $q=0.05$; their adjusted $p$-values sit on the permutation floor times the family size over rank, so they bound the evidence rather than measure it.
+\subsection{Calibration, Ablations, and Claims (RQ3)}
+Temperature-scaled ECE was \numIntEceMTwo{} internally and \numExtEceMTwo{} externally, with overlapping intervals, so calibration did not degrade. Temperature scaling did not lower ECE on either cohort (raw \numIntEceMOne{} and \numExtEceMOne{}). R7 and R8 did not differ from R2 on UTSW; on UCSF-PDGM R7 had a worse AURC (difference \numExtETwoDiff, adjusted $p=\numFamXETwoAdj$). Of $\numFamilySize$ family tests, $\numFamilyRejected$ are rejected. Table~\ref{tab:claims} lists every claim.
 
 \begin{table}[t]
 \centering
-\caption{Pre-registered claims and their frozen-rule status.}
+\caption{Pre-Registered Claims and Their Frozen-Rule Status}
 \label{tab:claims}
+\footnotesize
 \begin{tabular}{lll}
 \toprule
 Claim & UTSW (internal) & UCSF-PDGM (external) \\
@@ -247,103 +222,96 @@ C6 & \numStatusCSixInt & \numStatusCSixExt \\
 \end{table}
 
 \section{Discussion}
+\subsection{Where Abstention Helps and Where It Fails}
+Abstaining on the least confident cases works on complete input and fails in one place. Dropping the bottom half of cases cut the error rate to a small fraction of the always-predict rate on both cohorts. The ranking breaks when T1ce is missing: without the enhancement signal the model is less accurate and no better at knowing when it is wrong. The model trained without modality dropout (M6) degraded more sharply in the same condition, the expected benefit of modality dropout. A deployed system should treat a missing T1ce as a reason to withhold the prediction or request the sequence, not to lower a threshold. Ensemble variance ranked errors worse than confidence on complete input because it ignores how confident the members are on average: a patient whom every member misclassifies confidently has low variance and is accepted early.
 
-For this task and these cohorts, abstaining on the least confident cases works on complete input and fails in one specific place. Confidence from the trained network ranks its own errors well enough that dropping the bottom half of cases cuts the error rate to a small fraction of the always-predict rate, on both cohorts. The ranking breaks when T1ce is missing. That sequence carries the enhancement signal that the network relies on, and without it the model is both less accurate and no better at knowing when it is wrong. A deployed system should treat a missing T1ce as a reason to withhold the prediction, not to lower a threshold.
-
-The coverage result is a result about measurement precision. With $\numNInt$ internal and $\numNExt$ external patients, and calibration quantiles from 124 patients, a $0.07$ tolerance cannot be verified at $\alpha=0.1$ or $0.2$. The external point estimates are above nominal at $\alpha=0.05$ and $0.1$ and below it at $\alpha=0.2$, with many empty sets, so there is no simple degrade-only pattern. A larger calibration set is the direct remedy; no feasible split of this cohort reaches the band.
-
-Three results were negative: C2, C4 and (internally) C6 were refuted, and temperature scaling did not improve ECE. We did not re-run, re-tune or re-scope any of them. That the calibration did not degrade externally contradicts the degradation reported for other glioma IDH models; with two cohorts and one architecture we do not claim it generalises.
+\subsection{Coverage and Calibration}
+The coverage result is about measurement precision: with 124 calibration patients a $0.07$ tolerance cannot be verified at $\alpha=0.1$ or $0.2$. The one clear coverage failure, under T1ce removal, disappeared when the quantile was computed on calibration data with the same missing pattern, which suggests calibrating per pattern; we did not pre-specify that remedy. Calibration did not degrade externally, unlike the external drop reported for other IDH models; with two cohorts and one architecture we do not claim this generalizes. The fitted temperature was near one, which explains why scaling changed little. C2, C4, and internal C6 were refuted, and no experiment was re-run or re-tuned.
 
 \subsection{Limitations}
-\label{sec:limits}
 \begin{itemize}
-\item \textbf{Simulated missingness.} All three cohorts are curated four-sequence studies, so missing sequences were simulated by zeroing a channel. That reproduces the information loss but not the real selection mechanism (motion, intolerance, truncated protocols, scanner failure), which may correlate with image quality or disease severity. Every missing-sequence table and caption says ``simulated,'' and the claim wording was not softened after the fact.
-\item \textbf{Sample size.} The internal-test split has $\numNIntPos$ mutant patients and the external cohort $\numNExtPos$, so intervals are wide. Coverage-deviation intervals cannot meet the $0.07$ band at $\alpha=0.1$ or $0.2$ (Section~\ref{sec:coverage}).
-\item \textbf{Single development institution}, and one external cohort after excluding BraTS-overlapping patients, which changes the label mix. EGD is deferred.
-\item \textbf{Labels.} UTSW IDH labels mix immunohistochemistry (66\%) and sequencing (34\%), with a differential false-negative risk for non-R132H variants. Label harmonisation was done by one reviewer. UCSF-PDGM's assay was not independently re-confirmed.
-\item \textbf{Calibration split reuse.} The calibration split served early stopping as well as temperature scaling and conformal quantiles, which may make calibration slightly optimistic.
-\item \textbf{1p/19q} was examined only internally with a frozen-encoder probe, exploratory, no inferential claim.
-\item \textbf{Review depth.} The team was one researcher. Independent checks (Gate D reviews, the recomputation of the external numbers) were done by a second software agent from written contracts, not by a second person. Every reported number matched except for differences traced to a tie-handling ambiguity in the oracle AURC definition, Monte Carlo seed layout and an error in the second agent's own summary, none changing a reported value or claim status.
-\item \textbf{Protocol deviation.} The first external manifest omitted R7 and R8; a second signed manifest and run corrected it before any external metric was examined, with no change of method.
+\item \textbf{Simulated missingness.} Zeroing a channel reproduces the information loss but not the clinical selection mechanism (motion, intolerance, truncated protocols), which may correlate with image quality.
+\item \textbf{Sample size.} The cohorts hold $\numNIntPos$ and $\numNExtPos$ mutant patients, so intervals are wide.
+\item \textbf{Cohorts and labels.} There is one development institution and one external cohort after BraTS-overlap exclusion, which changes the label mix. UTSW labels mix two assays, with a false-negative risk for non-R132H variants.
+\item \textbf{Calibration reuse and review.} The calibration split also served early stopping. Independent checks were done by a second software agent, not a second person.
 \end{itemize}
 
 \section{Conclusion}
-Abstention helped where the input was complete and stopped helping when T1ce was missing. Conformal coverage could not be characterised within the pre-registered tolerance at these sample sizes, and calibration did not degrade from the internal to the external cohort. Four of six claims were not supported as stated in at least one cohort, and we report them as such. Code, frozen predictions and a regeneration script allow every number and figure to be rebuilt.
+Abstention helped where the input was complete and stopped helping when T1ce was missing. Conformal coverage could not be characterized within the pre-registered tolerance at these sample sizes, and calibration did not degrade externally. Four of six claims were not supported in at least one cohort. Code, frozen predictions, and a regeneration script rebuild every number and figure.
 
 \section*{Declarations}
-\textbf{Data.} UTSW-Glioma and UCSF-PDGM are public TCIA collections. No patient-level data or labels are redistributed here.
-\textbf{Ethics.} Retrospective analysis of de-identified public data.
-\textbf{AI assistance.} [Disclosure wording to be decided by the authors.]
-\textbf{Funding and conflicts.} [To be completed.]
+\textbf{Data.} UTSW-Glioma and UCSF-PDGM are public TCIA collections; no patient-level data are redistributed. \textbf{Ethics.} Retrospective analysis of de-identified public data. \textbf{AI assistance.} [Disclosure wording to be decided by the authors.] \textbf{Funding and conflicts.} [To be completed.]
 
 \begin{thebibliography}{99}
-% D-010: every entry below must be checked against its source before submission.
+% D-010: entries checked on 2026-11-19 against publisher, PubMed or arXiv pages;
+% still confirm volume, pages and author initials before submission.
 
-\bibitem{louis2021} D. N. Louis \emph{et al.}, ``The 2021 WHO classification of tumors of the central nervous system: a summary,'' \emph{Neuro-Oncology}, vol. 23, no. 8, pp. 1231--1251, 2021.
+\bibitem{louis2021} D. N. Louis \emph{et al.}, ``The 2021 WHO classification of tumors of the central nervous system: A summary,'' \emph{Neuro-Oncology}, vol. 23, no. 8, pp. 1231--1251, Aug. 2021.
 
-\bibitem{farahani2025} FoundBioNet: S. Farahani \emph{et al.}, MICCAI 2025, doi:10.1007/978-3-032-04981-0\_25.
+\bibitem{chow1970} C. K. Chow, ``On optimum recognition error and reject tradeoff,'' \emph{IEEE Trans. Inf. Theory}, vol. IT-16, no. 1, pp. 41--46, Jan. 1970.
 
-\bibitem{geifman2017} Y. Geifman and R. El-Yaniv, ``Selective classification for deep neural networks,'' in \emph{Advances in Neural Information Processing Systems}, 2017.
+\bibitem{geifman2017} Y. Geifman and R. El-Yaniv, ``Selective classification for deep neural networks,'' in \emph{Proc. Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol. 30, 2017, pp. 4878--4887.
 
-\bibitem{zadorozhny2023} K. Zadorozhny \emph{et al.}, ``Rescuing referral failures during automated diagnosis of domain-shifted medical images,'' arXiv:2311.16766, 2023.
+\bibitem{leibig2017} C. Leibig, V. Allken, M. S. Ayhan, P. Berens, and S. Wahl, ``Leveraging uncertainty information from deep neural networks for disease detection,'' \emph{Sci. Rep.}, vol. 7, Art. no. 17816, Dec. 2017.
 
-\bibitem{vovk2005} V. Vovk, A. Gammerman, and G. Shafer, \emph{Algorithmic Learning in a Random World}. Springer, 2005.
+\bibitem{srivastava2023} A. Srivastava, K. Patel, P. Shenoy, and D. Sridharan, ``Rescuing referral failures during automated diagnosis of domain-shifted medical images,'' 2023, \emph{arXiv:2311.16766}.
 
-\bibitem{angelopoulos2023} A. N. Angelopoulos and S. Bates, ``Conformal prediction: a gentle introduction,'' \emph{Foundations and Trends in Machine Learning}, vol. 16, no. 4, 2023.
+\bibitem{vovk2005} V. Vovk, A. Gammerman, and G. Shafer, \emph{Algorithmic Learning in a Random World}. New York, NY, USA: Springer, 2005.
 
-\bibitem{angelopoulos2024crc} A. N. Angelopoulos, S. Bates, A. Fisch, L. Lei, and T. Schuster, ``Conformal risk control,'' in \emph{International Conference on Learning Representations}, 2024.
+\bibitem{angelopoulos2023} A. N. Angelopoulos and S. Bates, ``Conformal prediction: A gentle introduction,'' \emph{Found. Trends Mach. Learn.}, vol. 16, no. 4, pp. 494--591, 2023.
 
-\bibitem{liang2026risen} RISEN: Liang \emph{et al.}, \emph{European Radiology}, 2026, doi:10.1007/s00330-026-12622-4.
+\bibitem{elyassirad2026} D. Elyassirad \emph{et al.}, ``Predicting IDH mutation in glioma patients using deep learning algorithms with conformal prediction,'' \emph{J. Imaging Inform. Med.}, vol. 39, pp. 1217--1224, 2026, doi: 10.1007/s10278-025-01580-w.
 
-\bibitem{liu2026gmmas} GMMAS: Liu \emph{et al.}, \emph{Medicine Advances}, 2026, doi:10.1002/med4.70064.
+\bibitem{liu2026gmmas} Y. Liu \emph{et al.}, ``GMMAS: Glioma multiparametric MRI analysis system for fully-automated layered tumor diagnosis and prognostic evaluation,'' \emph{Med. Adv.}, 2026, doi: 10.1002/med4.70064.
 
-\bibitem{yogananda2025} C. G. B. Yogananda \emph{et al.}, ``Bridging the clinical gap: confidence informed IDH prediction in brain gliomas using MRI and deep learning,'' \emph{Neuro-Oncology Advances}, vol. 7, no. 1, vdaf142, 2025.
+\bibitem{yogananda2025} C. G. Bangalore Yogananda \emph{et al.}, ``Bridging the clinical gap: Confidence informed IDH prediction in brain gliomas using MRI and deep learning,'' \emph{Neuro-Oncol. Adv.}, vol. 7, no. 1, Art. no. vdaf142, Jul. 2025, doi: 10.1093/noajnl/vdaf142.
 
-\bibitem{elyassirad2026} D. Elyassirad \emph{et al.}, ``Uncertainty-aware IDH mutation status classification with conformal prediction,'' \emph{J. Imaging Informatics in Medicine}, vol. 39, pp. 1217--1224, 2026.
+\bibitem{liang2026risen} F. Liang \emph{et al.}, ``Robust deep learning for incomplete MRI sequences in glioma grading and IDH mutation status prediction: A large-scale multicenter study,'' \emph{Eur. Radiol.}, 2026, doi: 10.1007/s00330-026-12622-4.
 
-\bibitem{liang2024selective} Liang, Peng, and Sun, ``Selective classification under distribution shifts,'' \emph{Transactions on Machine Learning Research}, 2024.
+% Co-author initials not confirmed: Farahani, Hejazi, Di Ieva, Liu (MICCAI page).
+\bibitem{farahani2025} S. Farahani \emph{et al.}, ``FoundBioNet: A foundation-based model for IDH genotyping of glioma from multi-parametric MRI,'' in \emph{Proc. Med. Image Comput. Comput. Assist. Interv. (MICCAI)}, LNCS vol. 15966, 2025, pp. 259--270, doi: 10.1007/978-3-032-04981-0\_25.
 
-\bibitem{guo2017} C. Guo, G. Pleiss, Y. Sun, and K. Q. Weinberger, ``On calibration of modern neural networks,'' in \emph{Proc. ICML}, 2017.
+\bibitem{neverova2016} N. Neverova, C. Wolf, G. Taylor, and F. Nebout, ``ModDrop: Adaptive multi-modal gesture recognition,'' \emph{IEEE Trans. Pattern Anal. Mach. Intell.}, vol. 38, no. 8, pp. 1692--1706, Aug. 2016.
 
-\bibitem{gal2016} Y. Gal and Z. Ghahramani, ``Dropout as a Bayesian approximation: representing model uncertainty in deep learning,'' in \emph{Proc. ICML}, 2016.
+\bibitem{liang2024selective} H. Liang, L. Peng, and J. Sun, ``Selective classification under distribution shifts,'' \emph{Trans. Mach. Learn. Res.}, Oct. 2024.
 
-\bibitem{lakshminarayanan2017} B. Lakshminarayanan, A. Pritzel, and C. Blundell, ``Simple and scalable predictive uncertainty estimation using deep ensembles,'' in \emph{Advances in Neural Information Processing Systems}, 2017.
+\bibitem{guo2017} C. Guo, G. Pleiss, Y. Sun, and K. Q. Weinberger, ``On calibration of modern neural networks,'' in \emph{Proc. Int. Conf. Mach. Learn. (ICML)}, PMLR, vol. 70, 2017, pp. 1321--1330.
 
-\bibitem{reddy2026utsw} Reddy \emph{et al.}, UTSW-Glioma, \emph{Scientific Data}, 2026, doi:10.1038/s41597-026-07274-4.
+\bibitem{gal2016} Y. Gal and Z. Ghahramani, ``Dropout as a Bayesian approximation: Representing model uncertainty in deep learning,'' in \emph{Proc. Int. Conf. Mach. Learn. (ICML)}, PMLR, vol. 48, 2016, pp. 1050--1059.
 
-\bibitem{calabrese2022ucsf} E. Calabrese \emph{et al.}, ``The University of California San Francisco preoperative diffuse glioma MRI dataset,'' \emph{Radiology: Artificial Intelligence}, 2022, doi:10.1148/ryai.220058.
+\bibitem{lakshminarayanan2017} B. Lakshminarayanan, A. Pritzel, and C. Blundell, ``Simple and scalable predictive uncertainty estimation using deep ensembles,'' in \emph{Proc. Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol. 30, 2017, pp. 6402--6413.
 
-\bibitem{isensee2019hdbet} F. Isensee \emph{et al.}, ``Automated brain extraction of multisequence MRI using artificial neural networks,'' \emph{Human Brain Mapping}, vol. 40, no. 17, pp. 4952--4964, 2019.
+\bibitem{sadinle2019} M. Sadinle, J. Lei, and L. Wasserman, ``Least ambiguous set-valued classifiers with bounded error levels,'' \emph{J. Amer. Statist. Assoc.}, vol. 114, no. 525, pp. 223--234, 2019.
 
-\bibitem{tustison2010n4} N. J. Tustison \emph{et al.}, ``N4ITK: improved N3 bias correction,'' \emph{IEEE Trans. Med. Imaging}, vol. 29, no. 6, pp. 1310--1320, 2010.
+\bibitem{tibshirani2019} R. J. Tibshirani, R. F. Barber, E. J. Cand\`{e}s, and A. Ramdas, ``Conformal prediction under covariate shift,'' in \emph{Proc. Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol. 32, 2019.
 
-\bibitem{myronenko2019segresnet} A. Myronenko, ``3D MRI brain tumor segmentation using autoencoder regularization,'' in \emph{BrainLes 2018}, Springer, 2019.
+\bibitem{barber2023} R. F. Barber, E. J. Cand\`{e}s, A. Ramdas, and R. J. Tibshirani, ``Conformal prediction beyond exchangeability,'' \emph{Ann. Statist.}, vol. 51, no. 2, pp. 816--845, Apr. 2023.
 
-\bibitem{cardoso2022monai} M. J. Cardoso \emph{et al.}, ``MONAI: an open-source framework for deep learning in healthcare,'' arXiv:2211.02701, 2022.
+\bibitem{dorfner2025} F. J. Dorfner, J. B. Patel, J. Kalpathy-Cramer, E. R. Gerstner, and C. P. Bridge, ``A review of deep learning for brain tumor analysis in MRI,'' \emph{npj Precis. Oncol.}, vol. 9, Art. no. 2, Jan. 2025, doi: 10.1038/s41698-024-00789-2.
 
-\bibitem{loshchilov2019adamw} I. Loshchilov and F. Hutter, ``Decoupled weight decay regularization,'' in \emph{Proc. ICLR}, 2019.
+\bibitem{ren2025} R. Ren \emph{et al.}, ``Federated radiomics analysis of preoperative MRI across institutions: Toward integrated glioma segmentation and molecular subtyping,'' \emph{Front. Radiol.}, vol. 5, Art. no. 1648145, Nov. 2025, doi: 10.3389/fradi.2025.1648145.
 
-\bibitem{hanley1982} J. A. Hanley and B. J. McNeil, ``The meaning and use of the area under a receiver operating characteristic (ROC) curve,'' \emph{Radiology}, vol. 143, no. 1, pp. 29--36, 1982.
+\bibitem{yagis2021} E. Yagis \emph{et al.}, ``Effect of data leakage in brain MRI classification using 2D convolutional neural networks,'' \emph{Sci. Rep.}, vol. 11, Art. no. 22544, Nov. 2021, doi: 10.1038/s41598-021-01681-w.
 
-\bibitem{delong1988} E. R. DeLong, D. M. DeLong, and D. L. Clarke-Pearson, ``Comparing the areas under two or more correlated receiver operating characteristic curves: a nonparametric approach,'' \emph{Biometrics}, vol. 44, no. 3, pp. 837--845, 1988.
+\bibitem{reddy2026utsw} D. D. Reddy \emph{et al.}, ``The University of Texas Southwestern glioma dataset---MRI, molecular markers and segmentations,'' \emph{Sci. Data}, vol. 13, 2026, doi: 10.1038/s41597-026-07274-4.
 
-\bibitem{benjamini1995} Y. Benjamini and Y. Hochberg, ``Controlling the false discovery rate: a practical and powerful approach to multiple testing,'' \emph{J. R. Stat. Soc. B}, vol. 57, no. 1, pp. 289--300, 1995.
+\bibitem{calabrese2022ucsf} E. Calabrese \emph{et al.}, ``The University of California San Francisco preoperative diffuse glioma MRI dataset,'' \emph{Radiol. Artif. Intell.}, vol. 4, no. 6, Art. no. e220058, Nov. 2022, doi: 10.1148/ryai.220058.
 
-\bibitem{borges2024} B. L. C. Borges, B. M. Pacheco, and D. Silva, ``Selective prediction for semantic segmentation using post-hoc confidence estimation and its performance under distribution shift,'' arXiv:2402.10665, 2024.
+\bibitem{isensee2019hdbet} F. Isensee \emph{et al.}, ``Automated brain extraction of multisequence MRI using artificial neural networks,'' \emph{Human Brain Mapping}, vol. 40, no. 17, pp. 4952--4964, Dec. 2019.
 
-\bibitem{hirsch2024} R. Hirsch and J. Goldberger, ``A conformalized learning of a prediction set with applications to medical imaging classification,'' arXiv:2408.05037, 2024.
+\bibitem{tustison2010n4} N. J. Tustison \emph{et al.}, ``N4ITK: Improved N3 bias correction,'' \emph{IEEE Trans. Med. Imag.}, vol. 29, no. 6, pp. 1310--1320, Jun. 2010.
 
-\bibitem{lu2023} C. Lu, Y. Yu, S. P. Karimireddy, M. I. Jordan, and R. Raskar, ``Federated conformal predictors for distributed uncertainty quantification,'' in \emph{Proc. ICML}, PMLR 202, pp. 22942--22964, 2023.
+\bibitem{myronenko2019segresnet} A. Myronenko, ``3D MRI brain tumor segmentation using autoencoder regularization,'' in \emph{Proc. Brainlesion: Glioma, Multiple Sclerosis, Stroke Traumatic Brain Injuries (BrainLes)}, LNCS vol. 11384, 2019, pp. 311--320.
 
-\bibitem{cheung2024} M. Y. Cheung, T. J. Netherton, L. E. Court, A. Veeraraghavan, and G. Balakrishnan, ``Metric-guided image reconstruction bounds via conformal prediction,'' arXiv:2404.15274, 2024.
+\bibitem{cardoso2022monai} M. J. Cardoso \emph{et al.}, ``MONAI: An open-source framework for deep learning in healthcare,'' 2022, \emph{arXiv:2211.02701}.
 
-\bibitem{dorfner2025} F. J. Dorfner, J. B. Patel, J. Kalpathy-Cramer, E. R. Gerstner, and C. P. Bridge, ``A review of deep learning for brain tumor analysis in MRI,'' \emph{npj Precision Oncology}, vol. 9, art. 2, 2025.
+\bibitem{loshchilov2019adamw} I. Loshchilov and F. Hutter, ``Decoupled weight decay regularization,'' in \emph{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2019.
 
-\bibitem{ren2025} R. Ren \emph{et al.}, ``Federated radiomics analysis of preoperative MRI across institutions: toward integrated glioma segmentation and molecular subtyping,'' \emph{Frontiers in Radiology}, vol. 5, 1648145, 2025.
+\bibitem{hanley1982} J. A. Hanley and B. J. McNeil, ``The meaning and use of the area under a receiver operating characteristic (ROC) curve,'' \emph{Radiology}, vol. 143, no. 1, pp. 29--36, Apr. 1982.
 
-\bibitem{liu2026dare} Y. Liu \emph{et al.}, ``DARE-FUSE: domain aligned evidence guided learning for joint brain tumor MRI segmentation and classification,'' \emph{npj Digital Medicine}, vol. 9, art. 178, 2026.
+\bibitem{delong1988} E. R. DeLong, D. M. DeLong, and D. L. Clarke-Pearson, ``Comparing the areas under two or more correlated receiver operating characteristic curves: A nonparametric approach,'' \emph{Biometrics}, vol. 44, no. 3, pp. 837--845, Sep. 1988.
 
-\bibitem{yagis2021} E. Ya\u{g}{\i}\c{s} \emph{et al.}, ``Effect of data leakage in brain MRI classification using 2D convolutional neural networks,'' \emph{Scientific Reports}, vol. 11, art. 22544, 2021.
+\bibitem{benjamini1995} Y. Benjamini and Y. Hochberg, ``Controlling the false discovery rate: A practical and powerful approach to multiple testing,'' \emph{J. Roy. Statist. Soc. B}, vol. 57, no. 1, pp. 289--300, 1995.
 
 \end{thebibliography}
 
