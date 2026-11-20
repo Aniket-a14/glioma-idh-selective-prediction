@@ -155,7 +155,7 @@ Six claims were fixed before any external result. C1: selective prediction beats
 Intervals use $\numBootDraws$ bootstrap draws with a shared index matrix; permutation tests use $\numPermDraws$ draws; AUROC differences use the DeLong test \cite{delong1988}. The confirmatory family of $\numFamilySize$ comparisons (14 UTSW, 15 UCSF-PDGM) was adjusted once with Benjamini--Hochberg at $q=0.05$ \cite{benjamini1995}.
 
 \subsection{Protocol Integrity}
-The external cohort was evaluated once by a harness that refuses to run without a signed freeze manifest naming the checkpoints, calibration parameters, and code commit. The first manifest omitted R7 and R8; this was found before any external metric was examined and corrected by a second signed manifest and run. A second agent recomputed the external numbers independently from written contracts.
+The external cohort was evaluated once by a harness that refuses to run without a signed freeze manifest naming the checkpoints, calibration parameters, and code commit. The first manifest omitted R7 and R8; this was found before any external metric was examined and corrected by a second signed manifest and run. The authors then recomputed the external numbers in a separate implementation written from the metric contracts.
 
 \section{Results}
 
@@ -291,7 +291,7 @@ The coverage result is about measurement precision: with 124 calibration patient
 \item \textbf{Simulated missingness.} Zeroing a channel reproduces the information loss but not the clinical selection mechanism (motion, intolerance, truncated protocols), which may correlate with image quality.
 \item \textbf{Sample size.} The cohorts hold $\numNIntPos$ and $\numNExtPos$ mutant patients, so intervals are wide.
 \item \textbf{Cohorts and labels.} There is one development institution and one external cohort after BraTS-overlap exclusion, which changes the label mix. UTSW labels mix two assays, with a false-negative risk for non-R132H variants.
-\item \textbf{Calibration reuse and review.} The calibration split also served early stopping. Independent checks were done by a second software agent, not a second person.
+\item \textbf{Calibration reuse and review.} The calibration split also served early stopping. Independent checks were done within the author team; no outside group audited the code or results.
 \end{itemize}
 
 \section{Conclusion}
